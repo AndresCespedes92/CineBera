@@ -1,0 +1,1246 @@
+{
+  "proyecto": "Proyecto Cine",
+  "fuente": "TP 1 - Programacion IV - 2026 C2.pdf",
+  "estado": "Plan relativo ajustado al 5 de octubre; pendiente de validar capacidad y publicar en Miro",
+  "calendario": {
+    "inicio": null,
+    "duracion_sprint_dias": 4,
+    "tipo_dias": "corridos como supuesto de planificación",
+    "entregas": "días 4, 8, 12, 16, 20 y 24",
+    "fecha_limite": "2026-10-05",
+    "fecha_limite_nota": "5 de octubre indicado por el usuario; año 2026 según contexto del TP",
+    "margen": "Si el día 1 es 09/09, el día 24 es 02/10 y quedan 03-05/10 para contingencia/entrega. Es una referencia de viabilidad, no una fecha inicial acordada."
+  },
+  "correos": [
+    {
+      "id": "C01",
+      "fecha": "01/01/2020",
+      "paginas": "1-3",
+      "tema": "Venta de entradas, cartelera, salas, registro y cupón inicial"
+    },
+    {
+      "id": "C02",
+      "fecha": "16/01/2020",
+      "paginas": "3-4",
+      "tema": "Reseñas, promedio, top 3 y buscador"
+    },
+    {
+      "id": "C03",
+      "fecha": "16/01/2020",
+      "paginas": "4",
+      "tema": "Ampliación del buscador a múltiples géneros"
+    },
+    {
+      "id": "C04",
+      "fecha": "30/01/2020",
+      "paginas": "4-5",
+      "tema": "Cupones configurables, mayores de 50, candy y mapa sin aprobación"
+    },
+    {
+      "id": "C05",
+      "fecha": "06/02/2020",
+      "paginas": "5-6",
+      "tema": "Administración, empleados, validación y asignación automática de salas"
+    },
+    {
+      "id": "C06",
+      "fecha": "12/02/2020",
+      "paginas": "6-7",
+      "tema": "Restricción de edad, accesibilidad y butacas en tiempo real"
+    },
+    {
+      "id": "C07",
+      "fecha": "28/02/2020",
+      "paginas": "7-8",
+      "tema": "Usabilidad, ingreso de fechas/horas y reporte diario"
+    },
+    {
+      "id": "C08",
+      "fecha": "03/03/2020",
+      "paginas": "8-9",
+      "tema": "Puntos, recompensas, historial de canjes y combos"
+    },
+    {
+      "id": "C09",
+      "fecha": "08/03/2020",
+      "paginas": "9",
+      "tema": "Próximamente, alertas, preventa y Mis películas"
+    },
+    {
+      "id": "C10",
+      "fecha": "10/03/2020",
+      "paginas": "10",
+      "tema": "Cancelación, crédito, VIP, exportaciones, gráficos y auditoría"
+    }
+  ],
+  "historias": [
+    {
+      "id": "HU01",
+      "titulo": "Registrarme y completar mi perfil",
+      "correo": "C01",
+      "sprint": 1,
+      "prioridad": "Alta",
+      "como": "visitante",
+      "quiero": "registrarme e ingresar los datos solicitados",
+      "para": "tener una cuenta y acceder a beneficios",
+      "criterios": [
+        "Se registran email, nombre, apellido, fecha de nacimiento, tipo de sangre, color de ojos y días de vacaciones anuales, según la consigna.",
+        "Se validan formato de email, fecha de nacimiento y días de vacaciones; se informa cada error junto al campo.",
+        "Puedo iniciar y cerrar sesión y consultar mis datos; no puedo consultar perfiles ajenos."
+      ],
+      "dependencias": [
+        "TEC02"
+      ],
+      "dudas": [
+        "D01"
+      ]
+    },
+    {
+      "id": "HU02",
+      "titulo": "Administrar películas y su visibilidad",
+      "correo": "C01",
+      "sprint": 1,
+      "prioridad": "Alta",
+      "como": "administrador",
+      "quiero": "gestionar películas y decidir cuáles se publican",
+      "para": "controlar la cartelera",
+      "criterios": [
+        "Cada película contiene nombre, duración, imagen y sinopsis; el modelo incorpora múltiples géneros y clasificación de edad solicitados después.",
+        "Puedo crear y editar películas y activar o desactivar su visibilidad.",
+        "Una película no publicada no se ofrece para nuevas compras; los comprobantes existentes conservan sus datos."
+      ],
+      "dependencias": [
+        "HU17"
+      ],
+      "evolucion": "C03 agrega géneros; C06 agrega edades; C09 agrega estreno y preventa."
+    },
+    {
+      "id": "HU03",
+      "titulo": "Consultar cartelera y detalle",
+      "correo": "C01",
+      "sprint": 1,
+      "prioridad": "Alta",
+      "como": "cliente",
+      "quiero": "ver películas, sinopsis y funciones disponibles",
+      "para": "elegir qué ver y cuándo",
+      "criterios": [
+        "La cartelera muestra imagen y nombre de películas publicadas.",
+        "El detalle muestra duración, sinopsis, clasificación y funciones con fecha, hora, formato 2D/3D/4D/5D e idioma castellano/subtitulada.",
+        "Los estados sin películas o sin funciones tienen un mensaje claro y no permiten compras inexistentes."
+      ],
+      "dependencias": [
+        "HU02"
+      ],
+      "nota": "En S1 las funciones se demuestran con datos de prueba; la programación real se integra en S2."
+    },
+    {
+      "id": "HU04",
+      "titulo": "Administrar salas y distribución de butacas",
+      "correo": "C01",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "administrador",
+      "quiero": "gestionar las salas del único edificio y sus butacas",
+      "para": "mantener la capacidad real del cine",
+      "criterios": [
+        "Se modela un único edificio con varias salas y bloques laterales/central/lateral.",
+        "La configuración inicial de referencia tiene filas A-T y bloques de 4/20/4 butacas; la configuración vigente incorpora HU22 y HU36.",
+        "Modificar la distribución no altera silenciosamente butacas ya vendidas; se identifica qué funciones usan cada distribución."
+      ],
+      "dependencias": [
+        "HU17"
+      ],
+      "evolucion": "C05 explicita la administración de distribución; C06 reemplaza J/K; C10 convierte R/S/T en VIP."
+    },
+    {
+      "id": "HU05",
+      "titulo": "Seleccionar función y butacas",
+      "correo": "C01",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "cliente",
+      "quiero": "seleccionar una función y butacas disponibles",
+      "para": "comprar lugares concretos",
+      "criterios": [
+        "Veo orientación de pantalla, filas, bloques y leyenda de estados.",
+        "Puedo seleccionar y quitar butacas disponibles y veo cantidad y subtotal.",
+        "No puedo seleccionar una butaca vendida; accesibles y VIP se distinguen visualmente y por texto."
+      ],
+      "dependencias": [
+        "HU20",
+        "HU22",
+        "HU36"
+      ]
+    },
+    {
+      "id": "HU06",
+      "titulo": "Comprar como invitado o usuario registrado",
+      "correo": "C01",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "cliente",
+      "quiero": "pagar entradas con o sin cuenta",
+      "para": "completar mi compra sin registro obligatorio",
+      "criterios": [
+        "Existe un recorrido de compra sin cuenta y otro con sesión iniciada.",
+        "Se muestra un resumen con función, butacas, conceptos y total antes de confirmar.",
+        "Solo una compra confirmada adjudica definitivamente las butacas; un pago rechazado no genera entradas válidas ni duplicados al reintentar."
+      ],
+      "dependencias": [
+        "HU05",
+        "HU21",
+        "HU23"
+      ],
+      "dudas": [
+        "D02",
+        "D03"
+      ]
+    },
+    {
+      "id": "HU07",
+      "titulo": "Descargar entrada PDF con QR y código",
+      "correo": "C01",
+      "sprint": 3,
+      "prioridad": "Alta",
+      "como": "comprador",
+      "quiero": "obtener un comprobante PDF con QR",
+      "para": "presentarlo al ingresar y retirar mi candy",
+      "criterios": [
+        "Tras una compra confirmada se genera un PDF con película, fecha, hora, sala, butacas y datos de compra.",
+        "Incluye QR y código legible para carga manual; no se emite un comprobante válido por una compra rechazada.",
+        "El comprobante incluye los productos comprados y, cuando corresponda, la advertencia de adulto exigida por la consigna."
+      ],
+      "dependencias": [
+        "HU06"
+      ],
+      "evolucion": "C04 incorpora candy al mismo QR; C05 agrega código manual y control de consumo.",
+      "dudas": [
+        "D04"
+      ]
+    },
+    {
+      "id": "HU08",
+      "titulo": "Usar el beneficio de primera compra",
+      "correo": "C01",
+      "sprint": 3,
+      "prioridad": "Alta",
+      "como": "usuario registrado",
+      "quiero": "aplicar mi cupón de bienvenida a la primera compra",
+      "para": "obtener el descuento vigente",
+      "criterios": [
+        "Un usuario elegible dispone del beneficio de primera compra.",
+        "El descuento mostrado y aplicado usa el porcentaje configurado por el administrador; 20% es el valor original del primer correo, no una constante obligatoria.",
+        "Una confirmación consume el beneficio una sola vez; un intento fallido no lo consume."
+      ],
+      "dependencias": [
+        "HU01",
+        "HU06",
+        "HU13"
+      ],
+      "evolucion": "C04 sustituye el porcentaje fijo del C01.",
+      "dudas": [
+        "D05"
+      ]
+    },
+    {
+      "id": "HU09",
+      "titulo": "Publicar mi reseña de una película",
+      "correo": "C02",
+      "sprint": 3,
+      "prioridad": "Media",
+      "como": "persona que califica una película",
+      "quiero": "dar estrellas y escribir un comentario corto",
+      "para": "compartir mi opinión",
+      "criterios": [
+        "Puedo enviar una puntuación en estrellas y un comentario asociado a una película.",
+        "Se validan el rango de estrellas y el largo de comentario según límites a acordar.",
+        "La reseña publicada es visible en el detalle antes de comprar entradas."
+      ],
+      "dependencias": [
+        "HU02"
+      ],
+      "dudas": [
+        "D06"
+      ]
+    },
+    {
+      "id": "HU10",
+      "titulo": "Consultar reseñas y puntuación promedio",
+      "correo": "C02",
+      "sprint": 3,
+      "prioridad": "Media",
+      "como": "cliente",
+      "quiero": "ver opiniones y promedio de estrellas antes de comprar",
+      "para": "decidir con más información",
+      "criterios": [
+        "El detalle permite leer comentarios y puntuaciones antes del checkout.",
+        "El promedio se calcula sobre las reseñas válidas y se actualiza cuando cambian.",
+        "Una película sin reseñas muestra ese estado y no un promedio engañoso."
+      ],
+      "dependencias": [
+        "HU09"
+      ]
+    },
+    {
+      "id": "HU11",
+      "titulo": "Ver primero las tres películas más vendidas",
+      "correo": "C02",
+      "sprint": 3,
+      "prioridad": "Media",
+      "como": "cliente",
+      "quiero": "ver destacadas las tres películas con más ventas",
+      "para": "conocer las más elegidas",
+      "criterios": [
+        "La página principal antepone hasta tres películas según entradas vendidas.",
+        "El ranking usa compras confirmadas y tiene un desempate estable.",
+        "Si hay menos de tres películas elegibles se muestran las existentes sin duplicados."
+      ],
+      "dependencias": [
+        "HU03",
+        "HU06"
+      ],
+      "dudas": [
+        "D07"
+      ]
+    },
+    {
+      "id": "HU12",
+      "titulo": "Buscar películas y filtrar por género",
+      "correo": "C03",
+      "sprint": 1,
+      "prioridad": "Media",
+      "como": "cliente",
+      "quiero": "buscar películas y filtrarlas por género",
+      "para": "encontrar opciones de mi interés",
+      "criterios": [
+        "El listado incluye un buscador por nombre y filtro de género.",
+        "Una película puede pertenecer a varios géneros y aparece al filtrar cualquiera de ellos.",
+        "Puedo limpiar filtros y recibo un mensaje si no hay resultados."
+      ],
+      "dependencias": [
+        "HU02",
+        "HU03"
+      ],
+      "evolucion": "C02 solicita buscador; C03 añade filtro por género y relación múltiple."
+    },
+    {
+      "id": "HU13",
+      "titulo": "Configurar el porcentaje del cupón de bienvenida",
+      "correo": "C04",
+      "sprint": 3,
+      "prioridad": "Alta",
+      "como": "administrador",
+      "quiero": "cambiar el porcentaje del cupón de primera compra",
+      "para": "ajustar la promoción",
+      "criterios": [
+        "El panel permite guardar un porcentaje válido de descuento.",
+        "La compra muestra el descuento calculado con la política vigente acordada.",
+        "Cambiar la configuración no modifica importes de compras ya confirmadas."
+      ],
+      "dependencias": [
+        "HU17"
+      ],
+      "dudas": [
+        "D05"
+      ]
+    },
+    {
+      "id": "HU14",
+      "titulo": "Crear y aplicar cupones para mayores de 50",
+      "correo": "C04",
+      "sprint": 3,
+      "prioridad": "Media",
+      "como": "administrador y cliente elegible",
+      "quiero": "ofrecer y usar cupones restringidos por edad",
+      "para": "dar beneficios a mayores de 50 años",
+      "criterios": [
+        "El administrador puede crear el cupón y su porcentaje.",
+        "Solo un usuario que cumpla la condición de más de 50 años puede aplicarlo; se evalúa también el caso límite de 50.",
+        "El checkout informa descuento aplicado o motivo de no elegibilidad y valida la regla en servidor."
+      ],
+      "dependencias": [
+        "HU01",
+        "HU06",
+        "HU13"
+      ],
+      "dudas": [
+        "D05"
+      ]
+    },
+    {
+      "id": "HU15",
+      "titulo": "Administrar productos y categorías de candy",
+      "correo": "C04",
+      "sprint": 3,
+      "prioridad": "Alta",
+      "como": "administrador",
+      "quiero": "crear productos de candy y agruparlos en categorías",
+      "para": "mantener la oferta de pochoclos, bebidas y otros productos",
+      "criterios": [
+        "Puedo crear y editar categorías y productos con nombre y precio.",
+        "Cada producto se asocia a una categoría y puedo controlar si está disponible para comprar.",
+        "Los cambios de precio conservan el importe histórico de las ventas confirmadas."
+      ],
+      "dependencias": [
+        "HU17"
+      ]
+    },
+    {
+      "id": "HU16",
+      "titulo": "Comprar candy junto con las entradas",
+      "correo": "C04",
+      "sprint": 3,
+      "prioridad": "Alta",
+      "como": "comprador",
+      "quiero": "agregar productos de candy a mi compra",
+      "para": "pagarlos juntos y retirarlos con el mismo QR",
+      "criterios": [
+        "Puedo elegir productos y cantidades durante la compra de entradas.",
+        "El resumen detalla entradas, productos y total, y preserva sus precios al confirmar.",
+        "El comprobante y el QR de HU07 identifican tanto el ingreso como los productos pendientes de entrega."
+      ],
+      "dependencias": [
+        "HU06",
+        "HU07",
+        "HU15"
+      ],
+      "dudas": [
+        "D04"
+      ]
+    },
+    {
+      "id": "HU17",
+      "titulo": "Acceder con roles de administrador y empleado",
+      "correo": "C05",
+      "sprint": 1,
+      "prioridad": "Alta",
+      "como": "responsable del cine",
+      "quiero": "contar con accesos diferenciados para administración y empleados",
+      "para": "controlar quién administra y quién valida compras",
+      "criterios": [
+        "El administrador accede a la gestión de películas, salas, funciones, butacas y productos.",
+        "Los empleados autorizados acceden a la validación de entradas y candy.",
+        "Cliente e invitado no pueden ejecutar acciones de administración ni validación, aunque invoquen directamente la API."
+      ],
+      "dependencias": [
+        "TEC02"
+      ],
+      "nota": "S1 entrega control de acceso y pantallas base; cada módulo administrativo se habilita en su sprint."
+    },
+    {
+      "id": "HU18",
+      "titulo": "Validar ingresos con QR o código manual",
+      "correo": "C05",
+      "sprint": 3,
+      "prioridad": "Alta",
+      "como": "empleado de acceso",
+      "quiero": "escanear el QR o ingresar el código manualmente",
+      "para": "validar el ingreso incluso si falla el lector",
+      "criterios": [
+        "Ambos métodos consultan la misma compra y muestran datos de la función y entradas.",
+        "Un ingreso válido se registra una sola vez; otro intento informa que ya fue utilizado.",
+        "Códigos inexistentes, compras canceladas o entradas inválidas se rechazan con un mensaje claro."
+      ],
+      "dependencias": [
+        "HU07",
+        "HU17"
+      ],
+      "dudas": [
+        "D04"
+      ]
+    },
+    {
+      "id": "HU19",
+      "titulo": "Validar la entrega de candy sin duplicados",
+      "correo": "C05",
+      "sprint": 3,
+      "prioridad": "Alta",
+      "como": "empleado de candy",
+      "quiero": "validar el retiro con QR o código manual",
+      "para": "entregar los productos correctos una sola vez",
+      "criterios": [
+        "La validación muestra productos y cantidades de la compra.",
+        "La entrega confirmada queda consumida y no puede duplicarse, incluso con solicitudes simultáneas.",
+        "La compra combinada puede completar ingreso y retiro en cualquier orden bajo la regla acordada en D04."
+      ],
+      "dependencias": [
+        "HU16",
+        "HU17"
+      ],
+      "dudas": [
+        "D04"
+      ]
+    },
+    {
+      "id": "HU20",
+      "titulo": "Programar funciones con sala automática y margen de limpieza",
+      "correo": "C05",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "administrador",
+      "quiero": "elegir película, días y horarios y que el sistema asigne sala",
+      "para": "programar funciones sin superposición",
+      "criterios": [
+        "Puedo programar una película por días de semana y hora, indicando formato e idioma.",
+        "La asignación automática exige que la función anterior termine al menos 30 minutos antes y no invada la siguiente función.",
+        "Si no existe una sala válida se informa el conflicto y no se guarda una programación superpuesta; se verifica también ante dos altas simultáneas."
+      ],
+      "dependencias": [
+        "HU02",
+        "HU04"
+      ],
+      "evolucion": "C01 fija duración y margen de 30 minutos; C05 exige asignación automática y recurrencia.",
+      "dudas": [
+        "D08"
+      ]
+    },
+    {
+      "id": "HU21",
+      "titulo": "Respetar la clasificación por edad al comprar",
+      "correo": "C06",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "responsable del cine",
+      "quiero": "bloquear compras que incumplan la edad de la película",
+      "para": "aplicar las restricciones solicitadas",
+      "criterios": [
+        "Cada película admite sin restricción, 13 o 18 años.",
+        "Se rechaza la compra cuando la edad informada/verificada es inferior al umbral, tanto en interfaz como en servidor.",
+        "Toda entrada de película restringida incluye la leyenda de acompañamiento adulto solicitada, aun cuando el comprador cumpla el umbral."
+      ],
+      "dependencias": [
+        "HU01",
+        "HU02"
+      ],
+      "dudas": [
+        "D03"
+      ]
+    },
+    {
+      "id": "HU22",
+      "titulo": "Identificar la nueva fila de butacas accesibles",
+      "correo": "C06",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "cliente",
+      "quiero": "reconocer las butacas accesibles en el mapa",
+      "para": "seleccionar el lugar adecuado",
+      "criterios": [
+        "Se reemplazan las dos filas originales J y K por una fila accesible con bloques 2/10/2, sujeto a confirmación del etiquetado.",
+        "Las butacas accesibles se distinguen mediante estilo visual y etiqueta, sin depender solo del color.",
+        "Se elimina la posibilidad de vender las antiguas J/K como si la adaptación no existiera."
+      ],
+      "dependencias": [
+        "HU04"
+      ],
+      "dudas": [
+        "D09"
+      ],
+      "evolucion": "Sustituye parte de la distribución original C01; el correo usa después la expresión 'filas J y K adaptadas', a aclarar."
+    },
+    {
+      "id": "HU23",
+      "titulo": "Ver disponibilidad de butacas en tiempo real",
+      "correo": "C06",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "cliente que selecciona butacas",
+      "quiero": "ver las ventas que ocurren en ese momento",
+      "para": "no comprar un lugar ya ocupado",
+      "criterios": [
+        "Una compra confirmada en otra sesión actualiza el mapa sin recargar la página.",
+        "Si una butaca seleccionada deja de estar disponible, se informa y se impide confirmar con ella.",
+        "Ante dos compras simultáneas de la misma butaca, solo una puede confirmarse; al reconectar se recupera el estado real."
+      ],
+      "dependencias": [
+        "HU05",
+        "TEC02"
+      ],
+      "nota": "Bloqueo temporal de una selección no fue solicitado: se evalúa como decisión técnica, no como requisito confirmado."
+    },
+    {
+      "id": "HU24",
+      "titulo": "Navegar e ingresar fechas y horas con facilidad",
+      "correo": "C07",
+      "sprint": 1,
+      "prioridad": "Alta",
+      "como": "cliente o empleado",
+      "quiero": "interfaces comprensibles y carga ágil de fechas y horas",
+      "para": "completar tareas sin búsquedas ni scroll excesivo",
+      "criterios": [
+        "Los recorridos principales tienen acciones y mensajes claros y funcionan con teclado.",
+        "La fecha permite ingresar directamente día, mes y año; no exige recorrer meses para ingresar un nacimiento antiguo.",
+        "La hora se ingresa o selecciona de forma directa; errores y formatos se explican junto a los campos."
+      ],
+      "dependencias": [],
+      "nota": "S1 entrega criterios y prototipo; se verifica en cada pantalla de los sprints posteriores."
+    },
+    {
+      "id": "HU25",
+      "titulo": "Consultar facturación y entradas por día",
+      "correo": "C07",
+      "sprint": 3,
+      "prioridad": "Media",
+      "como": "administrador",
+      "quiero": "ver cuánto se facturó y cuántas entradas se vendieron cada día",
+      "para": "controlar el negocio",
+      "criterios": [
+        "El reporte muestra fecha, facturación y cantidad de entradas, incluyendo días sin movimientos dentro del rango consultado.",
+        "Los totales provienen de compras confirmadas, sin duplicar reintentos de pago.",
+        "Se documentan moneda, zona horaria y tratamiento de descuentos, canjes y cancelaciones."
+      ],
+      "dependencias": [
+        "HU06",
+        "HU16"
+      ],
+      "dudas": [
+        "D10"
+      ],
+      "nota": "S3 entrega reporte base; S5/S5 incorporan conciliación de créditos y cancelaciones."
+    },
+    {
+      "id": "HU26",
+      "titulo": "Acumular un punto por peso gastado",
+      "correo": "C08",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "usuario registrado",
+      "quiero": "ganar puntos con mis compras",
+      "para": "obtener recompensas",
+      "criterios": [
+        "Una compra confirmada del usuario acredita 1 punto por peso gastado según la base monetaria acordada.",
+        "Invitados no acumulan puntos y reintentar una confirmación no acredita puntos duplicados.",
+        "El movimiento queda asociado al usuario y compra que lo originó."
+      ],
+      "dependencias": [
+        "HU01",
+        "HU06"
+      ],
+      "dudas": [
+        "D11"
+      ]
+    },
+    {
+      "id": "HU27",
+      "titulo": "Configurar recompensas y su costo en puntos",
+      "correo": "C08",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "administrador",
+      "quiero": "definir el costo en puntos de entradas y productos de candy",
+      "para": "gestionar el programa de fidelización",
+      "criterios": [
+        "Puedo publicar recompensas de entradas y productos con un costo positivo en puntos.",
+        "Los valores 500 para una entrada y 150 para pochoclo son ejemplos configurables.",
+        "Los cambios de costo no alteran canjes ya realizados."
+      ],
+      "dependencias": [
+        "HU15",
+        "HU17"
+      ]
+    },
+    {
+      "id": "HU28",
+      "titulo": "Canjear puntos por entradas o candy",
+      "correo": "C08",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "usuario registrado",
+      "quiero": "canjear mis puntos por recompensas",
+      "para": "obtener entradas o productos sin pagarlos en dinero",
+      "criterios": [
+        "Se comprueba el saldo y el costo vigente antes de confirmar el canje.",
+        "El canje descuenta puntos y genera la entrada/producto canjeado una sola vez, sin saldos negativos ante concurrencia.",
+        "La recompensa se integra al mecanismo de validación de entradas o candy y los puntos no se transfieren a otra cuenta."
+      ],
+      "dependencias": [
+        "HU26",
+        "HU27",
+        "HU18",
+        "HU19"
+      ],
+      "dudas": [
+        "D11"
+      ]
+    },
+    {
+      "id": "HU29",
+      "titulo": "Consultar saldo de puntos e historial de canjes",
+      "correo": "C08",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "usuario registrado",
+      "quiero": "ver mis puntos y canjes en mi perfil",
+      "para": "conocer y controlar mis beneficios",
+      "criterios": [
+        "El perfil muestra el saldo actual de puntos.",
+        "El historial muestra recompensa, fecha y puntos utilizados.",
+        "Solo accedo a mi información y no existe una operación de transferencia entre usuarios."
+      ],
+      "dependencias": [
+        "HU01",
+        "HU28"
+      ]
+    },
+    {
+      "id": "HU30",
+      "titulo": "Configurar y comprar combos destacados",
+      "correo": "C08",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "administrador y comprador",
+      "quiero": "ofrecer y comprar combos de entrada, pochoclos y bebida",
+      "para": "acceder a una oferta con precio fijo",
+      "criterios": [
+        "El administrador define componentes y precio fijo del combo.",
+        "Los combos se destacan en la página de compra e informan qué incluyen.",
+        "La confirmación cobra el precio del combo y genera derechos de ingreso y retiro de todos sus componentes."
+      ],
+      "dependencias": [
+        "HU16",
+        "HU17"
+      ],
+      "dudas": [
+        "D05",
+        "D11"
+      ]
+    },
+    {
+      "id": "HU31",
+      "titulo": "Explorar la sección Próximamente",
+      "correo": "C09",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "cliente",
+      "quiero": "ver las películas de próximos estrenos",
+      "para": "planificar mi próxima visita",
+      "criterios": [
+        "El administrador puede definir la fecha de estreno por película.",
+        "La sección muestra próximos estrenos con su información y estado de venta.",
+        "Si aún no hay entradas a la venta, se ofrece la acción de alerta y se evita mostrar una compra disponible."
+      ],
+      "dependencias": [
+        "HU02",
+        "HU03"
+      ]
+    },
+    {
+      "id": "HU32",
+      "titulo": "Recibir alerta al abrirse la venta",
+      "correo": "C09",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "usuario interesado en un estreno",
+      "quiero": "activar una alerta por película",
+      "para": "enterarme cuando se puedan comprar entradas",
+      "criterios": [
+        "Puedo activar una alerta asociada a una película y al destinatario autorizado.",
+        "La apertura de venta dispara una notificación por el canal acordado.",
+        "Reintentos no duplican la misma alerta y un fallo de envío queda identificado para recuperación."
+      ],
+      "dependencias": [
+        "HU31",
+        "HU33"
+      ],
+      "dudas": [
+        "D12"
+      ]
+    },
+    {
+      "id": "HU33",
+      "titulo": "Configurar preventa y retorno al precio normal",
+      "correo": "C09",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "administrador",
+      "quiero": "configurar la preventa por película",
+      "para": "vender anticipadamente a un precio especial",
+      "criterios": [
+        "Se puede abrir la venta 7 días antes del estreno con precio especial por película.",
+        "Se configura el precio normal y la política/fecha de fin de preventa por película.",
+        "Al concluir la preventa, nuevas compras usan el precio normal; las confirmadas mantienen el precio cobrado y se prueban los instantes límite."
+      ],
+      "dependencias": [
+        "HU06",
+        "HU31"
+      ],
+      "dudas": [
+        "D13"
+      ]
+    },
+    {
+      "id": "HU34",
+      "titulo": "Ver mi historial visual de películas",
+      "correo": "C09",
+      "sprint": 4,
+      "prioridad": "Media",
+      "como": "usuario registrado",
+      "quiero": "consultar Mis películas con pósters, fechas y mi calificación",
+      "para": "recordar lo que vi",
+      "criterios": [
+        "La sección muestra póster, película, fecha y calificación propia si existe.",
+        "Se define y aplica de forma consistente cuándo una película cuenta como vista.",
+        "No se mezclan historiales de otras cuentas y se muestra un estado vacío si no hay películas."
+      ],
+      "dependencias": [
+        "HU09",
+        "HU18",
+        "HU01"
+      ],
+      "dudas": [
+        "D14"
+      ]
+    },
+    {
+      "id": "HU35",
+      "titulo": "Cancelar una compra y recibir crédito",
+      "correo": "C10",
+      "sprint": 5,
+      "prioridad": "Alta",
+      "como": "comprador",
+      "quiero": "cancelar hasta dos horas antes de la función",
+      "para": "recuperar el importe como crédito para futuras compras",
+      "criterios": [
+        "La cancelación válida se acepta hasta el límite de 2 horas antes; se prueban justo el límite y un instante posterior.",
+        "Se cancela una sola vez, se invalidan los derechos pendientes y se libera la disponibilidad que corresponda.",
+        "Se acredita el importe según la política acordada, sin devolución de dinero ni acreditación duplicada."
+      ],
+      "dependencias": [
+        "HU06",
+        "HU18",
+        "HU19",
+        "HU37"
+      ],
+      "dudas": [
+        "D15",
+        "D11"
+      ]
+    },
+    {
+      "id": "HU36",
+      "titulo": "Reconocer y comprar butacas VIP",
+      "correo": "C10",
+      "sprint": 2,
+      "prioridad": "Alta",
+      "como": "cliente",
+      "quiero": "identificar las butacas VIP y su precio superior",
+      "para": "decidir con claridad antes de pagar",
+      "criterios": [
+        "Las filas R, S y T se identifican como VIP en cada sala.",
+        "El mapa muestra la categoría y el precio superior con una leyenda accesible.",
+        "La selección y el resumen previo al pago informan explícitamente que se compra VIP y su costo."
+      ],
+      "dependencias": [
+        "HU04"
+      ],
+      "nota": "S2 entrega mapa y regla de precios; S2 verifica el recorrido completo de compra.",
+      "dudas": [
+        "D05"
+      ]
+    },
+    {
+      "id": "HU37",
+      "titulo": "Consultar crédito y combinarlo con otro pago",
+      "correo": "C10",
+      "sprint": 5,
+      "prioridad": "Alta",
+      "como": "usuario con crédito",
+      "quiero": "ver mi saldo y usarlo con otro método de pago",
+      "para": "aprovecharlo en compras futuras",
+      "criterios": [
+        "El perfil muestra crédito disponible y el checkout permite indicar cuánto aplicar.",
+        "Si el crédito es insuficiente, el resto se paga con un método habilitado y se detalla el reparto.",
+        "La operación evita doble gasto; si falla el pago complementario, no se consume definitivamente el crédito."
+      ],
+      "dependencias": [
+        "HU01",
+        "HU06"
+      ],
+      "dudas": [
+        "D02",
+        "D15"
+      ]
+    },
+    {
+      "id": "HU38",
+      "titulo": "Exportar facturación a PDF y Excel",
+      "correo": "C10",
+      "sprint": 5,
+      "prioridad": "Media",
+      "como": "administrador",
+      "quiero": "exportar el reporte de facturación",
+      "para": "compartirlo y analizarlo fuera del sistema",
+      "criterios": [
+        "El reporte se descarga como PDF y como archivo Excel.",
+        "Los filtros, filas y totales coinciden con el reporte mostrado.",
+        "El PDF es legible y el Excel conserva fechas e importes como datos utilizables."
+      ],
+      "dependencias": [
+        "HU25",
+        "HU35",
+        "HU37"
+      ],
+      "dudas": [
+        "D10"
+      ]
+    },
+    {
+      "id": "HU39",
+      "titulo": "Consultar películas más vistas y candy más vendido",
+      "correo": "C10",
+      "sprint": 5,
+      "prioridad": "Media",
+      "como": "administrador",
+      "quiero": "ver gráficos semanales y mensuales de películas y el producto de candy más vendido",
+      "para": "entender la demanda",
+      "criterios": [
+        "Puedo alternar la agrupación semanal y mensual del gráfico de películas más vistas.",
+        "Se identifica el producto de candy con mayor cantidad vendida para el período.",
+        "Los gráficos tienen etiquetas, período y estado sin datos y coinciden con la definición acordada de venta/asistencia."
+      ],
+      "dependencias": [
+        "HU18",
+        "HU19",
+        "HU25"
+      ],
+      "dudas": [
+        "D07",
+        "D10"
+      ]
+    },
+    {
+      "id": "HU40",
+      "titulo": "Consultar el log de actividad administrativa",
+      "correo": "C10",
+      "sprint": 5,
+      "prioridad": "Media",
+      "como": "administrador",
+      "quiero": "ver quién realizó acciones y cuándo",
+      "para": "auditar cambios y validaciones",
+      "criterios": [
+        "Se registran como mínimo creación de funciones, modificaciones de precio y validaciones QR, con actor, acción, entidad, fecha y hora.",
+        "El panel permite consultar esos registros y distinguir acciones exitosas de intentos rechazados.",
+        "Un cliente o empleado no puede alterar ni borrar el historial de auditoría."
+      ],
+      "dependencias": [
+        "HU17",
+        "HU20",
+        "HU18",
+        "HU19"
+      ],
+      "nota": "TEC02 instrumenta eventos desde el inicio; S5 entrega la consulta administrativa."
+    },
+    {
+      "id": "HU41",
+      "titulo": "Ver la ubicación de mi sala en un mapa del cine",
+      "correo": "C04",
+      "sprint": null,
+      "prioridad": "Pendiente de aprobación",
+      "como": "comprador",
+      "quiero": "ver un mapa del edificio que señale mi sala",
+      "para": "orientarme al llegar",
+      "criterios": [
+        "Solo se desarrolla si el cliente aprueba explícitamente esta funcionalidad.",
+        "Si se aprueba, el mapa del edificio señala la sala de la entrada comprada y utiliza un plano validado."
+      ],
+      "dependencias": [
+        "HU07"
+      ],
+      "estado": "No comprometida: el correo dice que no tiene luz verde",
+      "nota": "No confundir con el mapa de selección de butacas, que sí está requerido."
+    }
+  ],
+  "tecnicas": [
+    {
+      "id": "TEC01",
+      "titulo": "Resumen de requisitos y trazabilidad",
+      "sprint": 1,
+      "fuente": "Consigna, página 1",
+      "criterios": [
+        "Documentar requisitos, correos de origen, cambios y preguntas pendientes.",
+        "Vincular cada requisito vigente a una historia y cada historia comprometida a una entrega.",
+        "Mantener el documento al cerrar cada sprint; excluir HU41 hasta aprobación."
+      ]
+    },
+    {
+      "id": "TEC02",
+      "titulo": "Base Angular, Supabase, GitHub y despliegue inicial",
+      "sprint": 1,
+      "fuente": "Consigna, página 1; habilitador técnico propuesto",
+      "criterios": [
+        "Preparar repositorio, estructura Angular y conexión Supabase por entornos.",
+        "Definir permisos por rol y protección de datos y operaciones en servidor.",
+        "Publicar una URL de demostración inicial e instrumentar auditoría desde las primeras operaciones; actualizarla cada sprint."
+      ]
+    },
+    {
+      "id": "TEC03",
+      "titulo": "PWA e integración final",
+      "sprint": 6,
+      "fuente": "Consigna, página 1",
+      "criterios": [
+        "Verificar instalación PWA, manifest e iconos y comportamiento de actualización.",
+        "Mostrar un estado claro sin conexión; no simular compras o validaciones exitosas sin confirmación del servidor.",
+        "Probar recorridos completos de invitado, cliente, administrador y empleado en la URL desplegada."
+      ]
+    },
+    {
+      "id": "TEC04",
+      "titulo": "README, arquitectura y defensa oral",
+      "sprint": 6,
+      "fuente": "Consigna, página 1",
+      "criterios": [
+        "Entregar código en GitHub y README con instalación, arquitectura y decisiones técnicas.",
+        "Vincular requisitos, demostraciones y decisiones a la versión entregada.",
+        "Preparar un guion de defensa sobre Angular, Supabase, PWA y lógica de negocio, con datos de prueba."
+      ]
+    },
+    {
+      "id": "TEC05",
+      "titulo": "Cierre visual y verificación de reglas críticas",
+      "sprint": 6,
+      "fuente": "Consigna, página 1; verificación propuesta",
+      "criterios": [
+        "Revisar estilo visual propio, coherencia, navegación, formularios y estados de error.",
+        "Verificar concurrencia de butacas, margen de 30 minutos, doble canje QR, edades, cupones, puntos, preventa y cancelación.",
+        "Conciliar reportes con operaciones de prueba y documentar limitaciones conocidas antes de la defensa."
+      ]
+    }
+  ],
+  "dudas": [
+    {
+      "id": "D01",
+      "tema": "Datos del registro",
+      "pregunta": "¿Todos los campos personales son obligatorios y qué opciones/validaciones se esperan?",
+      "resolver_antes": "S1",
+      "propuesta": "Conservar los campos de la consigna, sin inventar obligatoriedad ni usar tipo de sangre como regla comercial."
+    },
+    {
+      "id": "D02",
+      "tema": "Pago",
+      "pregunta": "¿Pago simulado o pasarela real, qué métodos y moneda?",
+      "resolver_antes": "S2",
+      "propuesta": "Demostración con pago simulado hasta confirmación; nunca presentar esa decisión como exigencia del correo."
+    },
+    {
+      "id": "D03",
+      "tema": "Edad e invitados",
+      "pregunta": "¿Cómo se acredita edad sin cuenta y cómo se interpreta la leyenda de adulto para +13/+18?",
+      "resolver_antes": "S2",
+      "propuesta": "Solicitar nacimiento también al invitado; no permitir que acompañamiento adulto eluda el bloqueo explícito del correo."
+    },
+    {
+      "id": "D04",
+      "tema": "Mismo QR para cine y candy",
+      "pregunta": "¿El consumo es independiente para ingreso y candy? ¿Permite entregas o ingresos parciales en compras múltiples?",
+      "resolver_antes": "S3",
+      "propuesta": "Un QR con derechos separados; consumir cine no anula candy y viceversa. Esto concilia C04 con C05, pero requiere validación."
+    },
+    {
+      "id": "D05",
+      "tema": "Precios y descuentos",
+      "pregunta": "¿Los cupones se acumulan, cubren candy/combos/VIP/preventa y qué ocurre con cupones ya emitidos al cambiar el porcentaje?",
+      "resolver_antes": "S3; precio VIP en S2",
+      "propuesta": "Un cupón por compra, política versionada y resumen de cálculo explícito; no implementarlo como regla confirmada sin acordarlo."
+    },
+    {
+      "id": "D06",
+      "tema": "Reseñas",
+      "pregunta": "¿Se requiere cuenta/compra previa, cuántas reseñas por persona, escala de estrellas y máximo de comentario?",
+      "resolver_antes": "S3",
+      "propuesta": "1 a 5 estrellas, hasta 280 caracteres y una reseña editable por cuenta/película, a validar."
+    },
+    {
+      "id": "D07",
+      "tema": "Rankings",
+      "pregunta": "¿Top 3 histórico o por período? ¿Más vistas cuenta entradas vendidas o ingresos validados?",
+      "resolver_antes": "S3 y S5",
+      "propuesta": "Top 3 por entradas confirmadas netas de cancelación; vistas por ingresos validados, sujeto a aprobación."
+    },
+    {
+      "id": "D08",
+      "tema": "Programación de funciones",
+      "pregunta": "¿Qué rango de fechas tiene una recurrencia y todas las salas admiten 2D/3D/4D/5D?",
+      "resolver_antes": "S2",
+      "propuesta": "Rango inicio/fin explícito y capacidades por sala si corresponde; no generar recurrencia indefinida."
+    },
+    {
+      "id": "D09",
+      "tema": "Distribución accesible",
+      "pregunta": "¿J y K se sustituyen por una única fila de 14 lugares? ¿Cómo se etiqueta?",
+      "resolver_antes": "S2",
+      "propuesta": "18 filas regulares x 28 + 14 accesibles = 518 lugares. R/S/T aportan 84 VIP dentro de ese total, sin sumar capacidad. Confirmar antes de modelar."
+    },
+    {
+      "id": "D10",
+      "tema": "Contabilidad y reportes",
+      "pregunta": "¿Cómo se computan descuentos, créditos, canjes, cancelaciones y combos? ¿Zona horaria y corte del día?",
+      "resolver_antes": "S3; revisar S5",
+      "propuesta": "Separar cobros, crédito emitido/usado y canjes; definir facturación antes de comparar totales."
+    },
+    {
+      "id": "D11",
+      "tema": "Puntos",
+      "pregunta": "¿Se calculan sobre importe neto, cómo se redondean centavos y qué ocurre al pagar con crédito/canjear/cancelar?",
+      "resolver_antes": "S4",
+      "propuesta": "No duplicar puntos por reutilizar crédito; registrar movimientos reversibles y acordar base/redondeo."
+    },
+    {
+      "id": "D12",
+      "tema": "Alertas",
+      "pregunta": "¿Notificación por email, push PWA o dentro de la app? ¿Requiere registro?",
+      "resolver_antes": "S4",
+      "propuesta": "Elegir un canal y definir consentimiento y recuperación de fallos antes de implementar."
+    },
+    {
+      "id": "D13",
+      "tema": "Preventa",
+      "pregunta": "¿Finaliza al estreno o en otra fecha configurable? ¿Se configura también la anticipación de 7 días?",
+      "resolver_antes": "S4",
+      "propuesta": "Inicio por defecto estreno menos 7 días; fin explícito por película, a validar."
+    },
+    {
+      "id": "D14",
+      "tema": "Mis películas",
+      "pregunta": "¿Vista significa función pasada o ingreso efectivamente validado?",
+      "resolver_antes": "S4",
+      "propuesta": "Usar ingreso validado y no mostrar compras canceladas como películas vistas."
+    },
+    {
+      "id": "D15",
+      "tema": "Cancelación",
+      "pregunta": "¿Cómo recibe crédito un invitado? ¿Se cancela compra completa o por ítem? ¿Qué sucede con candy retirado, canjes y puntos?",
+      "resolver_antes": "S5",
+      "propuesta": "Exigir vinculación segura a una cuenta para crédito; definir cancelación de derechos consumidos y restauración de beneficios antes de desarrollar."
+    }
+  ],
+  "sprints": [
+    {
+      "numero": 1,
+      "dias": "1-4",
+      "entrega_dia": 4,
+      "objetivo": "Base desplegada, roles y cartelera",
+      "demo": "URL Angular + Supabase, registro/login y roles; admin crea/publica película y cliente busca por nombre/género; formulario de fechas ágil.",
+      "riesgo": "Confirmar acceso, datos de registro y diseño. Roles y base de auditoría son habilitadores.",
+      "tarjetas": [
+        "HU01",
+        "HU02",
+        "HU03",
+        "HU12",
+        "HU17",
+        "HU24",
+        "TEC01",
+        "TEC02"
+      ]
+    },
+    {
+      "numero": 2,
+      "dias": "5-8",
+      "entrega_dia": 8,
+      "objetivo": "Salas, programación y primera compra",
+      "demo": "Mapa accesible/VIP, asignación automática con 30 minutos de margen, compra invitada/registrada con restricción de edad y disponibilidad en dos sesiones.",
+      "riesgo": "Concurrencia y pago son ruta crítica. Confirmar distribución accesible, recurrencias, edad del invitado y precio VIP.",
+      "tarjetas": [
+        "HU04",
+        "HU05",
+        "HU06",
+        "HU20",
+        "HU21",
+        "HU22",
+        "HU23",
+        "HU36"
+      ]
+    },
+    {
+      "numero": 3,
+      "dias": "9-12",
+      "entrega_dia": 12,
+      "objetivo": "Operación completa: QR, candy, cupones y opiniones",
+      "demo": "PDF y QR compartido, candy y descuentos configurables, validación manual/escáner sin doble consumo; reseñas, promedio, top 3 y reporte diario base.",
+      "riesgo": "Sprint de mayor carga. Secuencia: cupón/PDF -> candy -> validación -> reportes; reseñas/ranking en carril independiente si hay equipo. Ajustar tamaño de tareas según capacidad.",
+      "tarjetas": [
+        "HU07",
+        "HU08",
+        "HU09",
+        "HU10",
+        "HU11",
+        "HU13",
+        "HU14",
+        "HU15",
+        "HU16",
+        "HU18",
+        "HU19",
+        "HU25"
+      ]
+    },
+    {
+      "numero": 4,
+      "dias": "13-16",
+      "entrega_dia": 16,
+      "objetivo": "Fidelización, combos, estrenos y preventa",
+      "demo": "Puntos y canje con historial, combo de precio fijo, Próximamente y alerta al abrir preventa, cambio a precio normal y Mis películas.",
+      "riesgo": "Alta carga. No iniciar saldos ni notificaciones sin resolver políticas de acumulación, canjes, canal y límites de preventa.",
+      "tarjetas": [
+        "HU26",
+        "HU27",
+        "HU28",
+        "HU29",
+        "HU30",
+        "HU31",
+        "HU32",
+        "HU33",
+        "HU34"
+      ]
+    },
+    {
+      "numero": 5,
+      "dias": "17-20",
+      "entrega_dia": 20,
+      "objetivo": "Cancelación, crédito, reportes finales y auditoría",
+      "demo": "Cancelar hasta 2 h antes, usar crédito con otro pago, exportar PDF/Excel, gráficos semanal/mensual y candy más vendido, consulta de log por actor/fecha.",
+      "riesgo": "Conciliar cancelaciones con QR, disponibilidad, puntos, cupones, canjes y facturación. Instrumentación del log ya existe desde S1.",
+      "tarjetas": [
+        "HU35",
+        "HU37",
+        "HU38",
+        "HU39",
+        "HU40"
+      ]
+    },
+    {
+      "numero": 6,
+      "dias": "21-24",
+      "entrega_dia": 24,
+      "objetivo": "PWA, cierre integral y preparación de entrega",
+      "demo": "PWA instalable, pruebas de recorridos y reglas críticas, URL funcional, GitHub y README de arquitectura, documento de requisitos y guion de defensa.",
+      "riesgo": "Reserva de estabilización. Cada sprint previo debe desplegar y probar; no acumular integración para S6.",
+      "tarjetas": [
+        "TEC03",
+        "TEC04",
+        "TEC05"
+      ]
+    }
+  ],
+  "definicion_terminado": [
+    "Criterios de aceptación demostrados y dudas que afectan la historia resueltas.",
+    "Cambio integrado en GitHub y disponible en la URL de demostración del sprint.",
+    "Permisos verificados por rol, validaciones en servidor y errores comprensibles.",
+    "Pruebas proporcionales al riesgo; concurrencia y límites temporales cuando correspondan.",
+    "Evidencia breve de demo y actualización del documento de requisitos/decisiones."
+  ],
+  "ritmo": [
+    "Día 1: confirmar alcance, resolver dudas y cerrar diseño/datos.",
+    "Día 2: implementar recorrido principal e integrar.",
+    "Día 3: completar casos alternativos, permisos y pruebas críticas.",
+    "Día 4: corregir, desplegar, demostrar y ajustar el siguiente sprint."
+  ],
+  "advertencias_plan": [
+    "Las fechas de 2020 son la cronología ficticia de los correos, no fechas del sprint.",
+    "Plan solicitado en días relativos; entrega académica el 5 de octubre de 2026. Seis sprints de cuatro días = 24 días de trabajo calendario.",
+    "Plan exigente y provisional: faltan dedicación e integrantes para validar capacidad. No se garantiza alcance solo por asignar tarjetas a una fecha.",
+    "S3 y S4 tienen mucha carga. Revisar capacidad al final de cada sprint; si no alcanza, acordar simplificaciones con la cátedra, sin omitir requisitos en silencio.",
+    "Orden del backlog por correo; ejecución por dependencias y versión final de los requisitos.",
+    "HU41 no está aprobada y no integra ningún sprint.",
+    "No se programa ninguna automatización ni se construye la aplicación en esta tarea."
+  ]
+}
