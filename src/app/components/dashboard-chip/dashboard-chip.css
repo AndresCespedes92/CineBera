@@ -1,0 +1,25 @@
+.dashboard-chip {
+  padding: 20px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #cccccc;
+}
+
+.dashboard-chip h3 {
+  margin-top: 0;
+
+  font-size: 16px;
+  font-weight: normal;
+
+  color: #555555;
+}
+
+.dashboard-chip p {
+  margin-bottom: 0;
+
+  font-size: 24px;
+  font-weight: bold;
+
+  color: #222222;
+}

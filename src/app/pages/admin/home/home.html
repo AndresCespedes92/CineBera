@@ -1,0 +1,76 @@
+<app-admin-navbar></app-admin-navbar>
+
+<main class="admin-home">
+    <header class="home-header">
+        <!-- INTERPOLACION {{nombreUsuario}} -->
+        <h1>
+            Bienvenido, {{nombreUsuario}}
+        </h1>
+        <p>
+            Resumen general de CineBera.
+        </p>
+    </header>
+    <!-- ============================= -->
+    <!-- INDICADORES DEL DASHBOARD -->
+    <!-- ============================= -->
+    <section class="dashboard-section">
+        <h2>Dashboard</h2>
+        <div class="dashboard-chips">
+            @for (indicador of indicadores; track indicador.titulo) {
+            <!-- Property Binding traigo los valores del padre Home-->
+                <app-dashboard-chip
+                    [titulo]="indicador.titulo"
+                    [valor]="indicador.valor"
+                    [prefijo]="indicador.prefijo"
+                    [sufijo]="indicador.sufijo">
+                </app-dashboard-chip>
+            }
+        </div>
+
+    </section>
+
+
+<!-- ============================= -->
+<!-- INFORMACIÓN SEMANAL -->
+<!-- ============================= -->
+
+    <section class="weekly-section">
+
+    <article class="weekly-card">
+
+    <h2>
+        Película más vista de la semana
+    </h2>
+
+    <h3>
+        {{ peliculaMasVista.titulo }}
+    </h3>
+
+    <p>
+        {{ peliculaMasVista.entradasVendidas }}
+        entradas vendidas
+    </p>
+
+    </article>
+
+
+    <article class="weekly-card">
+
+    <h2>
+        Candy más vendido de la semana
+    </h2>
+
+    <h3>
+        {{ candyMasVendido.nombre }}
+    </h3>
+
+    <p>
+        {{ candyMasVendido.cantidadVendida }}
+        unidades vendidas
+    </p>
+
+    </article>
+
+    </section>
+
+</main>

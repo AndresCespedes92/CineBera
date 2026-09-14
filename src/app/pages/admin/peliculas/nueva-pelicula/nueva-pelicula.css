@@ -1,0 +1,137 @@
+.nueva-pelicula-page {
+  padding: 24px;
+
+  min-height: calc(100vh - 60px);
+
+  background-color: #f5f5f5;
+}
+
+form {
+  max-width: 700px;
+
+  padding: 24px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #cccccc;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+
+  margin-bottom: 20px;
+}
+
+.form-field label {
+  margin-bottom: 6px;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  padding: 10px;
+
+  border: 1px solid #aaaaaa;
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px 18px;
+
+  background-color: #444444;
+  color: #ffffff;
+
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #aaaaaa;
+  cursor: not-allowed;
+}
+
+.error {
+  margin-top: 6px;
+
+  font-size: 14px;
+
+  color: #555555;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin-top: 8px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 8px 12px;
+
+  background-color: #f2f2f2;
+
+  border: 1px solid #cccccc;
+}
+
+.imagenes-preview {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin-top: 12px;
+}
+
+.imagen-preview {
+  width: 140px;
+  height: 200px;
+
+  border: 1px solid #cccccc;
+
+  overflow: hidden;
+
+  background-color: #eeeeee;
+}
+
+.imagen-preview img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.imagen-preview {
+  position: relative;
+}
+
+.imagen-preview button {
+  position: absolute;
+
+  bottom: 6px;
+  left: 6px;
+  right: 6px;
+
+  padding: 6px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #999999;
+
+  cursor: pointer;
+}

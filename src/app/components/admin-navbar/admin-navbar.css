@@ -1,0 +1,29 @@
+.admin-navbar {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+
+  padding: 16px 24px;
+
+  background-color: #ffffff;
+  border-bottom: 1px solid #cccccc;
+}
+
+.navbar-brand {
+  white-space: nowrap;
+}
+
+.navbar-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.navbar-links a {
+  color: #333333;
+  text-decoration: none;
+}
+
+.navbar-links a:hover {
+  text-decoration: underline;
+}

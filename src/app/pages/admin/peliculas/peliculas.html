@@ -1,0 +1,91 @@
+<app-admin-navbar></app-admin-navbar>
+
+<main class="peliculas-page">
+    <header class="page-header">
+    <div>
+        <h1>Películas</h1>
+        <p>
+        Administración de las películas disponibles en CineBera.
+        </p>
+    </div>
+    <a
+        class="boton-nueva"
+        routerLink="/admin/peliculas/nueva">
+        Nueva Película
+    </a>
+    </header>
+
+    <section class="buscador">
+        <label for="buscarPelicula">
+            Buscar Pelicula
+        </label>
+<!-- Two-Way Data Binding va y vuelve el valor segun-->
+        <input
+            id="buscarPelicula"
+            type="text"
+            placeholder="Ingrese un titulo"
+            [(ngModel)]="textoBusqueda"
+            >
+    </section>
+
+    <section class="peliculas-listado">
+<h2>
+    Listado de películas
+</h2>
+    <table>
+    <thead>
+    <tr>
+        <th>Título</th>
+        <th>Duración</th>
+        <th>Géneros</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    @for (pelicula of obtenerPeliculasFiltradas(); track pelicula.id) {
+        <tr>
+        <td>
+            {{ pelicula.titulo }}
+        </td>
+        <td>
+            {{ pelicula.duracion }} min
+        </td>
+        <td>
+            {{ pelicula.generos.join(', ') }}
+        </td>
+        <td>
+            @if (pelicula.visible) {
+            Visible
+            } @else {
+            Oculta
+            }
+        </td>
+        <td>
+            <button type="button">
+            Editar
+            </button>
+            <button
+            type="button"
+            (click)='cambiarVisibilidad(pelicula)'>
+
+            @if (pelicula.visible) {
+                Ocultar
+            } @else {
+                Mostrar
+            }
+            
+            </button>
+        </td>
+        </tr>
+            } @empty {
+        <tr>
+            <td colspan="5">
+            No se encontraron películas.
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+</section>
+</main>

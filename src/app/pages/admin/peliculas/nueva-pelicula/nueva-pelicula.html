@@ -1,0 +1,280 @@
+<app-admin-navbar></app-admin-navbar>
+
+<main class="nueva-pelicula-page">
+
+  <header>
+
+    <h1>
+      Nueva película
+    </h1>
+
+    <p>
+      Complete la información de la película.
+    </p>
+
+  </header>
+
+
+  <form
+    [formGroup]="peliculaForm"
+    (ngSubmit)="guardarPelicula()">
+
+
+    <!-- TÍTULO -->
+
+    <div class="form-field">
+
+        <label for="titulo">
+            Título
+        </label>
+<!-- TOUCHED EL USUARIO ENTRO AL CAMPO Y DSP SALIO - ESPERO QUE EL USUARIO INTERACTUE ANTES DEL ERROR -->
+        <input id="titulo" type="text" formControlName="titulo">
+        @if (
+        peliculaForm.controls.titulo.invalid &&
+        peliculaForm.controls.titulo.touched
+        ) {
+            <p class="error">
+            El título es obligatorio y debe tener al menos 2 caracteres.
+            </p>
+        }
+    </div>
+
+
+    <!-- SINOPSIS -->
+
+    <div class="form-field">
+
+      <label for="sinopsis">
+        Sinopsis
+      </label>
+
+      <textarea
+        id="sinopsis"
+        rows="5"
+        formControlName="sinopsis">
+      </textarea>
+
+    </div>
+
+
+    <!-- DURACIÓN -->
+
+    <div class="form-field">
+
+    <label for="duracion">
+        Duración en minutos
+    </label>
+
+    <input
+        id="duracion"
+        type="number"
+        formControlName="duracion">
+    </div>
+
+    <!-- Check Generos, Template Reference Variable para preguntar si esta True o False  -->
+    <div class="form-field">
+        <label>
+            Géneros
+        </label>
+        <div class="checkbox-group">
+            @for (genero of generosDisponibles;
+            track genero) {
+            <label class="checkbox-option">
+                <input
+                type="checkbox"
+                #checkboxGenero
+                (change)="cambiarGenero(genero, checkboxGenero.checked)">
+                {{ genero }}
+            </label>
+            }
+    </div>
+    </div>
+
+    <div class="form-field">
+    <label>
+        Formatos disponibles
+    </label>
+    <div class="checkbox-group">
+        @for (
+        formato of formatosDisponibles;
+        track formato
+        ) {
+        <label class="checkbox-option">
+            <input
+            type="checkbox"
+            #checkboxFormato
+            (change)="cambiarFormato(
+                formato,
+                checkboxFormato.checked
+            )">
+            {{ formato }}
+        </label>
+        }
+    </div>
+    </div>
+
+
+    <div class="form-field">
+  <label>
+    Idiomas
+  </label>
+  <div class="checkbox-group">
+    @for (
+      idioma of idiomasDisponibles;
+      track idioma
+    ) {
+      <label class="checkbox-option">
+        <input
+          type="checkbox"
+          #checkboxIdioma
+          (change)="cambiarIdioma(
+            idioma,
+            checkboxIdioma.checked
+          )">
+        {{ idioma }}
+      </label>
+    }
+  </div>
+
+</div>
+    
+    <!-- PRECIO PREVENTA -->
+
+    <div class="form-field">
+
+      <label for="precioPreventa">
+        Precio preventa
+      </label>
+
+      <input
+        id="precioPreventa"
+        type="number"
+        formControlName="precioPreventa">
+
+    </div>
+
+
+    <!-- PRECIO VENTA -->
+
+    <div class="form-field">
+
+      <label for="precioVenta">
+        Precio venta
+      </label>
+
+      <input
+        id="precioVenta"
+        type="number"
+        formControlName="precioVenta">
+
+    </div>
+
+
+    <!-- FECHA ESTRENO -->
+
+    <div class="form-field">
+
+      <label for="fechaEstreno">
+        Fecha de estreno
+      </label>
+
+      <input
+        id="fechaEstreno"
+        type="date"
+        formControlName="fechaEstreno">
+
+    </div>
+
+
+    <!-- CLASIFICACIÓN -->
+
+    <div class="form-field">
+
+      <label for="clasificacionEdad">
+        Clasificación por edad
+      </label>
+
+      <select
+        id="clasificacionEdad"
+        formControlName="clasificacionEdad">
+
+        <option value="ATP">
+          ATP
+        </option>
+
+        <option value="+13">
+          Apta para mayores de 13 años
+        </option>
+
+        <option value="+18">
+          Apta para mayores de 18 años
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- VISIBLE -->
+
+    <div class="form-checkbox">
+
+      <input
+        id="visible"
+        type="checkbox"
+        formControlName="visible">
+
+      <label for="visible">
+        Mostrar en cartelera
+      </label>
+
+    </div>
+
+    <!-- Imagenes - accept = image es q aceptamos eso - multiple, varias
+    event -> cuando cambie el input, mandame toda la información del evento. -->
+        <div class="form-field">
+      <label for="imagenes">
+        Imágenes
+      </label>
+      <input
+        id="imagenes"
+        type="file"
+        accept="image/*"
+        multiple
+        (change)="seleccionarImagenes($event)"
+      >
+    </div>
+
+      @if (imagenesPreview.length > 0) {
+    <div class="imagenes-preview">
+      @for (
+        imagen of imagenesPreview;
+        track imagen;
+        let i = $index
+      ) {
+        <div class="imagen-preview">
+        <img
+          [src]="imagen"
+          alt="Vista previa de película"
+        >
+        <button
+          type="button"
+          (click)="eliminarImagen(i)">
+          Quitar
+        </button>
+      </div>
+      }
+    </div>
+  }
+
+    <button
+      type="submit"
+      [disabled]="peliculaForm.invalid">
+
+      Guardar película
+
+    </button>
+
+  </form>
+
+</main>

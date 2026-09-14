@@ -1,0 +1,61 @@
+/*
+ * Por ahora utilizamos únicamente grises y blancos.
+ *
+ * El objetivo de esta primera etapa es trabajar
+ * estructura y funcionamiento.
+ *
+ * El diseño visual definitivo vendrá más adelante.
+ */
+
+.login-page {
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: #f2f2f2;
+}
+
+.login-container {
+  width: 360px;
+
+  padding: 32px;
+
+  background-color: #ffffff;
+  border: 1px solid #cccccc;
+}
+
+.login-container h1,
+.login-container h2 {
+  margin-top: 0;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+
+  margin-bottom: 16px;
+}
+
+.form-field label {
+  margin-bottom: 6px;
+}
+
+.form-field input {
+  padding: 10px;
+
+  border: 1px solid #aaaaaa;
+}
+
+button {
+  width: 100%;
+
+  padding: 10px;
+
+  background-color: #444444;
+  color: white;
+
+  border: none;
+  cursor: pointer;
+}
