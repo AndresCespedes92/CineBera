@@ -1,6 +1,8 @@
 # CineBera
 
 Link: Documentacion https://miro.com/app/board/uXjVHogrWv8=/
+LinK App: https://cinebera.web.app/cartelera
+
 
 Comandos para deploy en firebase:
 ng build
