@@ -1,18 +1,29 @@
-<app-admin-navbar></app-admin-navbar>
-
 <main class="nueva-pelicula-page">
 
-  <header>
+  <!--
+    Navegación contextual:
+    esta pantalla pertenece a Gestión de Películas.
+  -->
+  <a
+    class="volver-peliculas"
+    routerLink="/admin/peliculas">
+    ← Volver a Películas
+  </a>
 
-    <h1>
-      Nueva película
-    </h1>
+  <header class="nueva-pelicula-header">
+
+    <h1>Nueva película</h1>
 
     <p>
-      Complete la información de la película.
+      Completá la información para agregar una película
+      a CineBera.
     </p>
 
   </header>
+
+  <!--
+    Acá continúa el formulario que ya tenemos.
+  -->
 
 
   <form

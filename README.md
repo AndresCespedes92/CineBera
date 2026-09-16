@@ -1,5 +1,11 @@
 # CineBera
 
+ng build
+Remove-Item .\public\* -Recurse -Force
+Copy-Item .\dist\cine-bera\browser\* .\public\ -Recurse -Force
+firebase deploy --only hosting
+
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.7.
 
 ## Development server

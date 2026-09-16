@@ -1,36 +1,94 @@
 <main class="login-page">
-    <section class="login-container">
-        <h1>CineBera</h1>        
-        <h2>Ingreso al sistema</h2>
-        <p>
-            Acceso para administradores y empleados
-        </p>
-        <form>
-            <div class="form-field">
-                <label for="email">
-                    Email
-                </label>
-                <input
-                id="email"
-                type="email"
-                placeholder="usuario@cinebera.com"
-                >
-            </div>
-            <div class="form-field">
-                <label for="password">
-                    Contraseña
-                </label>
-                <input
-                id="password"
-                type="password"
-                placeholder="Ingrese su Contraseña"
-                >
-            </div>
-        <!-- (click)="ingresar()" es el EVENT BINDING cuando ocurra el evento click ejecuta el metodo ingresar()-->
-            <button type="button" (click)="ingresar()">
-                Ingresar
-            </button>
-            
-        </form>
-    </section>
+
+  <section class="login-card">
+
+    <header class="login-header">
+      <h1>CineBera</h1>
+
+      <p>
+        Ingresá a tu cuenta
+      </p>
+    </header>
+
+
+    <form>
+
+      <!-- EMAIL -->
+
+      <div class="form-field">
+
+        <label for="email">
+          Correo electrónico
+        </label>
+
+        <input
+  type="email"
+  name="email"
+  [(ngModel)]="email"
+  placeholder="Email"
+/>
+
+      </div>
+
+
+      <!-- CONTRASEÑA -->
+
+      <div class="form-field">
+
+        <label for="password">
+          Contraseña
+        </label>
+
+        <input
+  type="password"
+  name="password"
+  [(ngModel)]="password"
+  placeholder="Contraseña"
+/>
+
+      </div>
+
+
+      <!--
+        Login simulado.
+
+        Más adelante este botón ejecutará la
+        autenticación real mediante un servicio
+        conectado con Supabase.
+      -->
+
+      <button
+        type="button"
+        class="boton-ingresar"
+        (click)="ingresar()">
+
+        Ingresar
+
+      </button>
+
+    </form>
+
+
+    <!--
+      El registro público existe únicamente
+      para clientes.
+
+      Los empleados serán creados desde
+      Usuarios y Roles por un administrador.
+    -->
+
+    <div class="registro-cliente">
+
+      <p>
+        ¿Todavía no tenés una cuenta?
+      </p>
+
+      <a routerLink="/registro">
+        Crear cuenta
+      </a>
+
+    </div>
+
+  </section>
+
 </main>

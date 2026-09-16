@@ -1,0 +1,15 @@
+.cliente-home {
+  max-width: 1200px;
+
+  margin: 0 auto;
+
+  padding: 32px 24px;
+}
+
+.cliente-home h1 {
+  margin-bottom: 8px;
+}
+
+.cliente-home p {
+  color: #666666;
+}

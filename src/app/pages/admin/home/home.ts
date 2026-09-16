@@ -1,40 +1,53 @@
 import { Component } from '@angular/core';
-import { AdminNavbar } from '../../../components/admin-navbar/admin-navbar';
+import { RouterLink } from '@angular/router';
+
 import { DashboardChip } from '../../../components/dashboard-chip/dashboard-chip';
 import { IndicadorDashboard } from '../../../models/indicador-dashboard';
 
 @Component({
-  /*
-   * Importo AdminNavbar porque este componente
-   * va a utilizar <app-admin-navbar> en su HTML.
-   */
-  imports: [AdminNavbar, DashboardChip],
   selector: 'app-home',
-  styleUrl: './home.css',
+
+  /*
+   * Home es un componente standalone.
+   *
+   * RouterLink:
+   * permite que los botones del dashboard
+   * naveguen hacia las distintas funcionalidades.
+   *
+   * DashboardChip:
+   * es nuestro componente reutilizable para
+   * mostrar los indicadores.
+   */
+  imports: [
+    RouterLink,
+    DashboardChip
+  ],
+
   templateUrl: './home.html',
+  styleUrl: './home.css'
 })
 export class Home {
-   /*
-   * Estas propiedades representan información
-   * que el componente necesita mostrar.
+
+  /*
+   * Por ahora simulamos el usuario.
    *
-   * Por ahora los valores están escritos manualmente.
-   *
-   * Más adelante estos valores llegarán desde Supabase.
+   * Cuando implementemos autenticación con Supabase,
+   * este dato vendrá del usuario autenticado.
    */
   nombreUsuario: string = 'Administrador';
+
+
   /*
- * El [] significa que no tenemos un solo IndicadorDashboard,
- * sino un ARRAY de IndicadorDashboard.
- *
- * TypeScript controlará que todos los objetos del array
- * respeten la estructura definida en la interface.
- */
-indicadores: IndicadorDashboard[] = [
+   * Indicadores principales del cine.
+   *
+   * Por ahora son datos simulados.
+   * Más adelante vendrán de nuestra capa de datos.
+   */
+  indicadores: IndicadorDashboard[] = [
 
     {
       titulo: 'Ingresos Totales',
-      valor: 125000,
+      valor: 1250000,
       prefijo: '$',
       sufijo: ''
     },
@@ -54,29 +67,31 @@ indicadores: IndicadorDashboard[] = [
     },
 
     {
-      titulo: 'Funciones Hoy',
-      valor: 18,
-      prefijo: '',
-      sufijo: ''
-    },
-
-    {
       titulo: 'Ventas Candy',
       valor: 326000,
       prefijo: '$',
       sufijo: ''
+    },
+
+    {
+      titulo: 'Funciones Hoy',
+      valor: 18,
+      prefijo: '',
+      sufijo: ''
     }
 
   ];
-  /*
-   * También podemos guardar información más compleja
-   * dentro de objetos.
-   */
 
+
+  /*
+   * Información resumida utilizada
+   * por el dashboard administrativo.
+   */
   peliculaMasVista = {
     titulo: 'Dune: Parte Dos',
     entradasVendidas: 342
   };
+
 
   candyMasVendido = {
     nombre: 'Combo Familiar',

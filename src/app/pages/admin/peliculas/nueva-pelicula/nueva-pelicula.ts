@@ -7,13 +7,12 @@ import {
   Validators
 } from '@angular/forms';
 
-import { AdminNavbar } from '../../../../components/admin-navbar/admin-navbar';
-
 import {
   Pelicula,
   FormatoPelicula,
   ClasificacionEdad
 } from '../../../../models/pelicula';
+import { RouterLink } from '@angular/router';
 
 
 @Component({
@@ -26,7 +25,7 @@ import {
    * También reutilizamos el navbar administrativo.
    */
   imports: [
-    AdminNavbar,
+    RouterLink,
     ReactiveFormsModule
   ],
 

@@ -1,76 +1,210 @@
-<app-admin-navbar></app-admin-navbar>
+<main class="admin-dashboard">
 
-<main class="admin-home">
-    <header class="home-header">
-        <!-- INTERPOLACION {{nombreUsuario}} -->
-        <h1>
-            Bienvenido, {{nombreUsuario}}
-        </h1>
+  <!-- =================================================
+       ENCABEZADO
+       ================================================= -->
+
+  <header class="dashboard-header">
+
+    <div>
+      <h1>Administración CineBera</h1>
+
+      <p>
+        Bienvenido, {{ nombreUsuario }}
+      </p>
+    </div>
+
+  </header>
+
+
+  <!-- =================================================
+       FUNCIONALIDADES ADMINISTRATIVAS
+       ================================================= -->
+
+  <section class="admin-section">
+
+    <h2>Gestión del sistema</h2>
+
+    <div class="admin-actions">
+
+
+      <!-- PELÍCULAS -->
+
+      <a
+        class="admin-action"
+        routerLink="/admin/peliculas">
+
+        <h3>Películas</h3>
+
         <p>
-            Resumen general de CineBera.
+          Administrar cartelera, información,
+          precios y visibilidad.
         </p>
-    </header>
-    <!-- ============================= -->
-    <!-- INDICADORES DEL DASHBOARD -->
-    <!-- ============================= -->
-    <section class="dashboard-section">
-        <h2>Dashboard</h2>
-        <div class="dashboard-chips">
-            @for (indicador of indicadores; track indicador.titulo) {
-            <!-- Property Binding traigo los valores del padre Home-->
-                <app-dashboard-chip
-                    [titulo]="indicador.titulo"
-                    [valor]="indicador.valor"
-                    [prefijo]="indicador.prefijo"
-                    [sufijo]="indicador.sufijo">
-                </app-dashboard-chip>
-            }
-        </div>
 
-    </section>
+      </a>
 
 
-<!-- ============================= -->
-<!-- INFORMACIÓN SEMANAL -->
-<!-- ============================= -->
+      <!-- USUARIOS -->
 
-    <section class="weekly-section">
+      <a
+        class="admin-action"
+        routerLink="/admin/usuarios">
 
-    <article class="weekly-card">
+        <h3>Usuarios y Roles</h3>
 
-    <h2>
-        Película más vista de la semana
-    </h2>
+        <p>
+          Administrar empleados y sus permisos.
+        </p>
 
-    <h3>
-        {{ peliculaMasVista.titulo }}
-    </h3>
-
-    <p>
-        {{ peliculaMasVista.entradasVendidas }}
-        entradas vendidas
-    </p>
-
-    </article>
+      </a>
 
 
-    <article class="weekly-card">
+      <!-- FUNCIONES -->
 
-    <h2>
-        Candy más vendido de la semana
-    </h2>
+      <a
+        class="admin-action"
+        routerLink="/admin/funciones">
 
-    <h3>
-        {{ candyMasVendido.nombre }}
-    </h3>
+        <h3>Funciones y Salas</h3>
 
-    <p>
-        {{ candyMasVendido.cantidadVendida }}
-        unidades vendidas
-    </p>
+        <p>
+          Administrar funciones, horarios,
+          salas y disponibilidad.
+        </p>
 
-    </article>
+      </a>
 
-    </section>
+
+      <!-- REPORTES -->
+
+      <a
+        class="admin-action"
+        routerLink="/admin/reportes">
+
+        <h3>Reportes y Facturación</h3>
+
+        <p>
+          Consultar ventas, ingresos
+          y reportes del cine.
+        </p>
+
+      </a>
+
+
+      <!-- CONFIGURACIÓN -->
+
+      <a
+        class="admin-action"
+        routerLink="/admin/configuracion">
+
+        <h3>Configuración General</h3>
+
+        <p>
+          Administrar parámetros generales
+          del sistema.
+        </p>
+
+      </a>
+
+
+      <!-- AUDITORÍA -->
+
+      <a
+        class="admin-action"
+        routerLink="/admin/auditoria">
+
+        <h3>Auditoría</h3>
+
+        <p>
+          Consultar las acciones realizadas
+          dentro del sistema.
+        </p>
+
+      </a>
+
+    </div>
+
+  </section>
+
+
+  <!-- =================================================
+       INDICADORES
+       ================================================= -->
+
+  <section class="dashboard-section">
+
+    <h2>Resumen de hoy</h2>
+
+    <div class="dashboard-chips">
+
+      @for (
+        indicador of indicadores;
+        track indicador.titulo
+      ) {
+
+        <app-dashboard-chip
+          [titulo]="indicador.titulo"
+          [valor]="indicador.valor"
+          [prefijo]="indicador.prefijo"
+          [sufijo]="indicador.sufijo">
+        </app-dashboard-chip>
+
+      }
+
+    </div>
+
+  </section>
+
+
+  <!-- =================================================
+       DESTACADOS
+       ================================================= -->
+
+  <section class="dashboard-section">
+
+    <h2>Destacados</h2>
+
+    <div class="destacados">
+
+
+      <article class="destacado-card">
+
+        <h3>
+          Película más vista
+        </h3>
+
+        <p>
+          {{ peliculaMasVista.titulo }}
+        </p>
+
+        <small>
+          {{ peliculaMasVista.entradasVendidas }}
+          entradas vendidas
+        </small>
+
+      </article>
+
+
+      <article class="destacado-card">
+
+        <h3>
+          Producto Candy más vendido
+        </h3>
+
+        <p>
+          {{ candyMasVendido.nombre }}
+        </p>
+
+        <small>
+          {{ candyMasVendido.cantidadVendida }}
+          unidades vendidas
+        </small>
+
+      </article>
+
+
+    </div>
+
+  </section>
 
 </main>

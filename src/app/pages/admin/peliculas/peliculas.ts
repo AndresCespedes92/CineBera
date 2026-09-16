@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { AdminNavbar } from '../../../components/admin-navbar/admin-navbar';
 import { Pelicula } from '../../../models/pelicula';
 /*
  * Para usar un imput necesitamos FormsModule
@@ -8,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 @Component({
-  imports: [AdminNavbar, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   selector: 'app-peliculas',
   styleUrl: './peliculas.css',
   templateUrl: './peliculas.html',

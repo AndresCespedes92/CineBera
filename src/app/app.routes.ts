@@ -1,52 +1,108 @@
 import { Routes } from '@angular/router';
 
-import { Login } from './pages/login/login';
-import { Home } from './pages/admin/home/home';
-import { Peliculas } from './pages/admin/peliculas/peliculas';
-import { NuevaPelicula } from './pages/admin/peliculas/nueva-pelicula/nueva-pelicula';
-
 export const routes: Routes = [
-  //Pantalla de ingreso para Administradores y Empleados.
+
+  /*
+   * LOGIN
+   *
+   * Angular no carga el componente Login
+   * al iniciar la aplicación.
+   *
+   * Lo importa recién cuando el usuario
+   * navega a /login.
+   */
   {
     path: 'login',
-    component: Login
+
+    loadComponent: () =>
+      import('./pages/login/login')
+        .then(m => m.Login)
   },
-  // Pantalla principal del panel administrativo.
+
+
+  /*
+   * REGISTRO DE CLIENTE
+   */
+  {
+    path: 'registro',
+
+    loadComponent: () =>
+      import('./pages/registro/registro')
+        .then(m => m.Registro)
+  },
+
+  {
+  path: 'cartelera',
+
+  loadComponent: () =>
+    import('./pages/cliente/home/home')
+      .then(modulo => modulo.Home)
+},
+
+  /*
+   * DASHBOARD ADMINISTRADOR
+   */
   {
     path: 'admin/home',
-    component: Home
+
+    loadComponent: () =>
+      import('./pages/admin/home/home')
+        .then(m => m.Home)
   },
+
+
   /*
-   * Si el usuario entra solamente a:
-   *
-   * localhost:4200
-   *
-   * Angular lo redirige automáticamente hacia /login.
+   * GESTIÓN DE PELÍCULAS
    */
   {
     path: 'admin/peliculas',
-    component: Peliculas
+
+    loadComponent: () =>
+      import('./pages/admin/peliculas/peliculas')
+        .then(m => m.Peliculas)
   },
-  {
-    path: 'admin/peliculas/nueva',
-    component: NuevaPelicula
-  },
-  {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full'
-  },
+
+
   /*
-   * El doble asterisco representa cualquier dirección
-   * que Angular no conozca.
-   *
-   * Ejemplo:
-   * /cualquier-cosa
-   *
-   * Por ahora también lo mandamos al login.
+   * ALTA DE PELÍCULA
    */
   {
-    path: '**',
-    redirectTo: 'login'
-  }
+    path: 'admin/peliculas/nueva',
+
+    loadComponent: () =>
+      import(
+        './pages/admin/peliculas/nueva-pelicula/nueva-pelicula'
+      )
+        .then(m => m.NuevaPelicula)
+  },
+
+
+  /*
+   * Si ingresamos solamente a:
+   *
+   * localhost:4200
+   *
+   * CineBera puede ser visitado sin iniciar sesión
+   */
+  {
+  path: '',
+  redirectTo: 'cartelera',
+  pathMatch: 'full'
+},
+
+
+  /*
+   * Ruta comodín.
+   *
+   * Cualquier dirección que Angular
+   * no reconozca vuelve al Login.
+   */
+  {
+  path: '**',
+
+  loadComponent: () =>
+    import('./pages/error/error')
+      .then(modulo => modulo.Error)
+}
+
 ];

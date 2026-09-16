@@ -1,0 +1,54 @@
+<nav class="navbar">
+
+  <!--
+    Logo/nombre de la aplicación.
+
+    Al hacer click vuelve a la cartelera principal.
+  -->
+  <a
+    class="navbar-logo"
+    routerLink="/">
+    CineBera
+  </a>
+
+
+  <!-- Navegación principal del cliente -->
+  <div class="navbar-links">
+
+    <a routerLink="/">
+      Cartelera
+    </a>
+
+    <a routerLink="/proximamente">
+      Próximamente
+    </a>
+
+    <a routerLink="/mis-peliculas">
+      Mis películas
+    </a>
+
+    <a routerLink="/perfil">
+      Mi perfil
+    </a>
+
+  </div>
+
+
+  <!--
+    Por ahora mostramos siempre Ingresar.
+
+    Más adelante, cuando implementemos autenticación,
+    vamos a poder mostrar distintas opciones según
+    exista o no un usuario autenticado.
+  -->
+  <div class="navbar-auth">
+
+    <a
+      class="boton-ingresar"
+      routerLink="/login">
+      Ingresar
+    </a>
+
+  </div>
+
+</nav>

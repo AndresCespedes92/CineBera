@@ -1,35 +1,84 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import {
+  Router,
+  RouterLink
+} from '@angular/router';
+import { supabase } from '../../supabase';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  imports: [],
   selector: 'app-login',
-  styleUrl: './login.css',
+
+  /*
+   * RouterLink:
+   * se utiliza desde el HTML para navegar
+   * hacia el registro de clientes.
+   */
+  imports: [
+    RouterLink,
+    FormsModule
+  ],
+
   templateUrl: './login.html',
+  styleUrl: './login.css'
 })
 export class Login {
+
+  email: string = '';
+  password: string = '';
+
   /*
-   * Router es el servicio de Angular que nos permite
-   * navegar entre pantallas desde TypeScript.
+   * Router es un servicio de Angular.
    *
-   * Es parecido a decir:
-   * "cuando pase algo, llevame a otra dirección". La linea de abajo le dice a Angular NECESITO USAR EL ROUTER DENTRO DE ESTE
-   * COMPONENTE -> LLAMADO DEPENDENCY INJECTION
-   * es como viajar en colectivo, no me compro el colectivo sino que el servicio de transporte me lleva
+   * Angular lo inyecta mediante el constructor
+   * para que podamos navegar desde TypeScript.
+   * Angular, cuando inicialices este componente, ejecutá esto
    */
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router
+  ) {}
+
+  
   /*
-   * Por ahora NO validamos usuario ni contraseña.
-   * Simplemente simulamos que el login fue correcto
-   * para poder avanzar con la estructura del sistema.
+   * LOGIN TEMPORAL
+   *
+   * Todavía no existe autenticación real.
+   *
+   * Por ahora enviamos directamente al Dashboard
+   * para poder continuar desarrollando el flujo
+   * administrativo.
+   *
+   * Más adelante:
+   *
+   * ingresar()
+   *     ↓
+   * AuthService
+   *     ↓
+   * Supabase
+   *     ↓
+   * usuario autenticado
+   *     ↓
+   * consultar rol
+   *     ↓
+   * redireccionar
    */
-  ingresar(): void {
-    console.log('Login simulado correctamente');
-    /*
-     * Navegamos hacia:
-     * localhost:4200/admin/home
-     */
-    this.router.navigate(['/admin/home']);
+  async ingresar(): Promise<void> {
+
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email: this.email,
+      password: this.password
+    });
+  if (error) {
+    console.error(
+      'Error al iniciar sesión:',
+      error.message
+    );
+    return;
   }
+  
+  this.router.navigate(['/admin/home']);
+}
 
 }
+

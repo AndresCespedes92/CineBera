@@ -1,19 +1,35 @@
-<app-admin-navbar></app-admin-navbar>
 
 <main class="peliculas-page">
-    <header class="page-header">
+  <!--
+    Navegación contextual.
+
+    No necesitamos un navbar administrativo porque
+    el Dashboard es el punto principal de navegación
+    del administrador.
+  -->
+  <a
+    class="volver-dashboard"
+    routerLink="/admin/home">
+    ← Volver al Dashboard
+  </a>
+
+  <header class="peliculas-header">
+
     <div>
-        <h1>Películas</h1>
-        <p>
-        Administración de las películas disponibles en CineBera.
-        </p>
+      <h1>Gestión de películas</h1>
+
+      <p>
+        Administrá las películas disponibles en CineBera.
+      </p>
     </div>
+
     <a
-        class="boton-nueva"
-        routerLink="/admin/peliculas/nueva">
-        Nueva Película
+      class="boton-nueva"
+      routerLink="/admin/peliculas/nueva">
+      Nueva película
     </a>
-    </header>
+
+  </header>
 
     <section class="buscador">
         <label for="buscarPelicula">

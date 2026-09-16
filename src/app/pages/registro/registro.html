@@ -1,0 +1,292 @@
+<main class="registro-page">
+
+  <section class="registro-card">
+
+    <!-- Navegación contextual -->
+    <a
+      class="volver-login"
+      routerLink="/login">
+      ← Volver al Login
+    </a>
+
+
+    <header class="registro-header">
+
+      <h1>Crear cuenta</h1>
+
+      <p>
+        Registrate como cliente de CineBera.
+      </p>
+
+    </header>
+
+
+    <!--
+      [formGroup] conecta este formulario HTML
+      con el FormGroup registroForm del TypeScript.
+
+      (ngSubmit) ejecuta registrar() cuando
+      enviamos el formulario.
+    -->
+    <form
+      [formGroup]="registroForm"
+      (ngSubmit)="registrar()">
+
+
+      <!-- NOMBRE -->
+
+      <div class="form-field">
+
+        <label for="nombre">
+          Nombre
+        </label>
+
+        <input
+          id="nombre"
+          type="text"
+          formControlName="nombre">
+
+        @if (
+          registroForm.controls.nombre.invalid &&
+          registroForm.controls.nombre.touched
+        ) {
+          <small class="error">
+            Ingresá un nombre válido.
+          </small>
+        }
+
+      </div>
+
+
+      <!-- APELLIDO -->
+
+      <div class="form-field">
+
+        <label for="apellido">
+          Apellido
+        </label>
+
+        <input
+          id="apellido"
+          type="text"
+          formControlName="apellido">
+
+        @if (
+          registroForm.controls.apellido.invalid &&
+          registroForm.controls.apellido.touched
+        ) {
+          <small class="error">
+            Ingresá un apellido válido.
+          </small>
+        }
+
+      </div>
+
+
+      <!-- EMAIL -->
+
+      <div class="form-field">
+
+        <label for="email">
+          Correo electrónico
+        </label>
+
+        <input
+          id="email"
+          type="email"
+          formControlName="email">
+
+        @if (
+          registroForm.controls.email.invalid &&
+          registroForm.controls.email.touched
+        ) {
+          <small class="error">
+            Ingresá un correo electrónico válido.
+          </small>
+        }
+
+      </div>
+
+
+      <!-- CONTRASEÑA -->
+
+      <div class="form-field">
+
+        <label for="password">
+          Contraseña
+        </label>
+
+        <input
+          id="password"
+          type="password"
+          formControlName="password">
+
+        @if (
+          registroForm.controls.password.invalid &&
+          registroForm.controls.password.touched
+        ) {
+          <small class="error">
+            La contraseña debe tener al menos 6 caracteres.
+          </small>
+        }
+
+      </div>
+
+
+      <!-- FECHA DE NACIMIENTO -->
+
+      <div class="form-field">
+
+        <label for="fechaNacimiento">
+          Fecha de nacimiento
+        </label>
+
+        <input
+          id="fechaNacimiento"
+          type="date"
+          formControlName="fechaNacimiento">
+
+        @if (
+          registroForm.controls.fechaNacimiento.invalid &&
+          registroForm.controls.fechaNacimiento.touched
+        ) {
+          <small class="error">
+            Seleccioná tu fecha de nacimiento.
+          </small>
+        }
+
+      </div>
+
+
+      <!-- GRUPO SANGUÍNEO -->
+
+      <div class="form-field">
+
+        <label for="grupoSanguineo">
+          Grupo sanguíneo
+        </label>
+
+        <select
+          id="grupoSanguineo"
+          formControlName="grupoSanguineo">
+
+          <option value="">
+            Seleccionar
+          </option>
+
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+
+        </select>
+
+        @if (
+          registroForm.controls.grupoSanguineo.invalid &&
+          registroForm.controls.grupoSanguineo.touched
+        ) {
+          <small class="error">
+            Seleccioná un grupo sanguíneo.
+          </small>
+        }
+
+      </div>
+
+
+      <!-- COLOR DE OJOS -->
+
+      <div class="form-field">
+
+        <label for="colorOjos">
+          Color de ojos
+        </label>
+
+        <select
+          id="colorOjos"
+          formControlName="colorOjos">
+
+          <option value="">
+            Seleccionar
+          </option>
+
+          <option value="Marrón">Marrón</option>
+          <option value="Negro">Negro</option>
+          <option value="Verde">Verde</option>
+          <option value="Azul">Azul</option>
+          <option value="Gris">Gris</option>
+          <option value="Otro">Otro</option>
+
+        </select>
+
+        @if (
+          registroForm.controls.colorOjos.invalid &&
+          registroForm.controls.colorOjos.touched
+        ) {
+          <small class="error">
+            Seleccioná un color de ojos.
+          </small>
+        }
+
+      </div>
+
+
+      <!-- DÍAS DE VACACIONES -->
+
+      <div class="form-field">
+
+        <label for="diasVacaciones">
+          Días de vacaciones
+        </label>
+
+        <input
+          id="diasVacaciones"
+          type="number"
+          min="0"
+          formControlName="diasVacaciones">
+
+        @if (
+          registroForm.controls.diasVacaciones.invalid &&
+          registroForm.controls.diasVacaciones.touched
+        ) {
+          <small class="error">
+            Ingresá una cantidad válida.
+          </small>
+        }
+
+      </div>
+
+
+      <!--
+        Al ser type="submit", Angular ejecutará
+        el (ngSubmit) definido en <form>.
+      -->
+      <button
+        type="submit"
+        class="boton-registrar">
+
+        Crear cuenta
+
+      </button>
+
+    </form>
+
+
+    <div class="login-link">
+
+      <p>
+        ¿Ya tenés una cuenta?
+      </p>
+
+      <a routerLink="/login">
+        Ingresar
+      </a>
+
+    </div>
+
+  </section>
+
+</main>

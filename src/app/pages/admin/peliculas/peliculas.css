@@ -1,11 +1,10 @@
 .peliculas-page {
-  padding: 24px;
-
-  min-height: calc(100vh - 60px);
+  min-height: 100vh;
+  padding: 32px;
 
   background-color: #f5f5f5;
+  color: #222222;
 }
-
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -89,4 +88,64 @@ td button {
   text-decoration: none;
 
   border: none;
+}
+
+/* Navegación hacia el Dashboard */
+
+.volver-dashboard {
+  display: inline-block;
+
+  margin-bottom: 24px;
+
+  color: #444444;
+
+  text-decoration: none;
+}
+
+
+.volver-dashboard:hover {
+  text-decoration: underline;
+}
+
+/* Encabezado */
+
+.peliculas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  margin-bottom: 24px;
+}
+
+
+.peliculas-header h1 {
+  margin: 0 0 8px;
+}
+
+
+.peliculas-header p {
+  margin: 0;
+
+  color: #666666;
+}
+
+/* Acción principal */
+
+.boton-nueva {
+  padding: 10px 16px;
+
+  background-color: #eeeeee;
+
+  border: 1px solid #cccccc;
+
+  color: #222222;
+
+  text-decoration: none;
+}
+
+
+.boton-nueva:hover {
+  background-color: #dddddd;
 }
