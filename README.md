@@ -1,10 +1,20 @@
 # CineBera
 
+Link: Documentacion https://miro.com/app/board/uXjVHogrWv8=/
+
+Comandos para deploy en firebase:
 ng build
 Remove-Item .\public\* -Recurse -Force
 Copy-Item .\dist\cine-bera\browser\* .\public\ -Recurse -Force
 firebase deploy --only hosting
 
+
+Comandos git:
+git status
+git add .
+git status
+git commit -m "feat: Lazy loading fix e Integraciòn Supabase auth - Firebase Hosting"
+git push origin main
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.7.
 
