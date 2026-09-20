@@ -1,7 +1,8 @@
 # CineBera
 
-Link: Documentacion https://miro.com/app/board/uXjVHogrWv8=/
+Link: Documentacion [https://miro.com/app/board/uXjVHogrWv8=/](https://miro.com/app/board/uXjVHogrWv8=/?share_link_id=2295409427)
 LinK App: https://cinebera.web.app/cartelera
+Link: paleta https://www.figma.com/design/npOTQoiVnjea5iPowB9rQs/Cine-TP-%E2%80%93-Prototipo-Programaci%C3%B3n-IV?node-id=0-1&p=f&t=oIhDM4NTu3IVSmJO-0
 
 
 Comandos para deploy en firebase:
