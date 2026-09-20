@@ -42,9 +42,20 @@
         </label>
 
         <input
-          id="nombre"
-          type="text"
-          formControlName="nombre">
+  id="nombre"
+  type="text"
+  formControlName="nombre"
+  (keydown)="soloLetras($event)"
+  [ngClass]="{
+    'input-valido':
+      registroForm.controls.nombre.valid &&
+      registroForm.controls.nombre.touched,
+
+    'input-invalido':
+      registroForm.controls.nombre.invalid &&
+      registroForm.controls.nombre.touched
+  }"
+/>
 
         @if (
           registroForm.controls.nombre.invalid &&
@@ -69,7 +80,20 @@
         <input
           id="apellido"
           type="text"
-          formControlName="apellido">
+          formControlName="apellido"
+          (keydown)="soloLetras($event)"
+            [ngClass]="{
+    'input-valido':
+      registroForm.controls.apellido.valid &&
+      registroForm.controls.apellido.touched,
+
+    'input-invalido':
+      registroForm.controls.apellido.invalid &&
+      registroForm.controls.apellido.touched
+  }"
+/>
+          
+          
 
         @if (
           registroForm.controls.apellido.invalid &&
@@ -94,7 +118,20 @@
         <input
           id="email"
           type="email"
-          formControlName="email">
+          formControlName="email"
+          
+            [ngClass]="{
+    'input-valido':
+      registroForm.controls.email.valid &&
+      registroForm.controls.email.touched,
+
+    'input-invalido':
+      registroForm.controls.email.invalid &&
+      registroForm.controls.email.touched
+  }"
+/>
+          
+          
 
         @if (
           registroForm.controls.email.invalid &&
@@ -119,7 +156,19 @@
         <input
           id="password"
           type="password"
-          formControlName="password">
+          formControlName="password"
+          
+            [ngClass]="{
+    'input-valido':
+      registroForm.controls.password.valid &&
+      registroForm.controls.password.touched,
+
+    'input-invalido':
+      registroForm.controls.password.invalid &&
+      registroForm.controls.password.touched
+  }"
+/>
+          
 
         @if (
           registroForm.controls.password.invalid &&
@@ -132,31 +181,209 @@
 
       </div>
 
-
-      <!-- FECHA DE NACIMIENTO -->
-
       <div class="form-field">
+          <label for="confirmarPassword">
+            Confirmar contraseña
+          </label>
 
-        <label for="fechaNacimiento">
-          Fecha de nacimiento
-        </label>
+          <input
+  id="confirmarPassword"
+  type="password"
+  formControlName="confirmarPassword"
+  placeholder="Repetí tu contraseña"
 
-        <input
-          id="fechaNacimiento"
-          type="date"
-          formControlName="fechaNacimiento">
+  [ngClass]="{
+    'input-valido':
+      registroForm.controls.confirmarPassword.valid &&
+      registroForm.controls.confirmarPassword.touched &&
+      !registroForm.hasError('passwordsNoCoinciden'),
 
-        @if (
-          registroForm.controls.fechaNacimiento.invalid &&
-          registroForm.controls.fechaNacimiento.touched
-        ) {
-          <small class="error">
-            Seleccioná tu fecha de nacimiento.
-          </small>
-        }
+    'input-invalido':
+      registroForm.controls.confirmarPassword.touched &&
+      (
+        registroForm.controls.confirmarPassword.invalid ||
+        registroForm.hasError('passwordsNoCoinciden')
+      )
+  }"
+/>
+          
+          
 
-      </div>
+          @if (
+            registroForm.hasError('passwordsNoCoinciden') &&
+            registroForm.controls.confirmarPassword.touched
+          ) {
+            <small class="error">
+              Las contraseñas no coinciden.
+            </small>
+          }
+        </div>
 
+
+<!-- FECHA DE NACIMIENTO -->
+
+<div class="form-field">
+
+  <label>
+    Fecha de nacimiento
+  </label>
+
+  <!--
+    Dividimos la fecha en tres controles diferentes.
+
+    Cada <select> está conectado con SU FormControl:
+    - diaNacimiento
+    - mesNacimiento
+    - anioNacimiento
+
+    Luego el fechaNacimientoValidator analiza
+    los tres valores juntos.
+  -->
+  <div class="fecha-nacimiento">
+
+    <!-- ==================== DÍA ==================== -->
+
+    <select
+      formControlName="diaNacimiento"
+
+      [ngClass]="{
+        'input-valido':
+          registroForm.controls.diaNacimiento.valid &&
+          registroForm.controls.diaNacimiento.touched &&
+          !registroForm.hasError('fechaInvalida') &&
+          !registroForm.hasError('fechaFutura'),
+
+        'input-invalido':
+          registroForm.controls.diaNacimiento.touched &&
+          (
+            registroForm.controls.diaNacimiento.invalid ||
+            registroForm.hasError('fechaInvalida') ||
+            registroForm.hasError('fechaFutura')
+          )
+      }"
+    >
+
+      <option [ngValue]="null">
+        Día
+      </option>
+
+      @for (dia of dias; track dia) {
+        <option [ngValue]="dia">
+          {{ dia }}
+        </option>
+      }
+
+    </select>
+
+
+    <!-- ==================== MES ==================== -->
+
+    <select
+      formControlName="mesNacimiento"
+
+      [ngClass]="{
+        'input-valido':
+          registroForm.controls.mesNacimiento.valid &&
+          registroForm.controls.mesNacimiento.touched &&
+          !registroForm.hasError('fechaInvalida') &&
+          !registroForm.hasError('fechaFutura'),
+
+        'input-invalido':
+          registroForm.controls.mesNacimiento.touched &&
+          (
+            registroForm.controls.mesNacimiento.invalid ||
+            registroForm.hasError('fechaInvalida') ||
+            registroForm.hasError('fechaFutura')
+          )
+      }"
+    >
+
+      <option [ngValue]="null">
+        Mes
+      </option>
+
+      @for (mes of meses; track mes.numero) {
+        <option [ngValue]="mes.numero">
+          {{ mes.nombre }}
+        </option>
+      }
+
+    </select>
+
+
+    <!-- ==================== AÑO ==================== -->
+
+    <select
+      formControlName="anioNacimiento"
+
+      [ngClass]="{
+        'input-valido':
+          registroForm.controls.anioNacimiento.valid &&
+          registroForm.controls.anioNacimiento.touched &&
+          !registroForm.hasError('fechaInvalida') &&
+          !registroForm.hasError('fechaFutura'),
+
+        'input-invalido':
+          registroForm.controls.anioNacimiento.touched &&
+          (
+            registroForm.controls.anioNacimiento.invalid ||
+            registroForm.hasError('fechaInvalida') ||
+            registroForm.hasError('fechaFutura')
+          )
+      }"
+    >
+
+      <option [ngValue]="null">
+        Año
+      </option>
+
+      @for (anio of anios; track anio) {
+        <option [ngValue]="anio">
+          {{ anio }}
+        </option>
+      }
+
+    </select>
+
+  </div>
+
+
+  <!--
+    Este error pertenece al FormGroup porque surge
+    de combinar día + mes + año.
+  -->
+  @if (
+    registroForm.hasError('fechaInvalida') &&
+    (
+      registroForm.controls.diaNacimiento.touched ||
+      registroForm.controls.mesNacimiento.touched ||
+      registroForm.controls.anioNacimiento.touched
+    )
+  ) {
+    <small class="error">
+      La fecha ingresada no existe.
+    </small>
+  }
+
+
+  <!--
+    Segundo posible error del validator:
+    la fecha existe pero está en el futuro.
+  -->
+  @if (
+    registroForm.hasError('fechaFutura') &&
+    (
+      registroForm.controls.diaNacimiento.touched ||
+      registroForm.controls.mesNacimiento.touched ||
+      registroForm.controls.anioNacimiento.touched
+    )
+  ) {
+    <small class="error">
+      La fecha de nacimiento no puede ser futura.
+    </small>
+  }
+
+</div> 
 
       <!-- GRUPO SANGUÍNEO -->
 
@@ -266,7 +493,8 @@
       -->
       <button
         type="submit"
-        class="boton-registrar">
+        class="boton-registrar"
+        [disabled]="this.registroForm.invalid">
 
         Crear cuenta
 
