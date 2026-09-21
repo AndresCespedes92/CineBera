@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth-guard';
+import { roleGuard } from './guards/role-guard';
 
 export const routes: Routes = [
 
@@ -31,7 +33,7 @@ export const routes: Routes = [
         .then(m => m.Registro)
   },
 
-  {
+{
   path: 'cartelera',
 
   loadComponent: () =>
@@ -39,42 +41,101 @@ export const routes: Routes = [
       .then(modulo => modulo.Home)
 },
 
+
+/*
+ * FUNCIONES DE UNA PELÍCULA
+ *
+ * ":id" es un parámetro de ruta.
+ *
+ * Permite utilizar una misma pantalla para
+ * diferentes películas.
+ *
+ * Ejemplos:
+ *
+ * /pelicula/1/funciones
+ * /pelicula/2/funciones
+ * /pelicula/15/funciones
+ */
+{
+  path: 'pelicula/:id/funciones',
+
+  loadComponent: () =>
+    import(
+      './pages/cliente/funciones-pelicula/funciones-pelicula'
+    )
+      .then(m => m.FuncionesPelicula)
+},
+
+
+
+/*
+ * ÁREA DE ADMINISTRACIÓN
+ *
+ * "admin" funciona como ruta padre.
+ *
+ * Todas las rutas definidas dentro de "children"
+ * pertenecen al área administrativa.
+ */
+{
+  path: 'admin',
+
   /*
-   * DASHBOARD ADMINISTRADOR
+   * Antes de utilizar esta configuración de ruta,
+   * comprobamos que el usuario tenga rol admin.
    */
-  {
-    path: 'admin/home',
+  canMatch: [roleGuard],
 
-    loadComponent: () =>
-      import('./pages/admin/home/home')
-        .then(m => m.Home)
-  },
+  loadComponent: () =>
+    import('./layouts/admin-layout/admin-layout')
+      .then(m => m.AdminLayout),
+
+  children: [
+
+    /*
+     * /admin/home
+     */
+    {
+      path: 'home',
+
+      /*
+       * Verificamos que exista una sesión activa
+       * antes de activar la pantalla.
+       */
+      canActivate: [authGuard],
+
+      loadComponent: () =>
+        import('./pages/admin/home/home')
+          .then(m => m.Home)
+    },
 
 
-  /*
-   * GESTIÓN DE PELÍCULAS
-   */
-  {
-    path: 'admin/peliculas',
+    /*
+     * /admin/peliculas
+     */
+    {
+      path: 'peliculas',
 
-    loadComponent: () =>
-      import('./pages/admin/peliculas/peliculas')
-        .then(m => m.Peliculas)
-  },
+      loadComponent: () =>
+        import('./pages/admin/peliculas/peliculas')
+          .then(m => m.Peliculas)
+    },
 
 
-  /*
-   * ALTA DE PELÍCULA
-   */
-  {
-    path: 'admin/peliculas/nueva',
+    /*
+     * /admin/peliculas/nueva
+     */
+    {
+      path: 'peliculas/nueva',
 
-    loadComponent: () =>
-      import(
-        './pages/admin/peliculas/nueva-pelicula/nueva-pelicula'
-      )
-        .then(m => m.NuevaPelicula)
-  },
+      loadComponent: () =>
+        import(
+          './pages/admin/peliculas/nueva-pelicula/nueva-pelicula'
+        )
+          .then(m => m.NuevaPelicula)
+    }
+
+  ]
+},
 
 
   /*

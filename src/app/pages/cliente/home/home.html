@@ -1,13 +1,95 @@
+<!--
+  NAVBAR PRINCIPAL DEL CLIENTE
+
+  Es un componente reutilizable que contiene
+  la navegación general de CineBera.
+
+  Al estar separado del Home, podemos reutilizarlo
+  en otras pantallas del cliente sin repetir código.
+-->
 <app-navbar></app-navbar>
+<!--
+  CONTENIDO PRINCIPAL DE LA CARTELERA
 
+  <main> representa el contenido principal de esta página.
+  La clase cliente-home se utiliza para aplicar los estilos
+  específicos de la pantalla desde home.css.
+-->
 <main class="cliente-home">
+  <!--
+    SECCIÓN CARTELERA
+    Home funciona como COMPONENTE PADRE.
+    Su responsabilidad es manejar la colección de películas
+    y crear un PeliculaCard por cada película disponible.
+  -->
+  <section class="cartelera">
+    <header class="cartelera-header">
+      <h1>
+        Cartelera
+      </h1>
+      <p>
+        Películas disponibles en CineBera.
+      </p>
+    </header>
+    <!--
+      LISTADO DE PELÍCULAS
+      @for es el control de flujo de Angular que permite
+      recorrer el array "peliculas" definido en home.ts.
+      En cada iteración:
+      - "pelicula" representa una película del array.
+      - "track pelicula.id" permite a Angular identificar
+        cada elemento de manera única.
+      El track mejora la actualización de la interfaz porque
+      Angular puede saber qué película cambió, se agregó
+      o se eliminó sin reconstruir innecesariamente todo
+      el listado.
+    -->
+    <div class="cartelera-listado">
+      @for (pelicula of peliculas; track pelicula.id) {
+        <!--
+          COMPONENTE HIJO: PeliculaCard
 
-  <header>
-    <h1>Cartelera</h1>
+          Home NO se encarga de definir cómo se muestra
+          visualmente cada película.
 
-    <p>
-      Películas disponibles en CineBera.
-    </p>
-  </header>
+          Esa responsabilidad pertenece a PeliculaCard.
 
+          [pelicula]="pelicula" utiliza PROPERTY BINDING
+          para enviar información desde el componente padre
+          hacia el componente hijo.
+
+          IZQUIERDA:
+          [pelicula]
+
+          corresponde al @Input declarado en PeliculaCard:
+
+          @Input({ required: true })
+          pelicula!: Pelicula;
+
+
+          DERECHA:
+          "pelicula"
+
+          corresponde a la variable creada por el @for
+          en la iteración actual.
+
+          Flujo:
+
+          Home
+            ↓
+          pelicula del @for
+            ↓
+          [pelicula]="pelicula"
+            ↓
+          @Input de PeliculaCard
+            ↓
+          PeliculaCard muestra la información
+        -->
+        <app-pelicula-card
+          [pelicula]="pelicula"
+          (peliculaSeleccionada)="seleccionarPelicula($event)">
+        </app-pelicula-card>
+      }
+    </div>
+  </section>
 </main>

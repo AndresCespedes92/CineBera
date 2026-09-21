@@ -13,15 +13,14 @@
     ← Volver al Dashboard
   </a>
 
-  <header class="peliculas-header">
+  <div class="peliculas-header">
 
-    <div>
-      <h1>Gestión de películas</h1>
-
-      <p>
-        Administrá las películas disponibles en CineBera.
-      </p>
-    </div>
+    <app-page-header>
+        <h1>Gestión de películas</h1>
+        <p>
+            Administrá las películas disponibles en CineBera.
+        </p>
+    </app-page-header>
 
     <a
       class="boton-nueva"
@@ -29,7 +28,7 @@
       Nueva película
     </a>
 
-  </header>
+  </div>
 
     <section class="buscador">
         <label for="buscarPelicula">
@@ -58,50 +57,59 @@
         <th>Acciones</th>
     </tr>
     </thead>
-    <tbody>
-    @for (pelicula of obtenerPeliculasFiltradas(); track pelicula.id) {
-        <tr>
+   <tbody>
+  @for (pelicula of obtenerPeliculasFiltradas(); track pelicula.id) {
+    <ng-container>
+      <tr>
         <td>
-            {{ pelicula.titulo }}
+          {{ pelicula.titulo }}
         </td>
         <td>
-            {{ pelicula.duracion }} min
+          {{ pelicula.duracion }} min
         </td>
         <td>
-            {{ pelicula.generos.join(', ') }}
+          {{ pelicula.generos.join(', ') }}
         </td>
         <td>
-            @if (pelicula.visible) {
+          @if (pelicula.visible) {
             Visible
-            } @else {
+          } @else {
             Oculta
-            }
+          }
         </td>
         <td>
-            <button type="button">
+          <button type="button">
             Editar
-            </button>
-            <button
+          </button>
+          <button
             type="button"
-            (click)='cambiarVisibilidad(pelicula)'>
-
+            (click)="cambiarVisibilidad(pelicula)">
             @if (pelicula.visible) {
-                Ocultar
+              Ocultar
             } @else {
-                Mostrar
+              Mostrar
             }
-            
-            </button>
+          </button>
         </td>
-        </tr>
-            } @empty {
-        <tr>
-            <td colspan="5">
-            No se encontraron películas.
-            </td>
-        </tr>
-        }
-    </tbody>
+      </tr>
+    </ng-container>
+  } @empty {
+<!-- NG CONTAINER-->
+  <ng-container
+    [ngTemplateOutlet]="sinPeliculas">
+  </ng-container>
+}
+</tbody>
+
+<!-- NG TEMPLATE-->
+<ng-template #sinPeliculas>
+  <tr>
+    <td colspan="5">
+      No se encontraron películas.
+    </td>
+  </tr>
+</ng-template>
+
 </table>
 </section>
 </main>

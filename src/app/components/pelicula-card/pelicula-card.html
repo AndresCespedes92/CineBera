@@ -1,0 +1,31 @@
+<article class="pelicula-card">
+  <h3>
+    {{ pelicula.titulo }}
+  </h3>
+  <p>
+    {{ pelicula.sinopsis }}
+  </p>
+  <p>
+    Duración:
+    {{ pelicula.duracion }} minutos
+  </p>
+  <p>
+    Clasificación:
+    {{ pelicula.clasificacionEdad }}
+  </p>
+</article>
+<!--
+  EVENT BINDING
+
+  (click) escucha el evento click del botón.
+
+  Cuando ocurre, Angular ejecuta el método
+  verFunciones() definido en pelicula-card.ts.
+-->
+<button
+  type="button"
+  (click)="verFunciones()">
+
+  Ver funciones
+
+</button>

@@ -5,9 +5,11 @@ import { Pelicula } from '../../../models/pelicula';
  */
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { PageHeader } from '../../../components/page-header/page-header';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PageHeader, NgTemplateOutlet],
   selector: 'app-peliculas',
   styleUrl: './peliculas.css',
   templateUrl: './peliculas.html',

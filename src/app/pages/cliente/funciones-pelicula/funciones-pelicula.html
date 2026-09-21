@@ -1,0 +1,41 @@
+<main class="funciones-pelicula">
+  <!--
+    pelicula puede contener una Pelicula
+    o ser undefined.
+
+    @if permite renderizar esta sección solamente
+    cuando la película fue encontrada.
+  -->
+  @if (pelicula) {
+    <header>
+      <h1>
+        Funciones de {{ pelicula.titulo }}
+      </h1>
+      <p>
+        {{ pelicula.sinopsis }}
+      </p>
+    </header>
+    <section>
+      <h2>
+        Funciones disponibles
+      </h2>
+      <p>
+        Próximamente mostraremos aquí
+        las funciones disponibles.
+      </p>
+    </section>
+  } @else {
+    <!--
+      Este bloque se muestra cuando el ID recibido
+      desde la URL no corresponde a una película.
+    -->
+    <section>
+      <h1>
+        Película no encontrada
+      </h1>
+      <p>
+        No existe una película con el ID solicitado.
+      </p>
+    </section>
+  }
+</main>

@@ -1,0 +1,21 @@
+<div class="admin-layout">
+  <!--
+    Parte fija del área administrativa.
+    No cambia cuando navegamos entre rutas hijas.
+  -->
+  <header class="admin-header">
+    <strong>
+      CineBera Administración
+    </strong>
+  </header>
+  <!--
+    Angular renderiza acá la ruta hija activa.
+    Ejemplos:
+    /admin/home
+    /admin/peliculas
+    /admin/peliculas/nueva
+  -->
+  <main class="admin-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
