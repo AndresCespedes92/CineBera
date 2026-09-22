@@ -1,291 +1,654 @@
 <main class="nueva-pelicula-page">
 
-  <!--
-    Navegación contextual:
-    esta pantalla pertenece a Gestión de Películas.
-  -->
+  <!-- =====================================================
+       NAVEGACIÓN
+       ===================================================== -->
+
   <a
     class="volver-peliculas"
     routerLink="/admin/peliculas">
+
     ← Volver a Películas
+
   </a>
+
+
+  <!-- =====================================================
+       ENCABEZADO
+       ===================================================== -->
 
   <header class="nueva-pelicula-header">
 
-    <h1>Nueva película</h1>
+    <h1>
+      Nueva película
+    </h1>
 
     <p>
-      Completá la información para agregar una película
-      a CineBera.
+      Buscá una película en TMDB y configurá
+      cómo estará disponible en CineBera.
     </p>
 
   </header>
 
-  <!--
-    Acá continúa el formulario que ya tenemos.
-  -->
+
+  <!-- =====================================================
+       LAYOUT PRINCIPAL
+
+       La pantalla se divide en dos columnas:
+
+       IZQUIERDA
+       → búsqueda y resultados TMDB
+
+       DERECHA
+       → película seleccionada
+       → configuración CineBera
+       ===================================================== -->
+
+  <div class="nueva-pelicula-layout">
 
 
-  <form
-    [formGroup]="peliculaForm"
-    (ngSubmit)="guardarPelicula()">
+    <!-- ===================================================
+         COLUMNA IZQUIERDA
+         BÚSQUEDA TMDB
+         =================================================== -->
+
+    <section class="busqueda-tmdb">
+
+      <div class="seccion-header">
+
+        <h2>
+          1. Buscar película
+        </h2>
+
+        <p>
+          Buscá y seleccioná una película.
+        </p>
+
+      </div>
 
 
-    <!-- TÍTULO -->
+      <!-- ===============================================
+           BUSCADOR
+           =============================================== -->
 
-    <div class="form-field">
+      <div class="busqueda-tmdb__form">
 
-        <label for="titulo">
-            Título
-        </label>
-<!-- TOUCHED EL USUARIO ENTRO AL CAMPO Y DSP SALIO - ESPERO QUE EL USUARIO INTERACTUE ANTES DEL ERROR -->
-        <input id="titulo" type="text" formControlName="titulo">
-        @if (
-        peliculaForm.controls.titulo.invalid &&
-        peliculaForm.controls.titulo.touched
-        ) {
-            <p class="error">
-            El título es obligatorio y debe tener al menos 2 caracteres.
-            </p>
-        }
-    </div>
-
-
-    <!-- SINOPSIS -->
-
-    <div class="form-field">
-
-      <label for="sinopsis">
-        Sinopsis
-      </label>
-
-      <textarea
-        id="sinopsis"
-        rows="5"
-        formControlName="sinopsis">
-      </textarea>
-
-    </div>
-
-
-    <!-- DURACIÓN -->
-
-    <div class="form-field">
-
-    <label for="duracion">
-        Duración en minutos
-    </label>
-
-    <input
-        id="duracion"
-        type="number"
-        formControlName="duracion">
-    </div>
-
-    <!-- Check Generos, Template Reference Variable para preguntar si esta True o False  -->
-    <div class="form-field">
-        <label>
-            Géneros
-        </label>
-        <div class="checkbox-group">
-            @for (genero of generosDisponibles;
-            track genero) {
-            <label class="checkbox-option">
-                <input
-                type="checkbox"
-                #checkboxGenero
-                (change)="cambiarGenero(genero, checkboxGenero.checked)">
-                {{ genero }}
-            </label>
-            }
-    </div>
-    </div>
-
-    <div class="form-field">
-    <label>
-        Formatos disponibles
-    </label>
-    <div class="checkbox-group">
-        @for (
-        formato of formatosDisponibles;
-        track formato
-        ) {
-        <label class="checkbox-option">
-            <input
-            type="checkbox"
-            #checkboxFormato
-            (change)="cambiarFormato(
-                formato,
-                checkboxFormato.checked
-            )">
-            {{ formato }}
-        </label>
-        }
-    </div>
-    </div>
-
-
-    <div class="form-field">
-  <label>
-    Idiomas
-  </label>
-  <div class="checkbox-group">
-    @for (
-      idioma of idiomasDisponibles;
-      track idioma
-    ) {
-      <label class="checkbox-option">
         <input
-          type="checkbox"
-          #checkboxIdioma
-          (change)="cambiarIdioma(
-            idioma,
-            checkboxIdioma.checked
-          )">
-        {{ idioma }}
-      </label>
-    }
-  </div>
-
-</div>
-    
-    <!-- PRECIO PREVENTA -->
-
-    <div class="form-field">
-
-      <label for="precioPreventa">
-        Precio preventa
-      </label>
-
-      <input
-        id="precioPreventa"
-        type="number"
-        formControlName="precioPreventa">
-
-    </div>
+          type="text"
+          placeholder="Ej: Batman"
+          [(ngModel)]="textoBusquedaTmdb">
 
 
-    <!-- PRECIO VENTA -->
-
-    <div class="form-field">
-
-      <label for="precioVenta">
-        Precio venta
-      </label>
-
-      <input
-        id="precioVenta"
-        type="number"
-        formControlName="precioVenta">
-
-    </div>
-
-
-    <!-- FECHA ESTRENO -->
-
-    <div class="form-field">
-
-      <label for="fechaEstreno">
-        Fecha de estreno
-      </label>
-
-      <input
-        id="fechaEstreno"
-        type="date"
-        formControlName="fechaEstreno">
-
-    </div>
-
-
-    <!-- CLASIFICACIÓN -->
-
-    <div class="form-field">
-
-      <label for="clasificacionEdad">
-        Clasificación por edad
-      </label>
-
-      <select
-        id="clasificacionEdad"
-        formControlName="clasificacionEdad">
-
-        <option value="ATP">
-          ATP
-        </option>
-
-        <option value="+13">
-          Apta para mayores de 13 años
-        </option>
-
-        <option value="+18">
-          Apta para mayores de 18 años
-        </option>
-
-      </select>
-
-    </div>
-
-
-    <!-- VISIBLE -->
-
-    <div class="form-checkbox">
-
-      <input
-        id="visible"
-        type="checkbox"
-        formControlName="visible">
-
-      <label for="visible">
-        Mostrar en cartelera
-      </label>
-
-    </div>
-
-    <!-- Imagenes - accept = image es q aceptamos eso - multiple, varias
-    event -> cuando cambie el input, mandame toda la información del evento. -->
-        <div class="form-field">
-      <label for="imagenes">
-        Imágenes
-      </label>
-      <input
-        id="imagenes"
-        type="file"
-        accept="image/*"
-        multiple
-        (change)="seleccionarImagenes($event)"
-      >
-    </div>
-
-      @if (imagenesPreview.length > 0) {
-    <div class="imagenes-preview">
-      @for (
-        imagen of imagenesPreview;
-        track imagen;
-        let i = $index
-      ) {
-        <div class="imagen-preview">
-        <img
-          [src]="imagen"
-          alt="Vista previa de película"
-        >
         <button
           type="button"
-          (click)="eliminarImagen(i)">
-          Quitar
+          (click)="buscarEnTmdb()">
+
+          Buscar
+
         </button>
+
       </div>
+
+
+      <!-- ===============================================
+           RESULTADOS
+           =============================================== -->
+
+      @if (resultadosTmdb.length > 0) {
+
+        <div class="resultados-tmdb">
+
+          @for (
+            pelicula of peliculasPaginadas;
+            track pelicula.id
+          ) {
+
+            <article class="resultado-tmdb">
+
+
+              <!-- PÓSTER -->
+
+              @if (pelicula.poster_path) {
+
+                <img
+                  class="resultado-tmdb__poster"
+                  [src]="
+                    obtenerPoster(
+                      pelicula.poster_path
+                    )
+                  "
+                  [alt]="
+                    'Póster de ' +
+                    pelicula.title
+                  ">
+
+              }
+
+
+              <!-- INFORMACIÓN -->
+
+              <div class="resultado-tmdb__info">
+
+                <h3>
+                  {{ pelicula.title }}
+                </h3>
+
+
+                @if (pelicula.release_date) {
+
+                  <small>
+                    {{ pelicula.release_date }}
+                  </small>
+
+                } @else {
+
+                  <small>
+                    Sin fecha
+                  </small>
+
+                }
+
+
+                <button
+                  type="button"
+                  (click)="
+                    seleccionarPeliculaTmdb(
+                      pelicula
+                    )
+                  ">
+
+                  Seleccionar
+
+                </button>
+
+              </div>
+
+            </article>
+
+          }
+
+        </div>
+
+
+        <!-- =============================================
+             PAGINACIÓN
+             ============================================= -->
+
+        <div class="paginacion-tmdb">
+
+          <button
+            type="button"
+            (click)="paginaAnterior()"
+            [disabled]="paginaActual === 1">
+
+            ←
+
+          </button>
+
+
+          <span>
+
+            {{ paginaActual }}
+            /
+            {{ totalPaginas }}
+
+          </span>
+
+
+          <button
+            type="button"
+            (click)="paginaSiguiente()"
+            [disabled]="
+              paginaActual === totalPaginas
+            ">
+
+            →
+
+          </button>
+
+        </div>
+
       }
-    </div>
-  }
 
-    <button
-      type="submit"
-      [disabled]="peliculaForm.invalid">
+    </section>
 
-      Guardar película
 
-    </button>
+    <!-- ===================================================
+         COLUMNA DERECHA
+         =================================================== -->
 
-  </form>
+    <section class="detalle-cinebera">
+
+
+      <!-- =================================================
+           TODAVÍA NO SELECCIONAMOS UNA PELÍCULA
+           ================================================= -->
+
+      @if (!peliculaTmdbSeleccionada) {
+
+        <div class="sin-pelicula-seleccionada">
+
+          <h2>
+            2. Película seleccionada
+          </h2>
+
+          <p>
+            Seleccioná una película de los resultados
+            para continuar con su configuración.
+          </p>
+
+        </div>
+
+      }
+
+
+      <!-- =================================================
+           PELÍCULA SELECCIONADA
+           ================================================= -->
+
+      @if (peliculaTmdbSeleccionada) {
+
+
+        <!-- ===============================================
+             INFORMACIÓN TMDB
+             =============================================== -->
+
+        <div class="pelicula-seleccionada">
+
+          <div class="seccion-header">
+
+            <h2>
+              2. Película seleccionada
+            </h2>
+
+          </div>
+
+
+          <div class="pelicula-seleccionada__contenido">
+
+
+            <!-- PÓSTER -->
+
+            @if (
+              peliculaTmdbSeleccionada.poster_path
+            ) {
+
+              <img
+                class="pelicula-seleccionada__poster"
+                [src]="
+                  obtenerPoster(
+                    peliculaTmdbSeleccionada.poster_path
+                  )
+                "
+                [alt]="
+                  'Póster de ' +
+                  peliculaTmdbSeleccionada.title
+                ">
+
+            }
+
+
+            <!-- INFORMACIÓN -->
+
+            <div class="pelicula-seleccionada__info">
+
+
+              <h3>
+                {{
+                  peliculaForm.controls
+                    .titulo.value
+                }}
+              </h3>
+
+
+              <!-- SINOPSIS -->
+
+              <p class="pelicula-sinopsis">
+
+                {{
+                  peliculaForm.controls
+                    .sinopsis.value
+                }}
+
+              </p>
+
+
+              <!-- DATOS PRINCIPALES -->
+
+              <div class="pelicula-datos">
+
+
+                <span>
+
+                  <strong>
+                    Duración:
+                  </strong>
+
+                  @if (detalleTmdbSeleccionado) {
+
+  <span>
+
+    <strong>
+      Duración:
+    </strong>
+
+    {{ detalleTmdbSeleccionado.runtime ?? 0 }}
+    min
+
+  </span>
+
+}
+
+                </span>
+
+
+                <span>
+
+                  <strong>
+                    Estreno:
+                  </strong>
+
+                  {{
+                    peliculaForm.controls
+                      .fechaEstreno.value
+                  }}
+
+                </span>
+
+
+                <span>
+
+                  <strong>
+                    TMDB:
+                  </strong>
+
+                  {{
+                    peliculaForm.controls
+                      .valoracion.value
+                  }}
+
+                </span>
+
+              </div>
+
+
+              <!-- GÉNEROS -->
+
+              @if (
+                generosSeleccionados.length > 0
+              ) {
+
+                <div class="generos">
+
+                  @for (
+                    genero of generosSeleccionados;
+                    track genero
+                  ) {
+
+                    <span class="genero">
+
+                      {{ genero }}
+
+                    </span>
+
+                  }
+
+                </div>
+
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ===============================================
+             CONFIGURACIÓN CINEBERA
+             =============================================== -->
+
+        <div class="configuracion-cinebera">
+
+          <div class="seccion-header">
+
+            <h2>
+              3. Configuración CineBera
+            </h2>
+
+            <p>
+              Completá únicamente los datos
+              propios del cine.
+            </p>
+
+          </div>
+
+
+          <form
+            [formGroup]="peliculaForm"
+            (ngSubmit)="guardarPelicula()">
+
+
+            <!-- ===========================================
+                 FORMATOS + IDIOMAS
+                 =========================================== -->
+
+            <div class="configuracion-fila">
+
+
+              <!-- FORMATOS -->
+
+              <div class="form-field">
+
+                <label>
+                  Formatos disponibles
+                </label>
+
+
+                <div class="checkbox-group">
+
+                  @for (
+                    formato of formatosDisponibles;
+                    track formato
+                  ) {
+
+                    <label class="checkbox-option">
+
+                      <input
+                        type="checkbox"
+                        #checkboxFormato
+                        (change)="
+                          cambiarFormato(
+                            formato,
+                            checkboxFormato.checked
+                          )
+                        ">
+
+                      {{ formato }}
+
+                    </label>
+
+                  }
+
+                </div>
+
+              </div>
+
+
+              <!-- IDIOMAS -->
+
+              <div class="form-field">
+
+                <label>
+                  Idiomas disponibles
+                </label>
+
+
+                <div class="checkbox-group">
+
+                  @for (
+                    idioma of idiomasDisponibles;
+                    track idioma
+                  ) {
+
+                    <label class="checkbox-option">
+
+                      <input
+                        type="checkbox"
+                        #checkboxIdioma
+                        (change)="
+                          cambiarIdioma(
+                            idioma,
+                            checkboxIdioma.checked
+                          )
+                        ">
+
+                      {{ idioma }}
+
+                    </label>
+
+                  }
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 PRECIOS
+                 =========================================== -->
+
+            <div class="configuracion-fila">
+
+
+              <!-- PRECIO PREVENTA -->
+
+              <div class="form-field">
+
+                <label for="precioPreventa">
+
+                  Precio preventa
+
+                </label>
+
+
+                <input
+                  id="precioPreventa"
+                  type="number"
+                  min="0"
+                  formControlName="precioPreventa">
+
+              </div>
+
+
+              <!-- PRECIO VENTA -->
+
+              <div class="form-field">
+
+                <label for="precioVenta">
+
+                  Precio venta
+
+                </label>
+
+
+                <input
+                  id="precioVenta"
+                  type="number"
+                  min="0"
+                  formControlName="precioVenta">
+
+              </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 CLASIFICACIÓN + VISIBILIDAD
+                 =========================================== -->
+
+            <div class="configuracion-fila">
+
+
+              <!-- CLASIFICACIÓN -->
+
+              <div class="form-field">
+
+                <label for="clasificacionEdad">
+
+                  Clasificación por edad
+
+                </label>
+
+
+                <select
+                  id="clasificacionEdad"
+                  formControlName="clasificacionEdad">
+
+                  <option value="ATP">
+                    ATP
+                  </option>
+
+                  <option value="+13">
+                    Mayores de 13 años
+                  </option>
+
+                  <option value="+18">
+                    Mayores de 18 años
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <!-- VISIBILIDAD -->
+
+              <div class="form-checkbox">
+
+                <input
+                  id="visible"
+                  type="checkbox"
+                  formControlName="visible">
+
+
+                <label for="visible">
+
+                  Mostrar en cartelera
+
+                </label>
+
+              </div>
+
+            </div>
+
+
+            <!-- ===========================================
+                 GUARDAR
+                 =========================================== -->
+
+            <div class="form-actions">
+
+              <button
+                type="submit"
+                [disabled]="peliculaForm.invalid">
+
+                Guardar película
+
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      }
+
+    </section>
+
+  </div>
 
 </main>

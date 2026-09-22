@@ -1,32 +1,39 @@
-import { Component } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component
+} from '@angular/core';
 
 import {
   FormControl,
   FormGroup,
+  FormsModule,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
+
+import { RouterLink } from '@angular/router';
 
 import {
   Pelicula,
   FormatoPelicula,
   ClasificacionEdad
 } from '../../../../models/pelicula';
-import { RouterLink } from '@angular/router';
+
+import {
+  TmdbDetallePelicula,
+  TmdbPelicula
+} from '../../../../models/tmdb-peliculas';
+
+import { TmdbService } from '../../../../services/tmdb';
 
 
 @Component({
   selector: 'app-nueva-pelicula',
 
-  /*
-   * Como este componente utiliza Reactive Forms,
-   * necesitamos importar ReactiveFormsModule.
-   *
-   * También reutilizamos el navbar administrativo.
-   */
   imports: [
     RouterLink,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    FormsModule
   ],
 
   templateUrl: './nueva-pelicula.html',
@@ -36,40 +43,147 @@ export class NuevaPelicula {
 
 
   // =====================================================
-  // OPCIONES DISPONIBLES
+  // DEPENDENCIAS
   // =====================================================
 
   /*
-   * Estas listas representan las opciones que el usuario
-   * puede seleccionar al crear una película.
+   * TmdbService:
+   * se encarga de comunicarse con la API de TMDB.
    *
-   * Por ahora son datos fijos.
-   * Más adelante algunos podrían venir desde Supabase.
+   * ChangeDetectorRef:
+   * nos permite indicarle a Angular que revise
+   * inmediatamente la vista cuando llega la segunda
+   * respuesta asíncrona de TMDB.
    */
+  constructor(
+    private tmdbService: TmdbService,
+    private changeDetectorRef: ChangeDetectorRef
+  ) {}
 
-  generosDisponibles: string[] = [
-    'Acción',
-    'Aventura',
-    'Ciencia ficción',
-    'Comedia',
-    'Drama',
-    'Terror',
-    'Animación',
-    'Crimen'
-  ];
+
+  // =====================================================
+  // BÚSQUEDA TMDB
+  // =====================================================
+
+  /*
+   * Texto que escribe el administrador
+   * en el buscador.
+   */
+  textoBusquedaTmdb: string = '';
 
 
   /*
-   * No usamos string[].
-   *
-   * Usamos FormatoPelicula[] porque en pelicula.ts
-   * definimos que solamente existen:
-   *
-   * '2D' | '3D' | '4D' | '5D'
-   *
-   * De esta manera TypeScript evita que podamos
-   * agregar por error algo como '6D'.
+   * Resultados obtenidos desde TMDB.
    */
+  resultadosTmdb: TmdbPelicula[] = [];
+
+
+  /*
+   * Película seleccionada desde los
+   * resultados de búsqueda.
+   *
+   * Contiene los datos básicos:
+   *
+   * título
+   * sinopsis
+   * póster
+   * fecha
+   * valoración
+   */
+  peliculaTmdbSeleccionada:
+    TmdbPelicula | null = null;
+
+
+  /*
+   * Contiene el detalle completo obtenido
+   * mediante /movie/{id}.
+   *
+   * Acá encontramos información adicional
+   * como duración y géneros.
+   */
+  detalleTmdbSeleccionado:
+    TmdbDetallePelicula | null = null;
+
+
+  // =====================================================
+  // PAGINACIÓN
+  // =====================================================
+
+  paginaActual: number = 1;
+
+  peliculasPorPagina: number = 10;
+
+
+  /*
+   * Devuelve solamente las películas
+   * correspondientes a la página actual.
+   *
+   * Ejemplo:
+   *
+   * página 1 → slice(0, 10)
+   * página 2 → slice(10, 20)
+   */
+  get peliculasPaginadas(): TmdbPelicula[] {
+
+    const inicio =
+      (this.paginaActual - 1) *
+      this.peliculasPorPagina;
+
+    const fin =
+      inicio +
+      this.peliculasPorPagina;
+
+    return this.resultadosTmdb.slice(
+      inicio,
+      fin
+    );
+  }
+
+
+  /*
+   * Calcula la cantidad total de páginas.
+   */
+  get totalPaginas(): number {
+
+    return Math.ceil(
+      this.resultadosTmdb.length /
+      this.peliculasPorPagina
+    );
+  }
+
+
+  paginaSiguiente(): void {
+
+    if (
+      this.paginaActual <
+      this.totalPaginas
+    ) {
+
+      this.paginaActual++;
+    }
+  }
+
+
+  paginaAnterior(): void {
+
+    if (this.paginaActual > 1) {
+
+      this.paginaActual--;
+    }
+  }
+
+
+  // =====================================================
+  // OPCIONES CINEBERA
+  // =====================================================
+
+  /*
+   * Estos datos NO vienen de TMDB.
+   *
+   * Representan las opciones que CineBera
+   * puede ofrecer para una película.
+   */
+
   formatosDisponibles: FormatoPelicula[] = [
     '2D',
     '3D',
@@ -84,15 +198,12 @@ export class NuevaPelicula {
   ];
 
 
-  /*
-   * También tipamos las clasificaciones usando
-   * el tipo ClasificacionEdad definido en pelicula.ts.
-   */
-  clasificacionesDisponibles: ClasificacionEdad[] = [
-    'ATP',
-    '+13',
-    '+18'
-  ];
+  clasificacionesDisponibles:
+    ClasificacionEdad[] = [
+      'ATP',
+      '+13',
+      '+18'
+    ];
 
 
   // =====================================================
@@ -100,32 +211,21 @@ export class NuevaPelicula {
   // =====================================================
 
   /*
-   * Estas propiedades guardan solamente las opciones
-   * seleccionadas por el usuario.
+   * Los géneros vienen automáticamente
+   * desde TMDB.
    */
-
   generosSeleccionados: string[] = [];
 
-  formatosSeleccionados: FormatoPelicula[] = [];
-
-  idiomasSeleccionados: string[] = [];
 
   /*
- * Archivos reales seleccionados por el usuario.
- *
- * File es un tipo nativo del navegador que representa
- * un archivo elegido desde el dispositivo.
- */
-imagenesSeleccionadas: File[] = [];
+   * Formatos e idiomas sí son seleccionados
+   * manualmente por el administrador.
+   */
+  formatosSeleccionados:
+    FormatoPelicula[] = [];
 
-
-/*
- * Estas URLs temporales nos permiten mostrar
- * una vista previa de las imágenes en pantalla.
- *
- * Todavía NO están guardadas en Supabase.
- */
-imagenesPreview: string[] = [];
+  idiomasSeleccionados:
+    string[] = [];
 
 
   // =====================================================
@@ -133,18 +233,14 @@ imagenesPreview: string[] = [];
   // =====================================================
 
   /*
-   * FormGroup representa el formulario completo.
+   * El formulario mantiene tanto los datos
+   * obtenidos desde TMDB como los datos
+   * propios de CineBera.
    *
-   * Cada FormControl representa un campo.
-   *
-   * Usamos nonNullable para indicar que estos controles
-   * siempre tendrán un valor y nunca serán null.
-   *
-   * Esto simplifica mucho el código al momento de
-   * construir finalmente nuestro objeto Pelicula.
+   * Algunos controles no se editan actualmente
+   * desde el HTML, pero nos sirven para preparar
+   * el objeto que luego enviaremos a Supabase.
    */
-
-
 
   peliculaForm = new FormGroup({
 
@@ -184,6 +280,20 @@ imagenesPreview: string[] = [];
     ),
 
 
+    /*
+     * Esta valoración es la recibida desde TMDB.
+     *
+     * Más adelante la diferenciaremos de
+     * las reseñas propias de CineBera.
+     */
+    valoracion: new FormControl(
+      0,
+      {
+        nonNullable: true
+      }
+    ),
+
+
     precioPreventa: new FormControl(
       0,
       {
@@ -219,15 +329,6 @@ imagenesPreview: string[] = [];
     ),
 
 
-    /*
-     * Este FormControl solamente acepta:
-     *
-     * ATP
-     * +13
-     * +18
-     *
-     * Esto evita tener que hacer un "as" más adelante.
-     */
     clasificacionEdad:
       new FormControl<ClasificacionEdad>(
         'ATP',
@@ -249,109 +350,243 @@ imagenesPreview: string[] = [];
 
   });
 
-   // =====================================================
-  // SELECCIÓN DE IMAGENES
+
   // =====================================================
+  // BUSCAR PELÍCULAS EN TMDB
+  // =====================================================
+
+  buscarEnTmdb(): void {
+
   /*
- * Se ejecuta cuando el usuario selecciona imágenes
- * desde el input type="file".
- */
-seleccionarImagenes(event: Event): void {
-  /*
-   * event.target representa el elemento HTML
-   * que disparó el evento.
-   *
-   * Le aclaramos a TypeScript que ese elemento
-   * es un input HTML.
+   * Evitamos consultar TMDB
+   * si el buscador está vacío.
    */
-  const input =
-    event.target as HTMLInputElement;
-  /*
-   * Si el usuario no seleccionó ningún archivo,
-   * terminamos el método.
-   */
-  if (!input.files) {
+  if (!this.textoBusquedaTmdb.trim()) {
     return;
   }
-  /*
-   * input.files no es exactamente un array normal.
-   *
-   * Array.from() lo transforma en un File[]
-   * para que podamos trabajar cómodamente.
-   */
-  const archivosSeleccionados =
-    Array.from(input.files);
-  /*
-   * Guardamos los archivos reales.
-   */
-  this.imagenesSeleccionadas =
-    archivosSeleccionados;
-  /*
-   * Antes de generar nuevos previews,
-   * liberamos las URLs temporales anteriores.
-   *
-   * Esto evita consumir memoria innecesariamente.
-   */
-  this.imagenesPreview.forEach(
-    url => URL.revokeObjectURL(url)
-  );
-  /*
-   * Por cada File creamos una URL temporal.
-   *
-   * Ejemplo conceptual:
-   *
-   * foto.jpg
-   *    ↓
-   * blob:http://localhost:4200/...
-   */
-  this.imagenesPreview =
-    this.imagenesSeleccionadas.map(
-      archivo =>
-        URL.createObjectURL(archivo)
-    );
-  console.log(
-    'Imágenes seleccionadas:',
-    this.imagenesSeleccionadas
-  );
+
+
+  this.tmdbService
+    .buscarPeliculas(
+      this.textoBusquedaTmdb
+    )
+    .subscribe({
+
+      next: (respuesta) => {
+
+        /*
+         * Guardamos los resultados
+         * obtenidos desde TMDB.
+         */
+        this.resultadosTmdb =
+          respuesta.results;
+
+
+        /*
+         * Cada búsqueda nueva comienza
+         * nuevamente en la página 1.
+         */
+        this.paginaActual = 1;
+
+
+        /*
+         * La respuesta de TMDB llega
+         * de manera asíncrona.
+         *
+         * Forzamos a Angular a revisar
+         * inmediatamente la vista para
+         * mostrar los resultados con
+         * un solo click.
+         */
+        this.changeDetectorRef
+          .detectChanges();
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error consultando TMDB:',
+          error
+        );
+
+      }
+
+    });
 
 }
 
 
   // =====================================================
-  // SELECCIÓN DE GÉNEROS
+  // SELECCIONAR PELÍCULA TMDB
+  // =====================================================
+
+  seleccionarPeliculaTmdb(
+    pelicula: TmdbPelicula
+  ): void {
+
+    /*
+     * Guardamos inmediatamente la película
+     * seleccionada desde los resultados.
+     */
+    this.peliculaTmdbSeleccionada =
+      pelicula;
+
+
+    /*
+     * Limpiamos el detalle anterior.
+     *
+     * Esto es importante si primero elegimos
+     * una película y después seleccionamos otra.
+     *
+     * No queremos mostrar durante unos milisegundos
+     * la duración o géneros de la película anterior.
+     */
+    this.detalleTmdbSeleccionado =
+      null;
+
+    this.generosSeleccionados = [];
+
+
+    /*
+     * La búsqueda de TMDB ya nos dio estos datos,
+     * por lo tanto podemos cargarlos inmediatamente.
+     */
+    this.peliculaForm.patchValue({
+
+      titulo:
+        pelicula.title,
+
+      sinopsis:
+        pelicula.overview,
+
+      fechaEstreno:
+        pelicula.release_date,
+
+      valoracion:
+        pelicula.vote_average,
+
+      /*
+       * Todavía no recibimos la duración.
+       *
+       * La dejamos temporalmente en 0 hasta
+       * recibir el detalle.
+       */
+      duracion: 0
+
+    });
+
+
+    /*
+     * Ahora hacemos una segunda consulta.
+     *
+     * Utilizamos el ID de TMDB para obtener
+     * información más completa.
+     */
+    this.tmdbService
+      .obtenerDetallePelicula(
+        pelicula.id
+      )
+      .subscribe({
+
+        next: (detalle) => {
+
+          /*
+           * Guardamos el detalle completo.
+           */
+          this.detalleTmdbSeleccionado =
+            detalle;
+
+
+          /*
+           * TMDB devuelve:
+           *
+           * [
+           *   {
+           *     id: 12,
+           *     name: 'Aventura'
+           *   },
+           *   {
+           *     id: 878,
+           *     name: 'Ciencia ficción'
+           *   }
+           * ]
+           *
+           * Con map() generamos:
+           *
+           * [
+           *   'Aventura',
+           *   'Ciencia ficción'
+           * ]
+           */
+          this.generosSeleccionados =
+            detalle.genres.map(
+              genero => genero.name
+            );
+
+
+          /*
+           * Actualizamos la duración dentro
+           * de nuestro Reactive Form.
+           *
+           * Si TMDB devuelve null,
+           * utilizamos 0.
+           */
+          this.peliculaForm.patchValue({
+
+            duracion:
+              detalle.runtime ?? 0
+
+          });
+
+
+          /*
+           * La consulta de detalle es asíncrona.
+           *
+           * Forzamos una revisión de la vista
+           * después de actualizar duración,
+           * géneros y detalle.
+           */
+          this.changeDetectorRef
+            .detectChanges();
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error obteniendo detalle de TMDB:',
+            error
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // PÓSTER TMDB
   // =====================================================
 
   /*
-   * Cuando se marca un checkbox:
-   * agregamos el género con push().
+   * TMDB devuelve solamente algo parecido a:
    *
-   * Cuando se desmarca:
-   * lo eliminamos usando filter().
+   * /abc123.jpg
+   *
+   * El servicio construye la URL completa.
    */
-  cambiarGenero(
-    genero: string,
-    seleccionado: boolean
-  ): void {
+  obtenerPoster(
+    posterPath: string | null
+  ): string {
 
-    if (seleccionado) {
-
-      this.generosSeleccionados.push(genero);
-
-    } else {
-
-      this.generosSeleccionados =
-        this.generosSeleccionados.filter(
-          item => item !== genero
-        );
-
-    }
-
-
-    console.log(
-      'Géneros seleccionados:',
-      this.generosSeleccionados
-    );
-
+    return this.tmdbService
+      .obtenerUrlPoster(
+        posterPath
+      );
   }
 
 
@@ -359,13 +594,6 @@ seleccionarImagenes(event: Event): void {
   // SELECCIÓN DE FORMATOS
   // =====================================================
 
-  /*
-   * El parámetro formato también utiliza
-   * el tipo FormatoPelicula.
-   *
-   * Por eso este método nunca debería recibir
-   * un formato inválido.
-   */
   cambiarFormato(
     formato: FormatoPelicula,
     seleccionado: boolean
@@ -373,22 +601,31 @@ seleccionarImagenes(event: Event): void {
 
     if (seleccionado) {
 
-      this.formatosSeleccionados.push(formato);
+      /*
+       * includes() evita agregar el mismo
+       * formato dos veces.
+       */
+      if (
+        !this.formatosSeleccionados
+          .includes(formato)
+      ) {
+
+        this.formatosSeleccionados
+          .push(formato);
+      }
 
     } else {
 
+      /*
+       * filter() genera un nuevo array
+       * sin el formato desmarcado.
+       */
       this.formatosSeleccionados =
         this.formatosSeleccionados.filter(
           item => item !== formato
         );
 
     }
-
-
-    console.log(
-      'Formatos seleccionados:',
-      this.formatosSeleccionados
-    );
 
   }
 
@@ -404,7 +641,14 @@ seleccionarImagenes(event: Event): void {
 
     if (seleccionado) {
 
-      this.idiomasSeleccionados.push(idioma);
+      if (
+        !this.idiomasSeleccionados
+          .includes(idioma)
+      ) {
+
+        this.idiomasSeleccionados
+          .push(idioma);
+      }
 
     } else {
 
@@ -415,70 +659,38 @@ seleccionarImagenes(event: Event): void {
 
     }
 
-
-    console.log(
-      'Idiomas seleccionados:',
-      this.idiomasSeleccionados
-    );
-
   }
-
-  /*
- * Elimina una imagen seleccionada antes
- * de guardar la película.
- */
-eliminarImagen(indice: number): void {
-  /*
-   * Liberamos la URL temporal.
-   */
-  URL.revokeObjectURL(
-    this.imagenesPreview[indice]
-  );
-  /*
-   * Eliminamos el archivo real.
-   */
-  this.imagenesSeleccionadas.splice(
-    indice,
-    1
-  );
-
-
-  /*
-   * Eliminamos también su preview.
-   */
-  this.imagenesPreview.splice(
-    indice,
-    1
-  );
-
-}
 
 
   // =====================================================
   // GUARDAR PELÍCULA
   // =====================================================
 
-  /*
-   * Este método se ejecuta cuando el usuario
-   * envía el formulario.
-   */
   guardarPelicula(): void {
 
 
-    // ---------------------------------------------------
-    // 1. Validamos los FormControl
-    // ---------------------------------------------------
+    // -----------------------------------------------------
+    // 1. Debe existir una película seleccionada desde TMDB
+    // -----------------------------------------------------
+
+    if (!this.peliculaTmdbSeleccionada) {
+
+      console.log(
+        'Debe seleccionar una película desde TMDB.'
+      );
+
+      return;
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Validamos el Reactive Form
+    // -----------------------------------------------------
 
     if (this.peliculaForm.invalid) {
 
-      /*
-       * Marcamos todos los campos como touched.
-       *
-       * Esto permite que los mensajes de validación
-       * aparezcan aunque el usuario haya intentado
-       * guardar sin tocar algunos campos.
-       */
-      this.peliculaForm.markAllAsTouched();
+      this.peliculaForm
+        .markAllAsTouched();
 
       console.log(
         'El formulario contiene errores.'
@@ -488,78 +700,88 @@ eliminarImagen(indice: number): void {
     }
 
 
-    // ---------------------------------------------------
-    // 2. Validamos opciones múltiples
-    // ---------------------------------------------------
+    // -----------------------------------------------------
+    // 3. Validamos géneros
+    // -----------------------------------------------------
 
     /*
-     * Los géneros, formatos e idiomas todavía
-     * no forman parte directamente del FormGroup.
+     * Los géneros ya no son seleccionados
+     * manualmente.
      *
-     * Por eso hacemos estas validaciones manualmente.
+     * Deben haber sido obtenidos desde TMDB.
      */
+    if (
+      this.generosSeleccionados.length === 0
+    ) {
 
-    if (this.generosSeleccionados.length === 0) {
       console.log(
-        'Debe seleccionar al menos un género.'
+        'TMDB no proporcionó géneros para esta película.'
       );
+
       return;
     }
-    if (this.formatosSeleccionados.length === 0) {
+
+
+    // -----------------------------------------------------
+    // 4. Validamos formatos CineBera
+    // -----------------------------------------------------
+
+    if (
+      this.formatosSeleccionados.length === 0
+    ) {
+
       console.log(
         'Debe seleccionar al menos un formato.'
       );
+
       return;
     }
-    if (this.idiomasSeleccionados.length === 0) {
+
+
+    // -----------------------------------------------------
+    // 5. Validamos idiomas CineBera
+    // -----------------------------------------------------
+
+    if (
+      this.idiomasSeleccionados.length === 0
+    ) {
+
       console.log(
         'Debe seleccionar al menos un idioma.'
       );
-      return;
-    }
-    if (this.imagenesSeleccionadas.length === 0) {
-      console.log(
-        'Debe seleccionar al menos una imagen.'
-      );
+
       return;
     }
 
 
-    // ---------------------------------------------------
-    // 3. Construimos el objeto Pelicula
-    // ---------------------------------------------------
-
-    /*
-     * En este punto transformamos los datos
-     * del formulario en un objeto de nuestro
-     * modelo Pelicula.
-     *
-     * Gracias a nonNullable ya no necesitamos
-     * utilizar ?? '' o ?? 0.
-     */
+    // -----------------------------------------------------
+    // 6. Construimos nuestro objeto Pelicula
+    // -----------------------------------------------------
 
     const nuevaPelicula: Pelicula = {
 
       /*
-       * Por ahora usamos un ID temporal.
+       * ID temporal.
        *
-       * Cuando trabajemos con Supabase,
-       * normalmente será la base de datos
-       * quien genere el identificador.
+       * En el próximo bloque Supabase
+       * generará nuestro ID real.
        */
-      id: 4,
+      id: 0,
 
 
       titulo:
-        this.peliculaForm.controls.titulo.value,
+        this.peliculaForm.controls
+          .titulo.value,
 
 
       sinopsis:
-        this.peliculaForm.controls.sinopsis.value,
+        this.peliculaForm.controls
+          .sinopsis.value,
 
 
       duracion:
-        this.peliculaForm.controls.duracion.value,
+        this.peliculaForm.controls
+          .duracion.value,
 
 
       generos:
@@ -574,14 +796,21 @@ eliminarImagen(indice: number): void {
         this.idiomasSeleccionados,
 
 
-            /*
-      * Por ahora usamos URLs temporales del navegador.
-      *
-      * Cuando conectemos Supabase Storage,
-      * acá irán las URLs reales guardadas en la nube.
-      */
+      /*
+       * Ya no cargamos imágenes manualmente.
+       *
+       * Utilizamos el póster proporcionado
+       * por TMDB.
+       */
       imagenes:
-        this.imagenesPreview,
+        this.peliculaTmdbSeleccionada.poster_path
+          ? [
+              this.obtenerPoster(
+                this.peliculaTmdbSeleccionada
+                  .poster_path
+              )
+            ]
+          : [],
 
 
       precioPreventa:
@@ -600,43 +829,45 @@ eliminarImagen(indice: number): void {
 
 
       /*
-       * Una película nueva todavía no recibió
-       * ninguna reseña.
+       * IMPORTANTE:
+       *
+       * Por ahora nuestro modelo Pelicula
+       * utiliza valoracion para las reseñas
+       * propias de CineBera.
+       *
+       * Una película nueva todavía no tiene
+       * reseñas internas.
+       *
+       * La valoración de TMDB se mantiene
+       * separada en el formulario/detalle.
        */
       valoracion: 0,
+
 
       cantidadResenas: 0,
 
 
-      /*
-       * Este valor ya está correctamente tipado
-       * como ClasificacionEdad.
-       *
-       * No necesitamos usar:
-       *
-       * as 'ATP' | '+13' | '+18'
-       */
       clasificacionEdad:
         this.peliculaForm.controls
           .clasificacionEdad.value,
 
 
       visible:
-        this.peliculaForm.controls.visible.value
+        this.peliculaForm.controls
+          .visible.value
 
     };
 
 
-    // ---------------------------------------------------
-    // 4. Resultado
-    // ---------------------------------------------------
+    // -----------------------------------------------------
+    // 7. RESULTADO TEMPORAL
+    // -----------------------------------------------------
 
     /*
-     * Por ahora solamente mostramos el resultado
-     * en la consola.
+     * Todavía no guardamos en Supabase.
      *
-     * Más adelante este objeto será enviado
-     * a un Service y finalmente a Supabase.
+     * Primero verificamos que el objeto final
+     * tenga exactamente los datos esperados.
      */
     console.log(
       'Película preparada para guardar:',

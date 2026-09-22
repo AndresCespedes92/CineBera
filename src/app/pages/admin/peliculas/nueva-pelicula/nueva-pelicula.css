@@ -1,169 +1,493 @@
+/* =========================================================
+   PÁGINA
+   ========================================================= */
+
 .nueva-pelicula-page {
-  min-height: 100vh;
-  padding: 32px;
-
-  background-color: #f5f5f5;
-  color: #222222;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 20px;
 }
-
-/* Navegación contextual */
-
-.volver-peliculas {
-  display: inline-block;
-
-  margin-bottom: 24px;
-
-  color: #444444;
-
-  text-decoration: none;
-}
-
-.volver-peliculas:hover {
-  text-decoration: underline;
-}
-
-/* Encabezado */
 
 .nueva-pelicula-header {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .nueva-pelicula-header h1 {
-  margin: 0 0 8px;
+  margin-bottom: 4px;
 }
 
 .nueva-pelicula-header p {
   margin: 0;
-
-  color: #666666;
 }
 
-form {
-  max-width: 700px;
-
-  padding: 24px;
-
-  background-color: #ffffff;
-
-  border: 1px solid #cccccc;
+.volver-peliculas {
+  display: inline-block;
+  margin-bottom: 12px;
 }
 
-.form-field {
+
+/* =========================================================
+   LAYOUT PRINCIPAL
+
+   IZQUIERDA → TMDB
+   DERECHA   → película + CineBera
+   ========================================================= */
+
+.nueva-pelicula-layout {
+  display: grid;
+
+  grid-template-columns:
+    minmax(420px, 0.9fr)
+    minmax(600px, 1.4fr);
+
+  gap: 20px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   PANELES
+   ========================================================= */
+
+.busqueda-tmdb,
+.detalle-cinebera {
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  padding: 16px;
+}
+
+.seccion-header {
+  margin-bottom: 12px;
+}
+
+.seccion-header h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.seccion-header p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   BUSCADOR
+   ========================================================= */
+
+.busqueda-tmdb__form {
   display: flex;
-  flex-direction: column;
+  gap: 8px;
 
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
-.form-field label {
-  margin-bottom: 6px;
+.busqueda-tmdb__form input {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 8px 10px;
+
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
 }
 
-.form-field input,
-.form-field textarea,
-.form-field select {
-  padding: 10px;
-
-  border: 1px solid #aaaaaa;
+.busqueda-tmdb__form button {
+  padding: 8px 14px;
 }
 
-.form-checkbox {
+
+/* =========================================================
+   RESULTADOS TMDB
+
+   2 columnas × 5 filas = 10 resultados.
+   ========================================================= */
+
+.resultados-tmdb {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 8px;
+}
+
+
+/* =========================================================
+   TARJETA TMDB
+   ========================================================= */
+
+.resultado-tmdb {
   display: flex;
   align-items: center;
 
+  min-width: 0;
+
   gap: 8px;
 
-  margin-bottom: 20px;
+  padding: 7px;
+
+  border: 1px solid #dddddd;
+  border-radius: 5px;
+
+  background: #fafafa;
 }
 
-button {
-  padding: 10px 18px;
 
-  background-color: #444444;
-  color: #ffffff;
+/* Póster pequeño */
 
-  border: none;
-  cursor: pointer;
+.resultado-tmdb__poster {
+  width: 42px;
+  height: 62px;
+
+  object-fit: cover;
+
+  flex-shrink: 0;
+
+  border-radius: 3px;
 }
 
-button:disabled {
-  background-color: #aaaaaa;
-  cursor: not-allowed;
+
+/* Información */
+
+.resultado-tmdb__info {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 3px;
 }
 
-.error {
-  margin-top: 6px;
+.resultado-tmdb__info h3 {
+  margin: 0;
 
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1.2;
 
-  color: #555555;
+  overflow: hidden;
+
+  display: -webkit-box;
+
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.checkbox-group {
+.resultado-tmdb__info small {
+  font-size: 11px;
+}
+
+.resultado-tmdb__info button {
+  width: fit-content;
+
+  padding: 3px 7px;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   PAGINACIÓN
+   ========================================================= */
+
+.paginacion-tmdb {
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 12px;
+}
+
+.paginacion-tmdb button {
+  min-width: 34px;
+
+  padding: 5px 8px;
+}
+
+.paginacion-tmdb span {
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   ESTADO SIN PELÍCULA
+   ========================================================= */
+
+.sin-pelicula-seleccionada {
+  min-height: 180px;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+}
+
+.sin-pelicula-seleccionada h2 {
+  margin-bottom: 5px;
+}
+
+
+/* =========================================================
+   PELÍCULA SELECCIONADA
+   ========================================================= */
+
+.pelicula-seleccionada {
+  padding-bottom: 16px;
+
+  border-bottom: 1px solid #dddddd;
+}
+
+
+/*
+ * Póster a la izquierda.
+ * Información a la derecha.
+ */
+
+.pelicula-seleccionada__contenido {
+  display: grid;
+
+  grid-template-columns:
+    110px 1fr;
+
+  gap: 16px;
+}
+
+
+/* Póster seleccionado */
+
+.pelicula-seleccionada__poster {
+  width: 110px;
+  height: 165px;
+
+  object-fit: cover;
+
+  border-radius: 5px;
+}
+
+
+/* Información */
+
+.pelicula-seleccionada__info {
+  min-width: 0;
+}
+
+.pelicula-seleccionada__info h3 {
+  margin: 0 0 7px;
+
+  font-size: 20px;
+}
+
+
+/* Sinopsis */
+
+.pelicula-sinopsis {
+  margin: 0 0 10px;
+
+  font-size: 13px;
+  line-height: 1.4;
+
+  /*
+   * Evitamos que una sinopsis enorme
+   * haga crecer demasiado la pantalla.
+   */
+
+  display: -webkit-box;
+
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+
+/* Datos película */
+
+.pelicula-datos {
   display: flex;
   flex-wrap: wrap;
 
   gap: 12px;
 
-  margin-top: 8px;
+  margin-bottom: 10px;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   GÉNEROS
+   ========================================================= */
+
+.generos {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 5px;
+}
+
+.genero {
+  padding: 3px 7px;
+
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+
+  background: #f3f3f3;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   CONFIGURACIÓN CINEBERA
+   ========================================================= */
+
+.configuracion-cinebera {
+  padding-top: 16px;
+}
+
+
+/*
+ * Dos campos por fila.
+ */
+
+.configuracion-fila {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 16px;
+
+  margin-bottom: 14px;
+}
+
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.form-field > label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.form-field input[type="number"],
+.form-field select {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 8px;
+
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+}
+
+
+/* =========================================================
+   CHECKBOXES
+   ========================================================= */
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 6px;
 }
 
 .checkbox-option {
   display: flex;
   align-items: center;
 
-  gap: 6px;
+  gap: 4px;
 
-  padding: 8px 12px;
+  padding: 5px 8px;
 
-  background-color: #f2f2f2;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
 
-  border: 1px solid #cccccc;
+  font-size: 12px;
 }
 
-.imagenes-preview {
+.form-checkbox {
   display: flex;
-  flex-wrap: wrap;
 
-  gap: 12px;
+  align-items: center;
 
-  margin-top: 12px;
+  gap: 7px;
+
+  padding-top: 24px;
 }
 
-.imagen-preview {
-  width: 140px;
-  height: 200px;
 
-  border: 1px solid #cccccc;
+/* =========================================================
+   ACCIONES
+   ========================================================= */
 
-  overflow: hidden;
+.form-actions {
+  display: flex;
 
-  background-color: #eeeeee;
+  justify-content: flex-end;
+
+  margin-top: 16px;
 }
 
-.imagen-preview img {
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
+.form-actions button {
+  padding: 9px 18px;
 }
 
-.imagen-preview {
-  position: relative;
+
+/* =========================================================
+   RESPONSIVE
+
+   En pantallas pequeñas dejamos de utilizar
+   dos columnas.
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+  .nueva-pelicula-layout {
+    grid-template-columns: 1fr;
+  }
+
 }
 
-.imagen-preview button {
-  position: absolute;
 
-  bottom: 6px;
-  left: 6px;
-  right: 6px;
+@media (max-width: 600px) {
 
-  padding: 6px;
+  .resultados-tmdb {
+    grid-template-columns: 1fr;
+  }
 
-  background-color: #ffffff;
+  .configuracion-fila {
+    grid-template-columns: 1fr;
+  }
 
-  border: 1px solid #999999;
+  .pelicula-seleccionada__contenido {
+    grid-template-columns: 90px 1fr;
+  }
 
-  cursor: pointer;
+  .pelicula-seleccionada__poster {
+    width: 90px;
+    height: 135px;
+  }
+
 }
