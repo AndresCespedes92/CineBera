@@ -85,3 +85,51 @@ export interface Pelicula {
   visible: boolean;
 
 }
+
+export interface NuevaPeliculaSupabase {
+
+  tmdb_id: number;
+
+  titulo: string;
+
+  sinopsis: string;
+
+  duracion: number;
+
+  generos: string[];
+
+  formatos: FormatoPelicula[];
+
+  idiomas: string[];
+
+  poster_url: string | null;
+
+  precio_preventa: number;
+
+  precio_venta: number;
+
+  /*
+ * Fecha original informada por TMDB.
+ */
+fecha_estreno_tmdb: string;
+
+
+/*
+ * Fecha desde la cual CineBera
+ * estrenará la película.
+ *
+ * Esta fecha la decide el administrador.
+ */
+fecha_estreno_cinebera: string;
+
+  valoracion_tmdb: number;
+
+  valoracion_cinebera: number;
+
+  cantidad_resenas: number;
+
+  clasificacion_edad: ClasificacionEdad;
+
+  visible: boolean;
+
+}

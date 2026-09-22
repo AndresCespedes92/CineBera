@@ -34,14 +34,11 @@
   <!-- =====================================================
        LAYOUT PRINCIPAL
 
-       La pantalla se divide en dos columnas:
+       IZQUIERDA:
+       búsqueda y resultados TMDB.
 
-       IZQUIERDA
-       → búsqueda y resultados TMDB
-
-       DERECHA
-       → película seleccionada
-       → configuración CineBera
+       DERECHA:
+       película seleccionada y configuración CineBera.
        ===================================================== -->
 
   <div class="nueva-pelicula-layout">
@@ -49,7 +46,6 @@
 
     <!-- ===================================================
          COLUMNA IZQUIERDA
-         BÚSQUEDA TMDB
          =================================================== -->
 
     <section class="busqueda-tmdb">
@@ -68,7 +64,7 @@
 
 
       <!-- ===============================================
-           BUSCADOR
+           BUSCADOR TMDB
            =============================================== -->
 
       <div class="busqueda-tmdb__form">
@@ -91,7 +87,7 @@
 
 
       <!-- ===============================================
-           RESULTADOS
+           RESULTADOS TMDB
            =============================================== -->
 
       @if (resultadosTmdb.length > 0) {
@@ -112,15 +108,8 @@
 
                 <img
                   class="resultado-tmdb__poster"
-                  [src]="
-                    obtenerPoster(
-                      pelicula.poster_path
-                    )
-                  "
-                  [alt]="
-                    'Póster de ' +
-                    pelicula.title
-                  ">
+                  [src]="obtenerPoster(pelicula.poster_path)"
+                  [alt]="'Póster de ' + pelicula.title">
 
               }
 
@@ -151,11 +140,7 @@
 
                 <button
                   type="button"
-                  (click)="
-                    seleccionarPeliculaTmdb(
-                      pelicula
-                    )
-                  ">
+                  (click)="seleccionarPeliculaTmdb(pelicula)">
 
                   Seleccionar
 
@@ -187,20 +172,14 @@
 
 
           <span>
-
-            {{ paginaActual }}
-            /
-            {{ totalPaginas }}
-
+            {{ paginaActual }} / {{ totalPaginas }}
           </span>
 
 
           <button
             type="button"
             (click)="paginaSiguiente()"
-            [disabled]="
-              paginaActual === totalPaginas
-            ">
+            [disabled]="paginaActual === totalPaginas">
 
             →
 
@@ -221,7 +200,7 @@
 
 
       <!-- =================================================
-           TODAVÍA NO SELECCIONAMOS UNA PELÍCULA
+           SIN PELÍCULA SELECCIONADA
            ================================================= -->
 
       @if (!peliculaTmdbSeleccionada) {
@@ -250,7 +229,7 @@
 
 
         <!-- ===============================================
-             INFORMACIÓN TMDB
+             INFORMACIÓN OBTENIDA DESDE TMDB
              =============================================== -->
 
         <div class="pelicula-seleccionada">
@@ -269,9 +248,7 @@
 
             <!-- PÓSTER -->
 
-            @if (
-              peliculaTmdbSeleccionada.poster_path
-            ) {
+            @if (peliculaTmdbSeleccionada.poster_path) {
 
               <img
                 class="pelicula-seleccionada__poster"
@@ -292,6 +269,8 @@
 
             <div class="pelicula-seleccionada__info">
 
+
+              <!-- TÍTULO -->
 
               <h3>
                 {{
@@ -318,6 +297,8 @@
               <div class="pelicula-datos">
 
 
+                <!-- DURACIÓN -->
+
                 <span>
 
                   <strong>
@@ -326,35 +307,37 @@
 
                   @if (detalleTmdbSeleccionado) {
 
-  <span>
+                    {{
+                      detalleTmdbSeleccionado.runtime ?? 0
+                    }}
+                    min
 
-    <strong>
-      Duración:
-    </strong>
+                  } @else {
 
-    {{ detalleTmdbSeleccionado.runtime ?? 0 }}
-    min
+                    Cargando...
 
-  </span>
-
-}
+                  }
 
                 </span>
 
+
+                <!-- FECHA ORIGINAL TMDB -->
 
                 <span>
 
                   <strong>
-                    Estreno:
+                    Estreno original:
                   </strong>
 
                   {{
                     peliculaForm.controls
-                      .fechaEstreno.value
+                      .fechaEstrenoTmdb.value
                   }}
 
                 </span>
 
+
+                <!-- VALORACIÓN TMDB -->
 
                 <span>
 
@@ -374,9 +357,7 @@
 
               <!-- GÉNEROS -->
 
-              @if (
-                generosSeleccionados.length > 0
-              ) {
+              @if (generosSeleccionados.length > 0) {
 
                 <div class="generos">
 
@@ -386,9 +367,7 @@
                   ) {
 
                     <span class="genero">
-
                       {{ genero }}
-
                     </span>
 
                   }
@@ -405,7 +384,7 @@
 
 
         <!-- ===============================================
-             CONFIGURACIÓN CINEBERA
+             CONFIGURACIÓN PROPIA DE CINEBERA
              =============================================== -->
 
         <div class="configuracion-cinebera">
@@ -517,6 +496,84 @@
 
 
             <!-- ===========================================
+                 FECHA DE ESTRENO CINEBERA
+                 =========================================== -->
+
+            <div class="form-field">
+
+              <label>
+                Fecha de estreno en CineBera
+              </label>
+
+
+              <div class="fecha-selects">
+
+
+                <!-- DÍA -->
+
+                <select
+                  formControlName="diaEstrenoCinebera">
+
+                  <option value="">
+                    Día
+                  </option>
+
+                  @for (dia of dias; track dia) {
+
+                    <option [value]="dia">
+                      {{ dia }}
+                    </option>
+
+                  }
+
+                </select>
+
+
+                <!-- MES -->
+
+                <select
+                  formControlName="mesEstrenoCinebera">
+
+                  <option value="">
+                    Mes
+                  </option>
+
+                  @for (mes of meses; track mes) {
+
+                    <option [value]="mes">
+                      {{ mes }}
+                    </option>
+
+                  }
+
+                </select>
+
+
+                <!-- AÑO -->
+
+                <select
+                  formControlName="anioEstrenoCinebera">
+
+                  <option value="">
+                    Año
+                  </option>
+
+                  @for (anio of anios; track anio) {
+
+                    <option [value]="anio">
+                      {{ anio }}
+                    </option>
+
+                  }
+
+                </select>
+
+              </div>
+
+            </div>
+
+
+            <!-- ===========================================
                  PRECIOS
                  =========================================== -->
 
@@ -528,11 +585,8 @@
               <div class="form-field">
 
                 <label for="precioPreventa">
-
                   Precio preventa
-
                 </label>
-
 
                 <input
                   id="precioPreventa"
@@ -548,11 +602,8 @@
               <div class="form-field">
 
                 <label for="precioVenta">
-
                   Precio venta
-
                 </label>
-
 
                 <input
                   id="precioVenta"
@@ -572,14 +623,12 @@
             <div class="configuracion-fila">
 
 
-              <!-- CLASIFICACIÓN -->
+              <!-- CLASIFICACIÓN POR EDAD -->
 
               <div class="form-field">
 
                 <label for="clasificacionEdad">
-
                   Clasificación por edad
-
                 </label>
 
 
@@ -587,17 +636,29 @@
                   id="clasificacionEdad"
                   formControlName="clasificacionEdad">
 
-                  <option value="ATP">
-                    ATP
-                  </option>
+                  @for (
+                    clasificacion
+                    of clasificacionesDisponibles;
+                    track clasificacion
+                  ) {
 
-                  <option value="+13">
-                    Mayores de 13 años
-                  </option>
+                    <option [value]="clasificacion">
 
-                  <option value="+18">
-                    Mayores de 18 años
-                  </option>
+                      @if (clasificacion === 'ATP') {
+                        ATP
+                      }
+
+                      @if (clasificacion === '+13') {
+                        Mayores de 13 años
+                      }
+
+                      @if (clasificacion === '+18') {
+                        Mayores de 18 años
+                      }
+
+                    </option>
+
+                  }
 
                 </select>
 
@@ -615,9 +676,7 @@
 
 
                 <label for="visible">
-
                   Mostrar en cartelera
-
                 </label>
 
               </div>
@@ -626,8 +685,8 @@
 
 
             <!-- ===========================================
-                 GUARDAR
-                 =========================================== -->
+            GUARDAR
+              =========================================== -->
 
             <div class="form-actions">
 

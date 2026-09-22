@@ -14,9 +14,9 @@ import {
 import { RouterLink } from '@angular/router';
 
 import {
-  Pelicula,
   FormatoPelicula,
-  ClasificacionEdad
+  ClasificacionEdad,
+  NuevaPeliculaSupabase
 } from '../../../../models/pelicula';
 
 import {
@@ -24,7 +24,13 @@ import {
   TmdbPelicula
 } from '../../../../models/tmdb-peliculas';
 
-import { TmdbService } from '../../../../services/tmdb';
+import {
+  TmdbService
+} from '../../../../services/tmdb';
+
+import {
+  PeliculaService
+} from '../../../../services/pelicula';
 
 
 @Component({
@@ -48,26 +54,30 @@ export class NuevaPelicula {
 
   /*
    * TmdbService:
-   * se encarga de comunicarse con la API de TMDB.
+   * se comunica con la API externa de TMDB.
+   *
+   * PeliculaService:
+   * se comunica con nuestra tabla "peliculas"
+   * de Supabase.
    *
    * ChangeDetectorRef:
-   * nos permite indicarle a Angular que revise
-   * inmediatamente la vista cuando llega la segunda
-   * respuesta asíncrona de TMDB.
+   * permite actualizar inmediatamente la vista
+   * cuando llegan respuestas asíncronas.
    */
   constructor(
     private tmdbService: TmdbService,
+    private peliculaService: PeliculaService,
     private changeDetectorRef: ChangeDetectorRef
   ) {}
 
 
   // =====================================================
-  // BÚSQUEDA TMDB
+  // BÚSQUEDA EN TMDB
   // =====================================================
 
   /*
-   * Texto que escribe el administrador
-   * en el buscador.
+   * Texto escrito por el administrador
+   * para buscar una película.
    */
   textoBusquedaTmdb: string = '';
 
@@ -79,34 +89,31 @@ export class NuevaPelicula {
 
 
   /*
-   * Película seleccionada desde los
+   * Película elegida dentro de los
    * resultados de búsqueda.
    *
-   * Contiene los datos básicos:
-   *
-   * título
-   * sinopsis
-   * póster
-   * fecha
-   * valoración
+   * Este objeto contiene los datos básicos
+   * obtenidos desde /search/movie.
    */
   peliculaTmdbSeleccionada:
     TmdbPelicula | null = null;
 
 
   /*
-   * Contiene el detalle completo obtenido
-   * mediante /movie/{id}.
+   * Información más completa de la película.
    *
-   * Acá encontramos información adicional
-   * como duración y géneros.
+   * Se obtiene mediante /movie/{id}.
+   *
+   * Incluye, por ejemplo:
+   * - duración
+   * - géneros completos
    */
   detalleTmdbSeleccionado:
     TmdbDetallePelicula | null = null;
 
 
   // =====================================================
-  // PAGINACIÓN
+  // PAGINACIÓN DE RESULTADOS TMDB
   // =====================================================
 
   paginaActual: number = 1;
@@ -115,13 +122,8 @@ export class NuevaPelicula {
 
 
   /*
-   * Devuelve solamente las películas
+   * Devuelve únicamente los resultados
    * correspondientes a la página actual.
-   *
-   * Ejemplo:
-   *
-   * página 1 → slice(0, 10)
-   * página 2 → slice(10, 20)
    */
   get peliculasPaginadas(): TmdbPelicula[] {
 
@@ -141,7 +143,8 @@ export class NuevaPelicula {
 
 
   /*
-   * Calcula la cantidad total de páginas.
+   * Calcula cuántas páginas necesitamos
+   * para mostrar los resultados disponibles.
    */
   get totalPaginas(): number {
 
@@ -174,14 +177,13 @@ export class NuevaPelicula {
 
 
   // =====================================================
-  // OPCIONES CINEBERA
+  // OPCIONES PROPIAS DE CINEBERA
   // =====================================================
 
   /*
-   * Estos datos NO vienen de TMDB.
+   * Estos valores NO vienen desde TMDB.
    *
-   * Representan las opciones que CineBera
-   * puede ofrecer para una película.
+   * Son decisiones propias del cine.
    */
 
   formatosDisponibles: FormatoPelicula[] = [
@@ -207,6 +209,94 @@ export class NuevaPelicula {
 
 
   // =====================================================
+  // FECHA DE ESTRENO CINEBERA
+  // =====================================================
+
+  /*
+   * Al igual que hicimos en Registro,
+   * utilizamos tres dropdowns:
+   *
+   * Día
+   * Mes
+   * Año
+   */
+
+  get dias(): number[] {
+
+  const mes =
+    Number(
+      this.peliculaForm.controls
+        .mesEstrenoCinebera.value
+    );
+
+  const anio =
+    Number(
+      this.peliculaForm.controls
+        .anioEstrenoCinebera.value
+    );
+
+  /*
+   * Mientras todavía no eligió mes,
+   * mostramos los 31 días.
+   */
+  if (!mes) {
+    return Array.from(
+      { length: 31 },
+      (_, indice) => indice + 1
+    );
+  }
+
+  /*
+   * Si todavía no eligió año usamos
+   * el año actual provisionalmente.
+   */
+  const anioParaCalcular =
+    anio || new Date().getFullYear();
+
+  /*
+   * Día 0 del mes siguiente =
+   * último día del mes actual.
+   *
+   * Ejemplo:
+   * new Date(2026, 2, 0)
+   * devuelve el último día de febrero.
+   */
+  const cantidadDias =
+    new Date(
+      anioParaCalcular,
+      mes,
+      0
+    ).getDate();
+
+  return Array.from(
+    { length: cantidadDias },
+    (_, indice) => indice + 1
+  );
+}
+
+  meses: number[] =
+    Array.from(
+      { length: 12 },
+      (_, indice) => indice + 1
+    );
+
+
+  /*
+   * Para una fecha de estreno no necesitamos
+   * años históricos como en fecha de nacimiento.
+   *
+   * Permitimos seleccionar desde el año actual
+   * hasta nueve años hacia adelante.
+   */
+  anios: number[] =
+    Array.from(
+      { length: 10 },
+      (_, indice) =>
+        new Date().getFullYear() + indice
+    );
+
+
+  // =====================================================
   // OPCIONES SELECCIONADAS
   // =====================================================
 
@@ -218,11 +308,12 @@ export class NuevaPelicula {
 
 
   /*
-   * Formatos e idiomas sí son seleccionados
+   * Formatos e idiomas son seleccionados
    * manualmente por el administrador.
    */
   formatosSeleccionados:
     FormatoPelicula[] = [];
+
 
   idiomasSeleccionados:
     string[] = [];
@@ -232,17 +323,12 @@ export class NuevaPelicula {
   // FORMULARIO REACTIVO
   // =====================================================
 
-  /*
-   * El formulario mantiene tanto los datos
-   * obtenidos desde TMDB como los datos
-   * propios de CineBera.
-   *
-   * Algunos controles no se editan actualmente
-   * desde el HTML, pero nos sirven para preparar
-   * el objeto que luego enviaremos a Supabase.
-   */
-
   peliculaForm = new FormGroup({
+
+
+    // ---------------------------------------------------
+    // INFORMACIÓN OBTENIDA DESDE TMDB
+    // ---------------------------------------------------
 
     titulo: new FormControl(
       '',
@@ -281,10 +367,11 @@ export class NuevaPelicula {
 
 
     /*
-     * Esta valoración es la recibida desde TMDB.
+     * Esta es la valoración externa
+     * proporcionada por TMDB.
      *
-     * Más adelante la diferenciaremos de
-     * las reseñas propias de CineBera.
+     * No debe confundirse con las futuras
+     * reseñas de usuarios de CineBera.
      */
     valoracion: new FormControl(
       0,
@@ -293,6 +380,68 @@ export class NuevaPelicula {
       }
     ),
 
+
+    /*
+     * Fecha de estreno original
+     * proporcionada por TMDB.
+     */
+    fechaEstrenoTmdb: new FormControl(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+
+    // ---------------------------------------------------
+    // FECHA DE ESTRENO EN CINEBERA
+    // ---------------------------------------------------
+
+    /*
+     * CineBera puede estrenar la película
+     * en una fecha diferente de la fecha
+     * original informada por TMDB.
+     */
+
+    diaEstrenoCinebera: new FormControl(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+
+    mesEstrenoCinebera: new FormControl(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+
+    anioEstrenoCinebera: new FormControl(
+      '',
+      {
+        nonNullable: true,
+        validators: [
+          Validators.required
+        ]
+      }
+    ),
+
+
+    // ---------------------------------------------------
+    // CONFIGURACIÓN COMERCIAL CINEBERA
+    // ---------------------------------------------------
 
     precioPreventa: new FormControl(
       0,
@@ -313,17 +462,6 @@ export class NuevaPelicula {
         validators: [
           Validators.required,
           Validators.min(0)
-        ]
-      }
-    ),
-
-
-    fechaEstreno: new FormControl(
-      '',
-      {
-        nonNullable: true,
-        validators: [
-          Validators.required
         ]
       }
     ),
@@ -357,91 +495,96 @@ export class NuevaPelicula {
 
   buscarEnTmdb(): void {
 
-  /*
-   * Evitamos consultar TMDB
-   * si el buscador está vacío.
-   */
-  if (!this.textoBusquedaTmdb.trim()) {
-    return;
+    /*
+     * trim() elimina espacios sobrantes.
+     *
+     * Si el usuario no escribió nada,
+     * no hacemos una petición innecesaria.
+     */
+    if (!this.textoBusquedaTmdb.trim()) {
+      return;
+    }
+
+
+    this.tmdbService
+      .buscarPeliculas(
+        this.textoBusquedaTmdb
+      )
+      .subscribe({
+
+        next: (respuesta) => {
+
+          /*
+           * Guardamos los resultados recibidos.
+           */
+          this.resultadosTmdb =
+            respuesta.results;
+
+
+          /*
+           * Cada búsqueda comienza
+           * desde la primera página.
+           */
+          this.paginaActual = 1;
+
+
+          /*
+           * Forzamos la actualización inmediata
+           * de la vista cuando llega la respuesta.
+           *
+           * Esto solucionó el problema donde
+           * necesitábamos hacer dos clicks
+           * en "Buscar".
+           */
+          this.changeDetectorRef
+            .detectChanges();
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error consultando TMDB:',
+            error
+          );
+
+        }
+
+      });
+
   }
 
 
-  this.tmdbService
-    .buscarPeliculas(
-      this.textoBusquedaTmdb
-    )
-    .subscribe({
-
-      next: (respuesta) => {
-
-        /*
-         * Guardamos los resultados
-         * obtenidos desde TMDB.
-         */
-        this.resultadosTmdb =
-          respuesta.results;
-
-
-        /*
-         * Cada búsqueda nueva comienza
-         * nuevamente en la página 1.
-         */
-        this.paginaActual = 1;
-
-
-        /*
-         * La respuesta de TMDB llega
-         * de manera asíncrona.
-         *
-         * Forzamos a Angular a revisar
-         * inmediatamente la vista para
-         * mostrar los resultados con
-         * un solo click.
-         */
-        this.changeDetectorRef
-          .detectChanges();
-
-      },
-
-
-      error: (error) => {
-
-        console.error(
-          'Error consultando TMDB:',
-          error
-        );
-
-      }
-
-    });
-
-}
-
-
   // =====================================================
-  // SELECCIONAR PELÍCULA TMDB
+  // SELECCIONAR PELÍCULA DESDE TMDB
   // =====================================================
 
   seleccionarPeliculaTmdb(
     pelicula: TmdbPelicula
   ): void {
 
+
     /*
      * Guardamos inmediatamente la película
-     * seleccionada desde los resultados.
+     * seleccionada.
      */
     this.peliculaTmdbSeleccionada =
       pelicula;
 
 
     /*
-     * Limpiamos el detalle anterior.
+     * Limpiamos información detallada
+     * de una posible selección anterior.
      *
-     * Esto es importante si primero elegimos
-     * una película y después seleccionamos otra.
+     * Ejemplo:
      *
-     * No queremos mostrar durante unos milisegundos
-     * la duración o géneros de la película anterior.
+     * Seleccionamos Batman
+     * y después Dune.
+     *
+     * No queremos mostrar durante unos
+     * instantes los géneros de Batman
+     * mientras esperamos los de Dune.
      */
     this.detalleTmdbSeleccionado =
       null;
@@ -450,8 +593,8 @@ export class NuevaPelicula {
 
 
     /*
-     * La búsqueda de TMDB ya nos dio estos datos,
-     * por lo tanto podemos cargarlos inmediatamente.
+     * Estos datos ya vienen en el resultado
+     * básico de búsqueda.
      */
     this.peliculaForm.patchValue({
 
@@ -461,17 +604,15 @@ export class NuevaPelicula {
       sinopsis:
         pelicula.overview,
 
-      fechaEstreno:
+      fechaEstrenoTmdb:
         pelicula.release_date,
 
       valoracion:
         pelicula.vote_average,
 
       /*
-       * Todavía no recibimos la duración.
-       *
-       * La dejamos temporalmente en 0 hasta
-       * recibir el detalle.
+       * La duración llegará mediante
+       * la consulta de detalle.
        */
       duracion: 0
 
@@ -479,9 +620,9 @@ export class NuevaPelicula {
 
 
     /*
-     * Ahora hacemos una segunda consulta.
+     * Segunda petición a TMDB.
      *
-     * Utilizamos el ID de TMDB para obtener
+     * Ahora utilizamos el ID para obtener
      * información más completa.
      */
     this.tmdbService
@@ -492,33 +633,31 @@ export class NuevaPelicula {
 
         next: (detalle) => {
 
+
           /*
-           * Guardamos el detalle completo.
+           * Guardamos el objeto completo.
            */
           this.detalleTmdbSeleccionado =
             detalle;
 
 
           /*
-           * TMDB devuelve:
+           * TMDB devuelve géneros como:
            *
            * [
-           *   {
-           *     id: 12,
-           *     name: 'Aventura'
-           *   },
-           *   {
-           *     id: 878,
-           *     name: 'Ciencia ficción'
-           *   }
+           *   { id: 12, name: 'Aventura' },
+           *   { id: 878, name: 'Ciencia ficción' }
            * ]
            *
-           * Con map() generamos:
+           * Nosotros queremos:
            *
            * [
            *   'Aventura',
            *   'Ciencia ficción'
            * ]
+           *
+           * map() transforma un array
+           * en otro array.
            */
           this.generosSeleccionados =
             detalle.genres.map(
@@ -527,11 +666,12 @@ export class NuevaPelicula {
 
 
           /*
-           * Actualizamos la duración dentro
-           * de nuestro Reactive Form.
+           * Actualizamos la duración.
            *
-           * Si TMDB devuelve null,
-           * utilizamos 0.
+           * ?? 0 significa:
+           *
+           * si runtime es null o undefined,
+           * utilizar 0.
            */
           this.peliculaForm.patchValue({
 
@@ -542,11 +682,13 @@ export class NuevaPelicula {
 
 
           /*
-           * La consulta de detalle es asíncrona.
+           * Actualizamos inmediatamente
+           * la vista.
            *
-           * Forzamos una revisión de la vista
-           * después de actualizar duración,
-           * géneros y detalle.
+           * Esto solucionó el problema
+           * donde duración y géneros
+           * aparecían recién después
+           * de un segundo click.
            */
           this.changeDetectorRef
             .detectChanges();
@@ -569,20 +711,20 @@ export class NuevaPelicula {
 
 
   // =====================================================
-  // PÓSTER TMDB
+  // PÓSTER DE TMDB
   // =====================================================
 
-  /*
-   * TMDB devuelve solamente algo parecido a:
-   *
-   * /abc123.jpg
-   *
-   * El servicio construye la URL completa.
-   */
   obtenerPoster(
     posterPath: string | null
   ): string {
 
+    /*
+     * TMDB nos entrega solamente una parte
+     * de la dirección del póster.
+     *
+     * TmdbService se encarga de construir
+     * la URL completa.
+     */
     return this.tmdbService
       .obtenerUrlPoster(
         posterPath
@@ -602,8 +744,8 @@ export class NuevaPelicula {
     if (seleccionado) {
 
       /*
-       * includes() evita agregar el mismo
-       * formato dos veces.
+       * Evitamos agregar el mismo formato
+       * más de una vez.
        */
       if (
         !this.formatosSeleccionados
@@ -617,8 +759,8 @@ export class NuevaPelicula {
     } else {
 
       /*
-       * filter() genera un nuevo array
-       * sin el formato desmarcado.
+       * Creamos un nuevo array sin
+       * el formato que fue desmarcado.
        */
       this.formatosSeleccionados =
         this.formatosSeleccionados.filter(
@@ -663,15 +805,101 @@ export class NuevaPelicula {
 
 
   // =====================================================
+  // VALIDACIÓN DE FECHA CINEBERA
+  // =====================================================
+
+  /*
+   * Los tres selects tienen Validators.required,
+   * pero eso solamente comprueba que tengan valor.
+   *
+   * También necesitamos impedir fechas imposibles:
+   *
+   * 31 / 02 / 2026
+   * 31 / 04 / 2026
+   *
+   * Este método verifica que la fecha realmente
+   * exista en el calendario.
+   */
+  fechaEstrenoCineberaValida(): boolean {
+
+    const dia =
+      Number(
+        this.peliculaForm.controls
+          .diaEstrenoCinebera.value
+      );
+
+    const mes =
+      Number(
+        this.peliculaForm.controls
+          .mesEstrenoCinebera.value
+      );
+
+    const anio =
+      Number(
+        this.peliculaForm.controls
+          .anioEstrenoCinebera.value
+      );
+
+
+    /*
+     * Si alguno todavía está vacío,
+     * dejamos que Validators.required
+     * se encargue del error.
+     */
+    if (!dia || !mes || !anio) {
+      return false;
+    }
+
+
+    /*
+     * JavaScript utiliza meses desde 0:
+     *
+     * Enero = 0
+     * Febrero = 1
+     * ...
+     *
+     * Por eso hacemos mes - 1.
+     */
+    const fecha =
+      new Date(
+        anio,
+        mes - 1,
+        dia
+      );
+
+
+    /*
+     * Ejemplo:
+     *
+     * Si intentamos crear:
+     *
+     * 31/02/2026
+     *
+     * JavaScript lo convierte en una
+     * fecha de marzo.
+     *
+     * Al comparar nuevamente día,
+     * mes y año detectamos que no coincide.
+     */
+    return (
+      fecha.getFullYear() === anio &&
+      fecha.getMonth() === mes - 1 &&
+      fecha.getDate() === dia
+    );
+
+  }
+
+
+  // =====================================================
   // GUARDAR PELÍCULA
   // =====================================================
 
-  guardarPelicula(): void {
+  async guardarPelicula(): Promise<void> {
 
 
-    // -----------------------------------------------------
-    // 1. Debe existir una película seleccionada desde TMDB
-    // -----------------------------------------------------
+    // ---------------------------------------------------
+    // 1. VALIDAMOS QUE HAYA UNA PELÍCULA TMDB
+    // ---------------------------------------------------
 
     if (!this.peliculaTmdbSeleccionada) {
 
@@ -683,12 +911,17 @@ export class NuevaPelicula {
     }
 
 
-    // -----------------------------------------------------
-    // 2. Validamos el Reactive Form
-    // -----------------------------------------------------
+    // ---------------------------------------------------
+    // 2. VALIDAMOS EL REACTIVE FORM
+    // ---------------------------------------------------
 
     if (this.peliculaForm.invalid) {
 
+      /*
+       * Marcamos todos los controles
+       * como tocados para poder mostrar
+       * los errores en pantalla.
+       */
       this.peliculaForm
         .markAllAsTouched();
 
@@ -700,15 +933,31 @@ export class NuevaPelicula {
     }
 
 
-    // -----------------------------------------------------
-    // 3. Validamos géneros
-    // -----------------------------------------------------
+    // ---------------------------------------------------
+    // 3. VALIDAMOS LA FECHA REAL
+    // ---------------------------------------------------
+
+    if (
+      !this.fechaEstrenoCineberaValida()
+    ) {
+
+      console.log(
+        'La fecha de estreno en CineBera no es válida.'
+      );
+
+      return;
+    }
+
+
+    // ---------------------------------------------------
+    // 4. VALIDAMOS GÉNEROS TMDB
+    // ---------------------------------------------------
 
     /*
-     * Los géneros ya no son seleccionados
+     * Los géneros ya no son ingresados
      * manualmente.
      *
-     * Deben haber sido obtenidos desde TMDB.
+     * Deben haber llegado desde TMDB.
      */
     if (
       this.generosSeleccionados.length === 0
@@ -722,9 +971,9 @@ export class NuevaPelicula {
     }
 
 
-    // -----------------------------------------------------
-    // 4. Validamos formatos CineBera
-    // -----------------------------------------------------
+    // ---------------------------------------------------
+    // 5. VALIDAMOS FORMATOS
+    // ---------------------------------------------------
 
     if (
       this.formatosSeleccionados.length === 0
@@ -738,9 +987,9 @@ export class NuevaPelicula {
     }
 
 
-    // -----------------------------------------------------
-    // 5. Validamos idiomas CineBera
-    // -----------------------------------------------------
+    // ---------------------------------------------------
+    // 6. VALIDAMOS IDIOMAS
+    // ---------------------------------------------------
 
     if (
       this.idiomasSeleccionados.length === 0
@@ -754,19 +1003,72 @@ export class NuevaPelicula {
     }
 
 
-    // -----------------------------------------------------
-    // 6. Construimos nuestro objeto Pelicula
-    // -----------------------------------------------------
+    // ---------------------------------------------------
+    // 7. CONSTRUIMOS LA FECHA CINEBERA
+    // ---------------------------------------------------
 
-    const nuevaPelicula: Pelicula = {
+    /*
+     * Los selects nos entregan:
+     *
+     * Día = 5
+     * Mes = 9
+     * Año = 2026
+     *
+     * Supabase DATE espera:
+     *
+     * 2026-09-05
+     */
+
+    const dia =
+      String(
+        this.peliculaForm.controls
+          .diaEstrenoCinebera.value
+      ).padStart(
+        2,
+        '0'
+      );
+
+
+    const mes =
+      String(
+        this.peliculaForm.controls
+          .mesEstrenoCinebera.value
+      ).padStart(
+        2,
+        '0'
+      );
+
+
+    const anio =
+      this.peliculaForm.controls
+        .anioEstrenoCinebera.value;
+
+
+    const fechaEstrenoCinebera =
+      `${anio}-${mes}-${dia}`;
+
+
+    // ---------------------------------------------------
+    // 8. CONSTRUIMOS EL OBJETO PARA SUPABASE
+    // ---------------------------------------------------
+
+    /*
+     * NuevaPeliculaSupabase representa
+     * exactamente la estructura que espera
+     * nuestra tabla "peliculas".
+     */
+    const nuevaPelicula:
+      NuevaPeliculaSupabase = {
+
 
       /*
-       * ID temporal.
+       * Identificador externo.
        *
-       * En el próximo bloque Supabase
-       * generará nuestro ID real.
+       * El ID interno de CineBera será
+       * generado por Supabase.
        */
-      id: 0,
+      tmdb_id:
+        this.peliculaTmdbSeleccionada.id,
 
 
       titulo:
@@ -797,57 +1099,66 @@ export class NuevaPelicula {
 
 
       /*
-       * Ya no cargamos imágenes manualmente.
+       * Si TMDB tiene póster guardamos
+       * su URL completa.
        *
-       * Utilizamos el póster proporcionado
-       * por TMDB.
+       * Si no tiene, guardamos null.
        */
-      imagenes:
-        this.peliculaTmdbSeleccionada.poster_path
-          ? [
-              this.obtenerPoster(
-                this.peliculaTmdbSeleccionada
-                  .poster_path
-              )
-            ]
-          : [],
+      poster_url:
+        this.peliculaTmdbSeleccionada
+          .poster_path
+          ? this.obtenerPoster(
+              this.peliculaTmdbSeleccionada
+                .poster_path
+            )
+          : null,
 
 
-      precioPreventa:
+      precio_preventa:
         this.peliculaForm.controls
           .precioPreventa.value,
 
 
-      precioVenta:
+      precio_venta:
         this.peliculaForm.controls
           .precioVenta.value,
 
 
-      fechaEstreno:
+      /*
+       * Fecha original obtenida
+       * automáticamente desde TMDB.
+       */
+      fecha_estreno_tmdb:
         this.peliculaForm.controls
-          .fechaEstreno.value,
+          .fechaEstrenoTmdb.value,
 
 
       /*
-       * IMPORTANTE:
-       *
-       * Por ahora nuestro modelo Pelicula
-       * utiliza valoracion para las reseñas
-       * propias de CineBera.
-       *
-       * Una película nueva todavía no tiene
-       * reseñas internas.
-       *
-       * La valoración de TMDB se mantiene
-       * separada en el formulario/detalle.
+       * Fecha definida manualmente
+       * por el administrador de CineBera.
        */
-      valoracion: 0,
+      fecha_estreno_cinebera:
+        fechaEstrenoCinebera,
 
 
-      cantidadResenas: 0,
+      /*
+       * Valoración externa de TMDB.
+       */
+      valoracion_tmdb:
+        this.peliculaForm.controls
+          .valoracion.value,
 
 
-      clasificacionEdad:
+      /*
+       * Una película nueva todavía
+       * no tiene reseñas de CineBera.
+       */
+      valoracion_cinebera: 0,
+
+      cantidad_resenas: 0,
+
+
+      clasificacion_edad:
         this.peliculaForm.controls
           .clasificacionEdad.value,
 
@@ -859,19 +1170,48 @@ export class NuevaPelicula {
     };
 
 
-    // -----------------------------------------------------
-    // 7. RESULTADO TEMPORAL
-    // -----------------------------------------------------
+    // ---------------------------------------------------
+    // 9. GUARDAMOS EN SUPABASE
+    // ---------------------------------------------------
 
     /*
-     * Todavía no guardamos en Supabase.
+     * El componente no habla directamente
+     * con Supabase.
      *
-     * Primero verificamos que el objeto final
-     * tenga exactamente los datos esperados.
+     * Delega esa responsabilidad
+     * a PeliculaService.
+     */
+    const {
+      data,
+      error
+    } = await this.peliculaService
+      .crearPelicula(
+        nuevaPelicula
+      );
+
+
+    // ---------------------------------------------------
+    // 10. CONTROLAMOS LA RESPUESTA
+    // ---------------------------------------------------
+
+    if (error) {
+
+      console.error(
+        'Error guardando película:',
+        error.message
+      );
+
+      return;
+    }
+
+
+    /*
+     * Si llegamos hasta acá,
+     * la película fue insertada correctamente.
      */
     console.log(
-      'Película preparada para guardar:',
-      nuevaPelicula
+      'Película guardada correctamente:',
+      data
     );
 
   }

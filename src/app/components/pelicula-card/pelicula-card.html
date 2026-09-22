@@ -1,31 +1,66 @@
 <article class="pelicula-card">
-  <h3>
-    {{ pelicula.titulo }}
-  </h3>
-  <p>
-    {{ pelicula.sinopsis }}
-  </p>
-  <p>
-    Duración:
-    {{ pelicula.duracion }} minutos
-  </p>
-  <p>
-    Clasificación:
-    {{ pelicula.clasificacionEdad }}
-  </p>
+
+  <!-- PÓSTER -->
+  @if (pelicula.imagenes.length > 0) {
+
+    <img
+      class="pelicula-card__poster"
+      [src]="pelicula.imagenes[0]"
+      [alt]="'Póster de ' + pelicula.titulo">
+
+  }
+
+
+  <!-- INFORMACIÓN -->
+  <div class="pelicula-card__contenido">
+
+    <h3>
+      {{ pelicula.titulo }}
+    </h3>
+
+
+    <p class="pelicula-card__sinopsis">
+      {{ pelicula.sinopsis }}
+    </p>
+
+
+    <div class="pelicula-card__datos">
+
+      <span>
+        <strong>Duración:</strong>
+        {{ pelicula.duracion }} min
+      </span>
+
+
+      <span>
+        <strong>Clasificación:</strong>
+        {{ pelicula.clasificacionEdad }}
+      </span>
+
+
+      <span>
+        <strong>Estreno CineBera:</strong>
+        {{ pelicula.fechaEstreno }}
+      </span>
+
+    </div>
+
+
+    <!--
+      EVENT BINDING
+
+      Cuando el usuario hace click,
+      el componente hijo emite la película
+      seleccionada hacia Home.
+    -->
+    <button
+      type="button"
+      (click)="verFunciones()">
+
+      Ver funciones
+
+    </button>
+
+  </div>
+
 </article>
-<!--
-  EVENT BINDING
-
-  (click) escucha el evento click del botón.
-
-  Cuando ocurre, Angular ejecuta el método
-  verFunciones() definido en pelicula-card.ts.
--->
-<button
-  type="button"
-  (click)="verFunciones()">
-
-  Ver funciones
-
-</button>
