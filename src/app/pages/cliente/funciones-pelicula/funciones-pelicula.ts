@@ -1,70 +1,115 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Pelicula } from '../../../models/pelicula';
-import { PeliculaService } from '../../../services/pelicula';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
+
+import {
+  ActivatedRoute
+} from '@angular/router';
+
+import {
+  Pelicula
+} from '../../../models/pelicula';
+
+import {
+  PeliculaService
+} from '../../../services/pelicula';
+
 
 @Component({
-  imports: [],
   selector: 'app-funciones-pelicula',
-  styleUrl: './funciones-pelicula.css',
+  imports: [],
   templateUrl: './funciones-pelicula.html',
+  styleUrl: './funciones-pelicula.css'
 })
-export class FuncionesPelicula {
-  
-  pelicula: Pelicula | undefined;
+export class FuncionesPelicula implements OnInit {
+
+
   /*
-   * Guardaremos el ID recibido desde la URL.
+   * Película que obtendremos desde Supabase.
+   *
+   * null significa que todavía no tenemos
+   * una película cargada.
+   */
+  pelicula: Pelicula | null = null;
+
+
+  /*
+   * ID recibido mediante la URL.
    *
    * Ejemplo:
-   * /pelicula/1/funciones
    *
-   * idPelicula = 1
+   * /pelicula/5/funciones
+   *
+   * idPelicula = 5
    */
-  idPelicula: number;
+  idPelicula: number = 0;
 
 
   /*
-   * ActivatedRoute es una dependencia proporcionada
-   * por Angular.
+   * ActivatedRoute:
+   * permite leer información de la URL.
    *
-   * Nos permite acceder a la información de la
-   * ruta que se encuentra actualmente activa.
+   * PeliculaService:
+   * se encarga de obtener la película
+   * desde Supabase.
    */
   constructor(
     private route: ActivatedRoute,
     private peliculaService: PeliculaService
-  ) {
+  ) {}
 
-    /*
-     * snapshot:
-     * obtenemos una "foto" del estado actual de la ruta.
-     *
-     * paramMap:
-     * contiene los parámetros definidos en la URL.
-     *
-     * get('id'):
-     * recupera el valor correspondiente a :id.
-     */
-    const idRecibido =
-      this.route.snapshot.paramMap.get('id');
+
+  /*
+   * Angular ejecuta ngOnInit cuando
+   * inicializa este componente.
+   *
+   * Lo hacemos async porque necesitamos
+   * esperar una consulta a Supabase.
+   */
+  async ngOnInit(): Promise<void> {
 
 
     /*
-     * Los parámetros de una URL llegan como texto.
+     * Obtenemos el parámetro :id
+     * definido en nuestra ruta.
      *
      * Por ejemplo:
-     * "1"
      *
-     * Como nuestro ID de Pelicula es number,
-     * utilizamos Number() para convertirlo.
+     * /pelicula/5/funciones
+     *
+     * idRecibido = "5"
      */
-    this.idPelicula = Number(idRecibido);
+    const idRecibido =
+      this.route.snapshot
+        .paramMap
+        .get('id');
 
+
+    /*
+     * Los parámetros de la URL son string.
+     *
+     * Number() convierte:
+     *
+     * "5" -> 5
+     */
+    this.idPelicula =
+      Number(idRecibido);
+
+
+    /*
+     * Ahora obtenerPeliculaPorId()
+     * consulta Supabase.
+     *
+     * Por eso utilizamos await:
+     * esperamos que termine la consulta
+     * antes de guardar el resultado.
+     */
     this.pelicula =
-    this.peliculaService.obtenerPeliculaPorId(
-      this.idPelicula
-    );
-
+      await this.peliculaService
+        .obtenerPeliculaPorId(
+          this.idPelicula
+        );
   }
 
 }

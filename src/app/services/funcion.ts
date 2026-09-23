@@ -83,4 +83,36 @@ export class FuncionService {
 
   }
 
+  async obtenerFuncionesPorFecha(fecha: string) {
+  return await supabase
+    .from('funciones')
+    .select('*')
+    .eq('fecha', fecha)
+    .eq('activa', true)
+    .order('sala_id', { ascending: true })
+    .order('hora', { ascending: true });
+}
+
+async desactivarFuncionSemanal(
+  peliculaId: number,
+  salaId: number,
+  hora: string,
+  fechaInicio: string,
+  fechaFin: string
+) {
+
+  return await supabase
+    .from('funciones')
+    .update({
+      activa: false
+    })
+    .eq('pelicula_id', peliculaId)
+    .eq('sala_id', salaId)
+    .eq('hora', hora)
+    .gte('fecha', fechaInicio)
+    .lte('fecha', fechaFin)
+    .eq('activa', true);
+}
+
+
 }

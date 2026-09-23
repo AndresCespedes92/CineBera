@@ -149,3 +149,21 @@ td button {
 .boton-nueva:hover {
   background-color: #dddddd;
 }
+
+.boton-editar {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 6px 10px;
+
+  background-color: #ffffff;
+  border: 1px solid #999999;
+
+  color: #222222;
+  text-decoration: none;
+
+  cursor: pointer;
+}
+
+.boton-editar:hover {
+  background-color: #eeeeee;
+}

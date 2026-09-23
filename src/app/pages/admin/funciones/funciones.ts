@@ -4,6 +4,8 @@ import {
   OnInit
 } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
+
 import {
   FormsModule
 } from '@angular/forms';
@@ -61,6 +63,8 @@ interface FuncionTemporal {
 
   idioma: string;
 
+  guardada: boolean;
+
 }
 
 
@@ -68,7 +72,7 @@ interface FuncionTemporal {
   selector: 'app-funciones',
 
   imports: [
-    FormsModule
+    FormsModule, RouterLink
   ],
 
   templateUrl: './funciones.html',
@@ -182,6 +186,78 @@ export class Funciones implements OnInit {
   private changeDetectorRef: ChangeDetectorRef
 ) {}
 
+
+  /*
+ * Devuelve el objeto completo de la
+ * película seleccionada actualmente.
+ *
+ * En el select solamente guardamos el ID,
+ * pero para conocer formatos e idiomas
+ * necesitamos acceder a toda la película.
+ */
+obtenerPeliculaSeleccionada(): Pelicula | undefined {
+
+  return this.peliculas.find(
+    pelicula =>
+      pelicula.id === this.peliculaIdSeleccionada
+  );
+}
+
+
+/*
+ * Devuelve solamente los formatos
+ * habilitados para la película seleccionada.
+ *
+ * Ejemplo:
+ *
+ * Dune:
+ * formatos = ['2D', '3D']
+ *
+ * Entonces el select de Funciones
+ * solamente mostrará 2D y 3D.
+ */
+obtenerFormatosDisponibles(): string[] {
+
+  const pelicula =
+    this.obtenerPeliculaSeleccionada();
+
+  if (!pelicula) {
+    return [];
+  }
+
+  return pelicula.formatos;
+}
+
+
+/*
+ * Devuelve solamente los idiomas
+ * habilitados para la película seleccionada.
+ */
+obtenerIdiomasDisponibles(): string[] {
+
+  const pelicula =
+    this.obtenerPeliculaSeleccionada();
+
+  if (!pelicula) {
+    return [];
+  }
+
+  return pelicula.idiomas;
+}
+
+
+/*
+ * Cada vez que cambiamos de película,
+ * limpiamos formato e idioma.
+ *
+ * Esto evita conservar una opción
+ * perteneciente a la película anterior.
+ */
+alCambiarPelicula(): void {
+
+  this.formato = '';
+  this.idioma = '';
+}
 
   /*
    * Se ejecuta cuando Angular
@@ -316,7 +392,17 @@ export class Funciones implements OnInit {
 
     }
 
+      /*
+      * Una vez construida la semana,
+      * buscamos si ya existe programación
+      * guardada para ella.
+      */
+      this.cargarProgramacionGuardada();
+
+    
+
   }
+
 
 
   /*
@@ -539,8 +625,41 @@ export class Funciones implements OnInit {
       'No se pudo encontrar la película o la sala seleccionada.'
     );
 
-    return;
+    return;    
   }
+
+  /*
+ * Segunda barrera de seguridad:
+ *
+ * aunque el HTML solamente muestre opciones
+ * permitidas, verificamos también desde TS.
+ */
+if (
+  !pelicula.formatos.includes(
+    this.formato as any
+  )
+) {
+
+  alert(
+    'El formato seleccionado no está habilitado para esta película.'
+  );
+
+  return;
+}
+
+
+if (
+  !pelicula.idiomas.includes(
+    this.idioma
+  )
+) {
+
+  alert(
+    'El idioma seleccionado no está habilitado para esta película.'
+  );
+
+  return;
+}
 
   /*
  * Antes de agregar la función,
@@ -624,7 +743,9 @@ if (!disponible) {
       this.formato,
 
     idioma:
-      this.idioma
+      this.idioma,
+
+    guardada: false
 
   };
 
@@ -700,6 +821,78 @@ convertirHoraAMinutos(
   ) + minutos;
 
 }
+
+async cargarProgramacionGuardada(): Promise<void> {
+
+  if (!this.fechaInicioSemana) {
+    return;
+  }
+
+  const { data, error } =
+    await this.funcionService.obtenerFuncionesPorFecha(
+      this.fechaInicioSemana
+    );
+
+  console.log('Fecha consultada:', this.fechaInicioSemana);
+console.log('Funciones recibidas:', data);
+console.log('Error Supabase:', error);
+
+  if (error) {
+    console.error(
+      'Error cargando programación:',
+      error
+    );
+    return;
+  }
+
+  this.programacionTemporal = [];
+
+  for (const fila of data ?? []) {
+
+    const pelicula = this.peliculas.find(
+      pelicula => pelicula.id === fila.pelicula_id
+    );
+
+    const sala = this.salas.find(
+      sala => sala.id === fila.sala_id
+    );
+
+    if (!pelicula || !sala) {
+      continue;
+    }
+
+    const hora = fila.hora.substring(0, 5);
+
+    const horaFin =
+      this.calcularHoraFinal(
+        hora,
+        pelicula.duracion
+      );
+
+    const salaDisponibleDesde =
+      this.calcularHoraFinal(
+        horaFin,
+        30
+      );
+
+    this.programacionTemporal.push({
+      peliculaId: pelicula.id,
+      peliculaTitulo: pelicula.titulo,
+      salaId: sala.id,
+      salaNombre: sala.nombre,
+      hora: hora,
+      duracion: pelicula.duracion,
+      horaFin: horaFin,
+      salaDisponibleDesde: salaDisponibleDesde,
+      formato: fila.formato,
+      idioma: fila.idioma,
+      guardada: true
+    });
+  }
+
+  this.changeDetectorRef.detectChanges();
+}
+
 
 
 /*
@@ -855,16 +1048,106 @@ calcularHoraFinal(
  * Permite sacar una función de la
  * programación antes de confirmarla.
  */
-eliminarFuncionTemporal(
+async eliminarFuncionTemporal(
   funcion: FuncionTemporal
-): void {
+): Promise<void> {
 
-  this.programacionTemporal =
-    this.programacionTemporal.filter(
-      item =>
-        item !== funcion
+  /*
+   * CASO 1:
+   * La función todavía no fue guardada.
+   *
+   * Solamente existe en el array de Angular,
+   * así que alcanza con quitarla de memoria.
+   */
+  if (!funcion.guardada) {
+
+    this.programacionTemporal =
+      this.programacionTemporal.filter(
+        item => item !== funcion
+      );
+
+    return;
+  }
+
+
+  /*
+   * CASO 2:
+   * La función ya existe en Supabase.
+   *
+   * Antes de modificar la base de datos,
+   * pedimos confirmación.
+   */
+  const confirmar = confirm(
+    `¿Querés eliminar ${funcion.peliculaTitulo} ` +
+    `de ${funcion.salaNombre} a las ${funcion.hora}?`
+  );
+
+  if (!confirmar) {
+    return;
+  }
+
+
+  /*
+   * Necesitamos conocer el inicio y el final
+   * de la semana cinematográfica.
+   */
+  if (this.fechasSemana.length !== 7) {
+
+    alert(
+      'No se pudo determinar la semana seleccionada.'
     );
 
+    return;
+  }
+
+  const fechaInicio =
+    this.fechasSemana[0];
+
+  const fechaFin =
+    this.fechasSemana[6];
+
+
+  /*
+   * No borramos físicamente los registros.
+   * Los marcamos como inactivos.
+   */
+  const { error } =
+    await this.funcionService
+      .desactivarFuncionSemanal(
+        funcion.peliculaId,
+        funcion.salaId,
+        funcion.hora,
+        fechaInicio,
+        fechaFin
+      );
+
+
+  if (error) {
+
+    console.error(
+      'Error desactivando función:',
+      error
+    );
+
+    alert(
+      'No se pudo eliminar la función.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * Volvemos a consultar Supabase.
+   *
+   * Así la pantalla siempre refleja
+   * el estado real de la base de datos.
+   */
+  await this.cargarProgramacionGuardada();
+
+  alert(
+    'Función eliminada correctamente.'
+  );
 }
 
 /*
@@ -940,6 +1223,18 @@ async guardarProgramacionSemanal(): Promise<void> {
   const funcionesParaGuardar:
     NuevaFuncionSupabase[] = [];
 
+    const funcionesNuevas =
+    this.programacionTemporal.filter(
+      funcion => !funcion.guardada
+    );
+
+    if (funcionesNuevas.length === 0) {
+      alert(
+        'No hay funciones nuevas para guardar.'
+      );
+      return;
+    }
+
 
   /*
    * Recorremos cada función configurada.
@@ -951,9 +1246,9 @@ async guardarProgramacionSemanal(): Promise<void> {
    * 17:00
    */
   for (
-    const funcion
-    of this.programacionTemporal
-  ) {
+  const funcion
+  of funcionesNuevas
+) {
 
     /*
      * Por cada configuración,
@@ -1064,7 +1359,7 @@ async guardarProgramacionSemanal(): Promise<void> {
    * No borramos la semana seleccionada
    * por ahora.
    */
-  this.programacionTemporal = [];
+  await this.cargarProgramacionGuardada();
 
 }
 

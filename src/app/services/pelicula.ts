@@ -9,26 +9,59 @@ import { NuevaPeliculaSupabase } from '../models/pelicula';
 export class PeliculaService {
 
   /*
-   * MOCK TEMPORAL.
-   *
-   * Todavía lo utiliza la cartelera.
-   * Lo eliminaremos cuando hagamos
-   * el SELECT desde Supabase.
+ * Obtiene una película específica
+ * desde Supabase utilizando su ID.
+ *
+ * Ejemplo:
+ *
+ * /admin/peliculas/5/editar
+ *
+ * El componente obtiene el ID 5
+ * desde la URL y el servicio busca
+ * esa película en la base de datos.
+ */
+async obtenerPeliculaPorId(
+  id: number
+): Promise<Pelicula | null> {
+
+  const {
+    data,
+    error
+  } = await supabase
+    .from('peliculas')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+
+  /*
+   * Si Supabase devuelve un error
+   * no intentamos construir una película.
    */
-  private peliculas: Pelicula[] = [
-    // tu película actual...
-  ];
+  if (error) {
 
-  obtenerPeliculaPorId(
-    id: number
-  ): Pelicula | undefined {
-
-    return this.peliculas.find(
-      pelicula => pelicula.id === id
+    console.error(
+      'Error obteniendo película por ID:',
+      error
     );
 
+    return null;
   }
 
+
+  /*
+   * Reutilizamos el mapper que ya tenemos.
+   *
+   * Así evitamos repetir la conversión:
+   *
+   * precio_venta -> precioVenta
+   * fecha_estreno_cinebera -> fechaEstreno
+   * etc.
+   */
+  return this.mapearPeliculaSupabase(
+    data
+  );
+}
 
   /*
    * A diferencia de los métodos anteriores,
@@ -47,7 +80,64 @@ export class PeliculaService {
 
   }
 
-  
+  /*
+ * Actualiza los datos comerciales
+ * de una película administrados
+ * por CineBera.
+ *
+ * No modificamos los datos originales
+ * provenientes de TMDB.
+ */
+async actualizarPelicula(
+  peliculaId: number,
+  datos: {
+    fechaEstreno: string;
+    precioPreventa: number;
+    precioVenta: number;
+    clasificacionEdad: string;
+    formatos: string[];
+    idiomas: string[];
+    visible: boolean;
+  }
+) {
+
+  return await supabase
+    .from('peliculas')
+    .update({
+
+      /*
+       * Traducimos nuevamente entre
+       * el modelo Angular y las columnas
+       * de Supabase.
+       */
+      fecha_estreno_cinebera:
+        datos.fechaEstreno,
+
+      precio_preventa:
+        datos.precioPreventa,
+
+      precio_venta:
+        datos.precioVenta,
+
+      clasificacion_edad:
+        datos.clasificacionEdad,
+
+      formatos:
+        datos.formatos,
+
+      idiomas:
+        datos.idiomas,
+
+      visible:
+        datos.visible
+    })
+    .eq(
+      'id',
+      peliculaId
+    )
+    .select()
+    .single();
+}
 
 
 /*
@@ -178,6 +268,22 @@ private mapearPeliculaSupabase(
   };
 
 }
+
+async cambiarVisibilidad(
+  peliculaId: number,
+  visible: boolean
+) {
+
+  return await supabase
+    .from('peliculas')
+    .update({
+      visible: visible
+    })
+    .eq('id', peliculaId)
+    .select()
+    .single();
+}
+
 
 /*
  * Obtiene únicamente las películas

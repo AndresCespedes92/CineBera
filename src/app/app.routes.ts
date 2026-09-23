@@ -157,7 +157,14 @@ export const routes: Routes = [
           './pages/admin/peliculas/nueva-pelicula/nueva-pelicula'
         )
           .then(m => m.NuevaPelicula)
-    }
+    },
+
+    {
+      path: 'peliculas/:id/editar',
+      loadComponent: () =>
+        import('./pages/admin/peliculas/editar-pelicula/editar-pelicula')
+          .then(m => m.EditarPelicula)
+    },
 
   ]
 },

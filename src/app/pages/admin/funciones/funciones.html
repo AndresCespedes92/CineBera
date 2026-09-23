@@ -1,3 +1,9 @@
+<a
+    class="volver-dashboard"
+    routerLink="/admin/home">
+    ← Volver al Dashboard
+  </a>
+
 <section class="funciones-admin">
 
   <h1>Funciones y Salas</h1>
@@ -15,8 +21,9 @@
     </label>
 
     <select
-      id="pelicula"
-      [(ngModel)]="peliculaIdSeleccionada">
+  id="pelicula"
+  [(ngModel)]="peliculaIdSeleccionada"
+  (ngModelChange)="alCambiarPelicula()">
 
       <option [ngValue]="null">
         Seleccionar película
@@ -121,32 +128,28 @@
 
   <select
     id="formato"
-    [(ngModel)]="formato">
+    [(ngModel)]="formato"
+    [disabled]="peliculaIdSeleccionada === null">
 
     <option value="">
       Seleccionar formato
     </option>
 
-    <option value="2D">
-      2D
-    </option>
+    @for (
+      formatoDisponible
+      of obtenerFormatosDisponibles();
+      track formatoDisponible
+    ) {
 
-    <option value="3D">
-      3D
-    </option>
+      <option [value]="formatoDisponible">
+        {{ formatoDisponible }}
+      </option>
 
-    <option value="4D">
-      4D
-    </option>
-
-    <option value="5D">
-      5D
-    </option>
+    }
 
   </select>
 
 </div>
-
 
 <!-- IDIOMA -->
 <div class="campo">
@@ -157,19 +160,24 @@
 
   <select
     id="idioma"
-    [(ngModel)]="idioma">
+    [(ngModel)]="idioma"
+    [disabled]="peliculaIdSeleccionada === null">
 
     <option value="">
       Seleccionar idioma
     </option>
 
-    <option value="Castellano">
-      Castellano
-    </option>
+    @for (
+      idiomaDisponible
+      of obtenerIdiomasDisponibles();
+      track idiomaDisponible
+    ) {
 
-    <option value="Subtitulado">
-      Subtitulado
-    </option>
+      <option [value]="idiomaDisponible">
+        {{ idiomaDisponible }}
+      </option>
+
+    }
 
   </select>
 
@@ -262,6 +270,8 @@
 
           <div class="funciones-sala">
 
+            
+
             @if (
               obtenerFuncionesDeSala(sala.id).length === 0
             ) {
@@ -325,6 +335,16 @@
                     Sala disponible:
                     {{ funcion.salaDisponibleDesde }}
                   </span>
+
+                  @if (funcion.guardada) {
+                    <span class="estado-funcion">
+                      ✓ Guardada
+                    </span>
+                  } @else {
+                    <span class="estado-funcion">
+                      Pendiente de guardar
+                    </span>
+                  }
 
                 </div>
 

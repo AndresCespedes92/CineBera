@@ -1,170 +1,245 @@
-import { Component } from '@angular/core';
-import { Pelicula } from '../../../models/pelicula';
-/*
- * Para usar un imput necesitamos FormsModule
- */
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { PageHeader } from '../../../components/page-header/page-header';
-import { NgTemplateOutlet } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
+
+import {
+  FormsModule
+} from '@angular/forms';
+
+import {
+  RouterLink
+} from '@angular/router';
+
+import {
+  NgTemplateOutlet
+} from '@angular/common';
+
+import {
+  Pelicula
+} from '../../../models/pelicula';
+
+import {
+  PeliculaService
+} from '../../../services/pelicula';
+
+import {
+  PageHeader
+} from '../../../components/page-header/page-header';
+
 
 @Component({
-  imports: [FormsModule, RouterLink, PageHeader, NgTemplateOutlet],
   selector: 'app-peliculas',
-  styleUrl: './peliculas.css',
+
+  imports: [
+    FormsModule,
+    RouterLink,
+    PageHeader,
+    NgTemplateOutlet
+  ],
+
   templateUrl: './peliculas.html',
+  styleUrl: './peliculas.css'
 })
-export class Peliculas {
+export class Peliculas implements OnInit {
+
+
   /*
- * Datos simulados.
- *
- * En esta primera etapa nos permiten desarrollar
- * y entender la interfaz sin depender de Supabase.
- *
- * Más adelante estos datos serán reemplazados
- * por una consulta a la base de datos.
- */
-peliculas: Pelicula[] = [
-
-  {
-    id: 1,
-    titulo: 'Dune: Parte Dos',
-    sinopsis:
-      'Paul Atreides continúa su viaje mientras se une a los Fremen.',
-    duracion: 166,
-    generos: [
-      'Ciencia ficción',
-      'Aventura'
-    ],
-    formatos: [
-      '2D',
-      '3D'
-    ],
-    idiomas: [
-      'Castellano',
-      'Subtitulada'
-    ],
-    imagenes: [
-      'dune-portada.jpg'
-    ],
-    precioPreventa: 6500,
-    precioVenta: 8000,
-    fechaEstreno: '2026-10-15',
-    valoracion: 4.7,
-    cantidadResenas: 128,
-    clasificacionEdad: '+13',
-    visible: true
-  },
+   * Array donde guardaremos las películas
+   * obtenidas desde Supabase.
+   *
+   * Antes teníamos películas escritas
+   * manualmente (mock).
+   *
+   * Ahora comienza vacío:
+   *
+   * []
+   *
+   * y se completa cuando consultamos
+   * la base de datos.
+   */
+  peliculas: Pelicula[] = [];
 
 
-  {
-    id: 2,
-    titulo: 'Interestelar',
-    sinopsis:
-      'Un grupo de exploradores viaja a través del espacio buscando un nuevo hogar para la humanidad.',
-    duracion: 169,
-    generos: [
-      'Ciencia ficción',
-      'Drama'
-    ],
-    formatos: [
-      '2D'
-    ],
-    idiomas: [
-      'Castellano',
-      'Subtitulada'
-    ],
-    imagenes: [
-      'interestelar-portada.jpg'
-    ],
-    precioPreventa: 6000,
-    precioVenta: 7500,
-    fechaEstreno: '2026-11-05',
-    valoracion: 4.8,
-    cantidadResenas: 245,
-    clasificacionEdad: '+13',
-    visible: true
-  },
+  /*
+   * Texto que escribe el administrador
+   * en el buscador.
+   *
+   * Está conectado al input mediante:
+   *
+   * [(ngModel)]="textoBusqueda"
+   */
+  textoBusqueda: string = '';
 
-  {
-    id: 3,
-    titulo: 'El Padrino',
-    sinopsis:
-      'La historia de la familia Corleone y su organización criminal.',
-    duracion: 175,
-    generos: [
-      'Drama',
-      'Crimen'
-    ],
-    formatos: [
-      '2D'
-    ],
-    idiomas: [
-      'Subtitulada'
-    ],
-    imagenes: [
-      'el-padrino-portada.jpg'
-    ],
-    precioPreventa: 5500,
-    precioVenta: 7000,
-    fechaEstreno: '2026-12-10',
-    valoracion: 4.9,
-    cantidadResenas: 389,
-    clasificacionEdad: '+18',
-    visible: false
-  }
-];
 
+  /*
+   * Angular nos entrega las dependencias
+   * que necesita este componente.
+   *
+   * PeliculaService:
+   * se encarga de trabajar con las películas.
+   *
+   * ChangeDetectorRef:
+   * nos permite actualizar la vista después
+   * de terminar la consulta asíncrona.
+   */
+  constructor(
+    private peliculaService: PeliculaService,
+    private changeDetectorRef: ChangeDetectorRef
+  ) {}
+
+
+  /*
+   * ngOnInit pertenece al ciclo de vida
+   * de un componente Angular.
+   *
+   * Angular ejecuta este método
+   * cuando se inicializa la pantalla.
+   *
+   * Lo usamos para traer las películas
+   * reales desde Supabase.
+   */
+  async ngOnInit(): Promise<void> {
+
+    /*
+     * Le pedimos al servicio las películas.
+     *
+     * Como obtenerPeliculas() es asíncrono,
+     * utilizamos await.
+     */
+    this.peliculas =
+      await this.peliculaService
+        .obtenerPeliculas();
 
 
     /*
- * Cambia el estado de visibilidad de una película.
- *
- * Si está visible -> la oculta.
- * Si está oculta -> la vuelve visible.
- *
- * Recibimos la película completa como parámetro
- * porque necesitamos modificar específicamente
- * el objeto sobre el cual el usuario hizo click. el ! es como decir NOT lo pasa a false
+     * Avisamos a Angular que los datos
+     * cambiaron después de la operación
+     * asíncrona.
+     */
+    this.changeDetectorRef
+      .detectChanges();
+  }
+
+
+  /*
+ * Cambia la visibilidad de una película
+ * y guarda el cambio en Supabase.
  */
+async cambiarVisibilidad(
+  pelicula: Pelicula
+): Promise<void> {
 
-    cambiarVisibilidad(pelicula:Pelicula): void {
-      pelicula.visible = !pelicula.visible;
-    }
+  /*
+   * Calculamos cuál será el nuevo estado.
+   *
+   * Si actualmente:
+   * visible = true
+   *
+   * entonces:
+   * nuevoEstado = false
+   *
+   * y viceversa.
+   */
+  const nuevoEstado =
+    !pelicula.visible;
 
-        /*
-    * Texto que escribe el usuario en el buscador.
-    */
-    textoBusqueda: string = '';
 
-      /*
- * Devuelve las películas cuyo título contiene
- * el texto escrito en el buscador.
- */
-    obtenerPeliculasFiltradas(): Pelicula[] {
-      const texto = this.textoBusqueda
+  /*
+   * Le pedimos al servicio que actualice
+   * la película en Supabase.
+   */
+  const { error } =
+    await this.peliculaService
+      .cambiarVisibilidad(
+        pelicula.id,
+        nuevoEstado
+      );
+
+
+  /*
+   * Si Supabase devuelve un error,
+   * no modificamos la interfaz.
+   */
+  if (error) {
+
+    console.error(
+      'Error cambiando visibilidad:',
+      error
+    );
+
+    alert(
+      'No se pudo cambiar la visibilidad de la película.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * Supabase confirmó el cambio.
+   *
+   * Ahora actualizamos el objeto que
+   * Angular está mostrando.
+   */
+  pelicula.visible =
+    nuevoEstado;
+
+
+  /*
+   * Actualizamos la vista.
+   */
+  this.changeDetectorRef
+    .detectChanges();
+}
+
+
+  /*
+   * Devuelve las películas que deben
+   * aparecer en la tabla según lo que
+   * escribió el usuario en el buscador.
+   */
+  obtenerPeliculasFiltradas(): Pelicula[] {
+
+    /*
+     * Convertimos el texto a minúsculas
+     * para que la búsqueda no dependa
+     * de mayúsculas/minúsculas.
+     *
+     * trim() elimina espacios innecesarios
+     * al principio y al final.
+     */
+    const texto =
+      this.textoBusqueda
         .toLowerCase()
         .trim();
 
-      /*
-      * Si no hay texto escrito,
-      * devolvemos todas las películas.
-      */
-      if (texto === '') {
-        return this.peliculas;
-      }
-      /*
-      * filter() crea un nuevo array únicamente
-      * con los elementos que cumplen la condición.
-      */
-      return this.peliculas.filter(
-        pelicula =>
-          pelicula.titulo
-            .toLowerCase()
-            .includes(texto)
-      );
+
+    /*
+     * Si el administrador no escribió nada,
+     * mostramos todas las películas.
+     */
+    if (texto === '') {
+
+      return this.peliculas;
     }
 
-    
+
+    /*
+     * filter() crea un nuevo array
+     * solamente con las películas
+     * que cumplen la condición.
+     *
+     * includes() pregunta si el título
+     * contiene el texto buscado.
+     */
+    return this.peliculas.filter(
+      pelicula =>
+        pelicula.titulo
+          .toLowerCase()
+          .includes(texto)
+    );
+  }
 
 }

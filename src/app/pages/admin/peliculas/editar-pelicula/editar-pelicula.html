@@ -1,0 +1,311 @@
+<main class="editar-pelicula-page">
+
+  <a
+    class="volver"
+    routerLink="/admin/peliculas">
+    ← Volver a películas
+  </a>
+
+
+  @if (cargando) {
+
+    <p>
+      Cargando película...
+    </p>
+
+  } @else if (pelicula) {
+
+    <header class="encabezado">
+
+      <div>
+        <h1>
+          Editar película
+        </h1>
+
+        <p>
+          {{ pelicula.titulo }}
+        </p>
+      </div>
+
+    </header>
+
+
+    <section class="datos-tmdb">
+
+      <h2>
+        Información de la película
+      </h2>
+
+      <p>
+        Estos datos provienen de la información
+        original de la película y no se modifican
+        desde esta pantalla.
+      </p>
+
+      <div class="datos-pelicula">
+
+        @if (pelicula.imagenes.length > 0) {
+
+          <img
+            [src]="pelicula.imagenes[0]"
+            [alt]="pelicula.titulo">
+
+        }
+
+        <div>
+
+          <h3>
+            {{ pelicula.titulo }}
+          </h3>
+
+          <p>
+            {{ pelicula.sinopsis }}
+          </p>
+
+          <p>
+            <strong>Duración:</strong>
+            {{ pelicula.duracion }} minutos
+          </p>
+
+          <p>
+            <strong>Géneros:</strong>
+            {{ pelicula.generos.join(', ') }}
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section class="configuracion">
+
+      <h2>
+        Configuración CineBera
+      </h2>
+
+
+      <div class="campo">
+
+        <label for="fechaEstreno">
+          Fecha de estreno en CineBera
+        </label>
+
+        <div class="fecha-selectores">
+
+  <select [(ngModel)]="diaEstreno">
+
+    <option [ngValue]="null">
+      Día
+    </option>
+
+    @for (dia of dias; track dia) {
+      <option [ngValue]="dia">
+        {{ dia }}
+      </option>
+    }
+
+  </select>
+
+
+  <select [(ngModel)]="mesEstreno">
+
+    <option [ngValue]="null">
+      Mes
+    </option>
+
+    @for (mes of meses; track mes) {
+      <option [ngValue]="mes">
+        {{ mes }}
+      </option>
+    }
+
+  </select>
+
+
+  <select [(ngModel)]="anioEstreno">
+
+    <option [ngValue]="null">
+      Año
+    </option>
+
+    @for (anio of anios; track anio) {
+      <option [ngValue]="anio">
+        {{ anio }}
+      </option>
+    }
+
+  </select>
+
+</div>
+
+      </div>
+
+
+      <div class="campo">
+
+        <label for="precioPreventa">
+          Precio preventa
+        </label>
+
+        <input
+          id="precioPreventa"
+          type="number"
+          min="0"
+          [(ngModel)]="pelicula.precioPreventa">
+
+      </div>
+
+
+      <div class="campo">
+
+        <label for="precioVenta">
+          Precio de venta
+        </label>
+
+        <input
+          id="precioVenta"
+          type="number"
+          min="0"
+          [(ngModel)]="pelicula.precioVenta">
+
+      </div>
+
+
+      <div class="campo">
+
+        <label for="clasificacion">
+          Clasificación de edad
+        </label>
+
+        <select
+          id="clasificacion"
+          [(ngModel)]="pelicula.clasificacionEdad">
+
+          @for (
+            clasificacion
+            of clasificacionesDisponibles;
+            track clasificacion
+          ) {
+
+            <option [value]="clasificacion">
+              {{ clasificacion }}
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <fieldset>
+
+        <legend>
+          Formatos
+        </legend>
+
+        @for (
+          formato
+          of formatosDisponibles;
+          track formato
+        ) {
+
+          <label class="opcion">
+
+            <input
+              type="checkbox"
+              [checked]="tieneFormato(formato)"
+              (change)="cambiarFormato(
+                formato,
+                $any($event.target).checked
+              )">
+
+            {{ formato }}
+
+          </label>
+
+        }
+
+      </fieldset>
+
+
+      <fieldset>
+
+  <legend>
+    Idiomas
+  </legend>
+
+  @for (
+    idioma
+    of idiomasDisponibles;
+    track idioma
+  ) {
+
+    <label class="opcion">
+
+      <input
+        type="checkbox"
+        [checked]="tieneIdioma(idioma)"
+        (change)="cambiarIdioma(
+          idioma,
+          $any($event.target).checked
+        )">
+
+      {{ idioma }}
+
+    </label>
+
+  }
+
+</fieldset>
+
+
+      <label class="opcion">
+
+        <input
+          type="checkbox"
+          [(ngModel)]="pelicula.visible">
+
+        Película visible
+
+      </label>
+
+
+      <div class="acciones">
+
+        <a
+          routerLink="/admin/peliculas">
+          Cancelar
+        </a>
+
+        <button
+          type="button"
+          [disabled]="guardando"
+          (click)="guardarCambios()">
+
+          @if (guardando) {
+            Guardando...
+          } @else {
+            Guardar cambios
+          }
+
+        </button>
+      </div>
+
+    </section>
+
+  } @else {
+
+    <h1>
+      Película no encontrada
+    </h1>
+
+    <p>
+      No existe una película con el ID solicitado.
+    </p>
+
+  }
+
+</main>

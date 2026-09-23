@@ -78,9 +78,15 @@
           }
         </td>
         <td>
-          <button type="button">
+          <a
+            class="boton-editar"
+            [routerLink]="[
+              '/admin/peliculas',
+              pelicula.id,
+              'editar'
+            ]">
             Editar
-          </button>
+          </a>
           <button
             type="button"
             (click)="cambiarVisibilidad(pelicula)">
