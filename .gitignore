@@ -46,3 +46,8 @@ Thumbs.db
 # Firebase local cache
 .firebase/
 
+# Configuración local con credenciales
+/src/environments/environment.local.ts
+
+# Build generado para Firebase Hosting
+/public/

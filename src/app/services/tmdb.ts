@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TmdbDetallePelicula, TmdbRespuestaBusqueda } from '../models/tmdb-peliculas';
+import { environmentLocal } from '../../environments/environment.local';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +21,7 @@ export class TmdbService {
    * reemplazar el texto por tu API Key.
    */
   private apiKey =
-    'd8aacc7449b2592ad5c06bf1ea245ea4';
+    environmentLocal.tmdbApiKey;
 
       /*
   * URL base utilizada para obtener
