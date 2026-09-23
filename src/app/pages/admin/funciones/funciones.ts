@@ -411,87 +411,136 @@ alCambiarPelicula(): void {
    *
    * Todas comienzan un jueves.
    */
-  generarSemanasDisponibles(): void {
+generarSemanasDisponibles(): void {
 
-    this.semanasDisponibles = [];
+  this.semanasDisponibles = [];
 
 
-    const hoy =
-      new Date();
+  const hoy =
+    new Date();
 
+
+  /*
+   * Queremos encontrar el jueves
+   * que inició la semana cinematográfica
+   * ACTUAL.
+   *
+   * La semana del cine es:
+   *
+   * jueves → miércoles
+   *
+   * Ejemplo:
+   *
+   * Hoy: miércoles 23/09/2026
+   *
+   * Semana actual:
+   * 17/09/2026 → 23/09/2026
+   */
+  const diaActual =
+    hoy.getDay();
+
+
+  /*
+   * getDay() devuelve:
+   *
+   * domingo   = 0
+   * lunes     = 1
+   * martes    = 2
+   * miércoles = 3
+   * jueves    = 4
+   * viernes   = 5
+   * sábado    = 6
+   *
+   * Calculamos cuántos días debemos
+   * retroceder hasta el último jueves.
+   */
+  const diasDesdeJueves =
+    (diaActual - 4 + 7) % 7;
+
+
+  /*
+   * Creamos una copia de la fecha actual.
+   *
+   * No modificamos "hoy" directamente.
+   */
+  const primerJueves =
+    new Date(hoy);
+
+
+  /*
+   * Retrocedemos hasta el jueves
+   * que inició la semana actual.
+   */
+  primerJueves.setDate(
+    hoy.getDate() - diasDesdeJueves
+  );
+
+
+  /*
+   * Generamos doce semanas comenzando
+   * por la semana cinematográfica actual.
+   */
+  for (let i = 0; i < 12; i++) {
 
     /*
-     * Calculamos cuántos días faltan
-     * hasta el próximo jueves.
-     *
-     * Si hoy es jueves:
-     * resultado = 0.
+     * Inicio de cada semana.
      */
-    const diasHastaJueves =
-      (4 - hoy.getDay() + 7) % 7;
+    const inicio =
+      new Date(primerJueves);
 
 
-    const primerJueves =
-      new Date(hoy);
-
-
-    primerJueves.setDate(
-      hoy.getDate() + diasHastaJueves
+    inicio.setDate(
+      primerJueves.getDate() + (i * 7)
     );
 
 
     /*
-     * Generamos doce semanas.
+     * Cada semana termina seis días
+     * después del jueves:
+     *
+     * jueves + 6 días = miércoles.
      */
-    for (let i = 0; i < 12; i++) {
-
-      const inicio =
-        new Date(primerJueves);
+    const fin =
+      new Date(inicio);
 
 
-      inicio.setDate(
-        primerJueves.getDate() + (i * 7)
-      );
+    fin.setDate(
+      inicio.getDate() + 6
+    );
 
 
-      /*
-       * La semana termina
-       * seis días después:
-       *
-       * jueves + 6 = miércoles.
-       */
-      const fin =
-        new Date(inicio);
+    /*
+     * Convertimos las fechas al formato
+     * utilizado por nuestra aplicación
+     * y Supabase.
+     */
+    const inicioTexto =
+      this.convertirFechaAString(inicio);
 
 
-      fin.setDate(
-        inicio.getDate() + 6
-      );
+    const finTexto =
+      this.convertirFechaAString(fin);
 
 
-      const inicioTexto =
-        this.convertirFechaAString(inicio);
+    /*
+     * Agregamos la semana al selector.
+     */
+    this.semanasDisponibles.push({
 
+      inicio:
+        inicioTexto,
 
-      const finTexto =
-        this.convertirFechaAString(fin);
+      fin:
+        finTexto,
 
+      descripcion:
+        `${this.formatearFecha(inicioTexto)} → ${this.formatearFecha(finTexto)}`
 
-      this.semanasDisponibles.push({
-
-        inicio: inicioTexto,
-
-        fin: finTexto,
-
-        descripcion:
-          `${this.formatearFecha(inicioTexto)} → ${this.formatearFecha(finTexto)}`
-
-      });
-
-    }
+    });
 
   }
 
+}
 
   /*
    * Convierte un objeto Date:

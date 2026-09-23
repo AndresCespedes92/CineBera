@@ -1,72 +1,66 @@
-import { Injectable } from '@angular/core';
-import { Pelicula } from '../models/pelicula';
-import { supabase } from '../supabase';
-import { NuevaPeliculaSupabase } from '../models/pelicula';
+import {
+  Injectable
+} from '@angular/core';
+
+import {
+  Pelicula,
+  NuevaPeliculaSupabase
+} from '../models/pelicula';
+
+import {
+  supabase
+} from '../supabase';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class PeliculaService {
 
-  /*
- * Obtiene una película específica
- * desde Supabase utilizando su ID.
- *
- * Ejemplo:
- *
- * /admin/peliculas/5/editar
- *
- * El componente obtiene el ID 5
- * desde la URL y el servicio busca
- * esa película en la base de datos.
- */
-async obtenerPeliculaPorId(
-  id: number
-): Promise<Pelicula | null> {
-
-  const {
-    data,
-    error
-  } = await supabase
-    .from('peliculas')
-    .select('*')
-    .eq('id', id)
-    .single();
-
 
   /*
-   * Si Supabase devuelve un error
-   * no intentamos construir una película.
+   * Obtiene una película específica
+   * desde Supabase utilizando su ID.
+   *
+   * Ejemplo:
+   *
+   * /admin/peliculas/5/editar
    */
-  if (error) {
+  async obtenerPeliculaPorId(
+    id: number
+  ): Promise<Pelicula | null> {
 
-    console.error(
-      'Error obteniendo película por ID:',
+    const {
+      data,
       error
+    } = await supabase
+      .from('peliculas')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+
+    if (error) {
+
+      console.error(
+        'Error obteniendo película por ID:',
+        error
+      );
+
+      return null;
+    }
+
+
+    return this.mapearPeliculaSupabase(
+      data
     );
 
-    return null;
   }
 
 
   /*
-   * Reutilizamos el mapper que ya tenemos.
-   *
-   * Así evitamos repetir la conversión:
-   *
-   * precio_venta -> precioVenta
-   * fecha_estreno_cinebera -> fechaEstreno
-   * etc.
-   */
-  return this.mapearPeliculaSupabase(
-    data
-  );
-}
-
-  /*
-   * A diferencia de los métodos anteriores,
-   * este método ya trabaja realmente
-   * contra Supabase.
+   * Crea una nueva película
+   * en Supabase.
    */
   async crearPelicula(
     pelicula: NuevaPeliculaSupabase
@@ -80,317 +74,353 @@ async obtenerPeliculaPorId(
 
   }
 
+
   /*
- * Actualiza los datos comerciales
- * de una película administrados
- * por CineBera.
- *
- * No modificamos los datos originales
- * provenientes de TMDB.
- */
-async actualizarPelicula(
-  peliculaId: number,
-  datos: {
-    fechaEstreno: string;
-    precioPreventa: number;
-    precioVenta: number;
-    clasificacionEdad: string;
-    formatos: string[];
-    idiomas: string[];
-    visible: boolean;
-  }
-) {
+   * Actualiza los datos comerciales
+   * administrados por CineBera.
+   *
+   * Los datos originales provenientes
+   * de TMDB no se modifican.
+   */
+  async actualizarPelicula(
+    peliculaId: number,
+    datos: {
+      fechaEstreno: string;
+      precioPreventa: number;
+      precioVenta: number;
+      clasificacionEdad: string;
+      formatos: string[];
+      idiomas: string[];
+      visible: boolean;
+    }
+  ) {
 
-  return await supabase
-    .from('peliculas')
-    .update({
+    return await supabase
+      .from('peliculas')
+      .update({
 
-      /*
-       * Traducimos nuevamente entre
-       * el modelo Angular y las columnas
-       * de Supabase.
-       */
-      fecha_estreno_cinebera:
-        datos.fechaEstreno,
+        fecha_estreno_cinebera:
+          datos.fechaEstreno,
 
-      precio_preventa:
-        datos.precioPreventa,
+        precio_preventa:
+          datos.precioPreventa,
 
-      precio_venta:
-        datos.precioVenta,
+        precio_venta:
+          datos.precioVenta,
 
-      clasificacion_edad:
-        datos.clasificacionEdad,
+        clasificacion_edad:
+          datos.clasificacionEdad,
 
-      formatos:
-        datos.formatos,
+        formatos:
+          datos.formatos,
 
-      idiomas:
-        datos.idiomas,
+        idiomas:
+          datos.idiomas,
 
-      visible:
-        datos.visible
-    })
-    .eq(
-      'id',
-      peliculaId
-    )
-    .select()
-    .single();
-}
+        visible:
+          datos.visible
 
+      })
+      .eq(
+        'id',
+        peliculaId
+      )
+      .select()
+      .single();
 
-/*
- * Obtiene las películas guardadas
- * realmente en Supabase.
- *
- * Las ordenamos utilizando la fecha
- * de estreno definida por CineBera,
- * no la fecha original de TMDB.
- */
-async obtenerPeliculasSupabase() {
-
-  return await supabase
-    .from('peliculas')
-    .select('*')
-    .order(
-      'fecha_estreno_cinebera',
-      {
-        ascending: true
-      }
-    );
-
-}
-
-async obtenerPeliculas(): Promise<Pelicula[]> {
-
-  const {
-    data,
-    error
-  } = await this.obtenerPeliculasSupabase();
-
-  if (error) {
-
-    console.error(
-      'Error obteniendo películas:',
-      error
-    );
-
-    return [];
-  }
-
-  return (data ?? [])
-    .map(
-      fila =>
-        this.mapearPeliculaSupabase(fila)
-    );
-
-}
-
-/*
- * Convierte una fila de la tabla "peliculas"
- * de Supabase al modelo Pelicula utilizado
- * por nuestra aplicación Angular.
- *
- * Supabase utiliza nombres como:
- * precio_venta
- *
- * Angular utiliza:
- * precioVenta
- */
-private mapearPeliculaSupabase(
-  fila: any
-): Pelicula {
-
-  return {
-
-    id:
-      fila.id,
-
-    titulo:
-      fila.titulo,
-
-    sinopsis:
-      fila.sinopsis,
-
-    duracion:
-      fila.duracion,
-
-    generos:
-      fila.generos ?? [],
-
-    formatos:
-      fila.formatos ?? [],
-
-    idiomas:
-      fila.idiomas ?? [],
-
-    /*
-     * Nuestro modelo anterior esperaba
-     * un array de imágenes.
-     *
-     * Actualmente TMDB nos proporciona
-     * un único póster.
-     */
-    imagenes:
-      fila.poster_url
-        ? [fila.poster_url]
-        : [],
-
-    precioPreventa:
-      Number(fila.precio_preventa),
-
-    precioVenta:
-      Number(fila.precio_venta),
-
-    /*
-     * Para CineBera nos interesa su propia
-     * fecha de estreno, no la fecha histórica
-     * de TMDB.
-     */
-    fechaEstreno:
-      fila.fecha_estreno_cinebera,
-
-    valoracion:
-      Number(
-        fila.valoracion_cinebera ?? 0
-      ),
-
-    cantidadResenas:
-      fila.cantidad_resenas ?? 0,
-
-    clasificacionEdad:
-      fila.clasificacion_edad,
-
-    visible:
-      fila.visible
-
-  };
-
-}
-
-async cambiarVisibilidad(
-  peliculaId: number,
-  visible: boolean
-) {
-
-  return await supabase
-    .from('peliculas')
-    .update({
-      visible: visible
-    })
-    .eq('id', peliculaId)
-    .select()
-    .single();
-}
-
-
-/*
- * Obtiene únicamente las películas
- * que actualmente pertenecen a la cartelera.
- *
- * Para estar en cartelera:
- *
- * 1. Debe estar visible.
- * 2. Su fecha de estreno en CineBera
- *    debe ser hoy o una fecha anterior.
- */
-async obtenerCartelera(): Promise<Pelicula[]> {
-
-  const {
-    data,
-    error
-  } = await this.obtenerPeliculasSupabase();
-
-
-  if (error) {
-
-    console.error(
-      'Error obteniendo películas:',
-      error
-    );
-
-    return [];
   }
 
 
   /*
-   * Creamos la fecha de hoy.
+   * Obtiene todas las películas
+   * almacenadas en Supabase.
+   *
+   * Se ordenan utilizando la fecha
+   * de estreno definida por CineBera.
+   */
+  async obtenerPeliculasSupabase() {
+
+    return await supabase
+      .from('peliculas')
+      .select('*')
+      .order(
+        'fecha_estreno_cinebera',
+        {
+          ascending: true
+        }
+      );
+
+  }
+
+
+  /*
+   * Obtiene todas las películas
+   * y las transforma al modelo
+   * utilizado por Angular.
+   */
+  async obtenerPeliculas(): Promise<Pelicula[]> {
+
+    const {
+      data,
+      error
+    } = await this.obtenerPeliculasSupabase();
+
+
+    if (error) {
+
+      console.error(
+        'Error obteniendo películas:',
+        error
+      );
+
+      return [];
+    }
+
+
+    return (data ?? [])
+      .map(
+        fila =>
+          this.mapearPeliculaSupabase(
+            fila
+          )
+      );
+
+  }
+
+
+  /*
+   * Convierte una fila de Supabase
+   * al modelo Pelicula utilizado
+   * por Angular.
    *
    * Ejemplo:
-   * 2026-09-22
+   *
+   * Supabase:
+   * precio_venta
+   *
+   * Angular:
+   * precioVenta
    */
-  const hoy =
-    new Date()
-      .toISOString()
-      .split('T')[0];
+  private mapearPeliculaSupabase(
+    fila: any
+  ): Pelicula {
+
+    return {
+
+      id:
+        fila.id,
+
+      titulo:
+        fila.titulo,
+
+      sinopsis:
+        fila.sinopsis,
+
+      duracion:
+        fila.duracion,
+
+      generos:
+        fila.generos ?? [],
+
+      formatos:
+        fila.formatos ?? [],
+
+      idiomas:
+        fila.idiomas ?? [],
 
 
-  return (data ?? [])
-
-    /*
-     * Primero filtramos.
-     */
-    .filter(
-      fila =>
-        fila.visible === true &&
-        fila.fecha_estreno_cinebera <= hoy
-    )
-
-    /*
-     * Después transformamos cada fila
-     * Supabase al modelo Pelicula.
-     */
-    .map(
-      fila =>
-        this.mapearPeliculaSupabase(fila)
-    );
-
-}
+      /*
+       * Nuestro modelo Pelicula utiliza
+       * un array de imágenes.
+       *
+       * Actualmente guardamos un solo
+       * póster proveniente de TMDB.
+       */
+      imagenes:
+        fila.poster_url
+          ? [fila.poster_url]
+          : [],
 
 
-/*
- * Obtiene películas que CineBera
- * todavía no estrenó.
- */
-async obtenerProximamente(): Promise<Pelicula[]> {
+      precioPreventa:
+        Number(
+          fila.precio_preventa
+        ),
 
-  const {
-    data,
-    error
-  } = await this.obtenerPeliculasSupabase();
+      precioVenta:
+        Number(
+          fila.precio_venta
+        ),
 
 
-  if (error) {
+      /*
+       * Para CineBera utilizamos su propia
+       * fecha de estreno comercial.
+       */
+      fechaEstreno:
+        fila.fecha_estreno_cinebera,
 
-    console.error(
-      'Error obteniendo próximos estrenos:',
-      error
-    );
 
-    return [];
+      valoracion:
+        Number(
+          fila.valoracion_cinebera ?? 0
+        ),
+
+      cantidadResenas:
+        fila.cantidad_resenas ?? 0,
+
+      clasificacionEdad:
+        fila.clasificacion_edad,
+
+      visible:
+        fila.visible
+
+    };
+
   }
 
 
-  const hoy =
-    new Date()
-      .toISOString()
-      .split('T')[0];
+  /*
+   * Permite activar o desactivar
+   * visualmente una película.
+   */
+  async cambiarVisibilidad(
+    peliculaId: number,
+    visible: boolean
+  ) {
+
+    return await supabase
+      .from('peliculas')
+      .update({
+        visible: visible
+      })
+      .eq(
+        'id',
+        peliculaId
+      )
+      .select()
+      .single();
+
+  }
 
 
-  return (data ?? [])
+  /*
+   * Obtiene las películas que PUEDEN
+   * formar parte de la cartelera.
+   *
+   * IMPORTANTE:
+   *
+   * Acá solamente comprobamos que
+   * la película esté visible.
+   *
+   * La existencia de funciones activas
+   * se comprueba desde Home utilizando
+   * FuncionService.
+   *
+   * Por lo tanto:
+   *
+   * visible
+   *      +
+   * función activa futura
+   *      =
+   * CARTELERA
+   */
+  async obtenerCartelera(): Promise<Pelicula[]> {
 
-    .filter(
-      fila =>
-        fila.visible === true &&
-        fila.fecha_estreno_cinebera > hoy
-    )
+    const {
+      data,
+      error
+    } = await this.obtenerPeliculasSupabase();
 
-    .map(
-      fila =>
-        this.mapearPeliculaSupabase(fila)
-    );
 
-}
+    if (error) {
+
+      console.error(
+        'Error obteniendo películas para cartelera:',
+        error
+      );
+
+      return [];
+    }
+
+
+    return (data ?? [])
+
+      /*
+       * En este servicio solamente
+       * comprobamos visibilidad.
+       */
+      .filter(
+        fila =>
+          fila.visible === true
+      )
+
+      /*
+       * Convertimos cada fila de Supabase
+       * al modelo Pelicula de Angular.
+       */
+      .map(
+        fila =>
+          this.mapearPeliculaSupabase(
+            fila
+          )
+      );
+
+  }
+
+
+  /*
+   * Obtiene películas que CineBera
+   * todavía no estrenó.
+   *
+   * Próximamente SÍ depende de
+   * fecha_estreno_cinebera.
+   */
+  async obtenerProximamente(): Promise<Pelicula[]> {
+
+    const {
+      data,
+      error
+    } = await this.obtenerPeliculasSupabase();
+
+
+    if (error) {
+
+      console.error(
+        'Error obteniendo próximos estrenos:',
+        error
+      );
+
+      return [];
+    }
+
+
+    /*
+     * Fecha actual en formato:
+     *
+     * YYYY-MM-DD
+     */
+    const hoy =
+      new Date()
+        .toISOString()
+        .split('T')[0];
+
+
+    return (data ?? [])
+
+      .filter(
+        fila =>
+          fila.visible === true &&
+          fila.fecha_estreno_cinebera > hoy
+      )
+
+      .map(
+        fila =>
+          this.mapearPeliculaSupabase(
+            fila
+          )
+      );
+
+  }
 
 }

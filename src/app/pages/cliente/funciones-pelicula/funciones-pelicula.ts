@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   OnInit
 } from '@angular/core';
@@ -15,10 +16,16 @@ import {
   PeliculaService
 } from '../../../services/pelicula';
 
+import {
+  FuncionService
+} from '../../../services/funcion';
+
 
 @Component({
   selector: 'app-funciones-pelicula',
+
   imports: [],
+
   templateUrl: './funciones-pelicula.html',
   styleUrl: './funciones-pelicula.css'
 })
@@ -26,16 +33,25 @@ export class FuncionesPelicula implements OnInit {
 
 
   /*
-   * Película que obtendremos desde Supabase.
-   *
-   * null significa que todavía no tenemos
-   * una película cargada.
+   * Película seleccionada por el cliente.
    */
   pelicula: Pelicula | null = null;
 
 
   /*
-   * ID recibido mediante la URL.
+   * Funciones disponibles de esa película.
+   *
+   * Por ahora utilizamos any[].
+   * Después podemos tiparlo con Funcion
+   * cuando terminemos de definir exactamente
+   * qué información necesita esta pantalla.
+   */
+  funciones: any[] = [];
+
+
+  /*
+   * ID de la película recibido
+   * mediante la URL.
    *
    * Ejemplo:
    *
@@ -46,39 +62,28 @@ export class FuncionesPelicula implements OnInit {
   idPelicula: number = 0;
 
 
-  /*
-   * ActivatedRoute:
-   * permite leer información de la URL.
-   *
-   * PeliculaService:
-   * se encarga de obtener la película
-   * desde Supabase.
-   */
   constructor(
     private route: ActivatedRoute,
-    private peliculaService: PeliculaService
+    private peliculaService: PeliculaService,
+    private funcionService: FuncionService,
+    private changeDetectorRef: ChangeDetectorRef
   ) {}
 
 
   /*
-   * Angular ejecuta ngOnInit cuando
-   * inicializa este componente.
+   * Cuando se inicia la pantalla:
    *
-   * Lo hacemos async porque necesitamos
-   * esperar una consulta a Supabase.
+   * 1. Leemos el ID de la URL.
+   * 2. Buscamos la película.
+   * 3. Buscamos sus funciones activas.
    */
   async ngOnInit(): Promise<void> {
 
 
     /*
-     * Obtenemos el parámetro :id
-     * definido en nuestra ruta.
+     * PASO 1
      *
-     * Por ejemplo:
-     *
-     * /pelicula/5/funciones
-     *
-     * idRecibido = "5"
+     * Obtenemos :id desde la URL.
      */
     const idRecibido =
       this.route.snapshot
@@ -87,29 +92,104 @@ export class FuncionesPelicula implements OnInit {
 
 
     /*
-     * Los parámetros de la URL son string.
+     * Los parámetros de URL son texto.
      *
-     * Number() convierte:
-     *
-     * "5" -> 5
+     * "5" → 5
      */
     this.idPelicula =
       Number(idRecibido);
 
 
     /*
-     * Ahora obtenerPeliculaPorId()
-     * consulta Supabase.
+     * PASO 2
      *
-     * Por eso utilizamos await:
-     * esperamos que termine la consulta
-     * antes de guardar el resultado.
+     * Buscamos la película en Supabase.
      */
     this.pelicula =
       await this.peliculaService
         .obtenerPeliculaPorId(
           this.idPelicula
         );
+
+
+    /*
+     * PASO 3
+     *
+     * Generamos la fecha de hoy
+     * para no traer funciones de
+     * días anteriores.
+     */
+    const hoy =
+      new Date()
+        .toISOString()
+        .split('T')[0];
+
+
+    /*
+     * PASO 4
+     *
+     * Buscamos únicamente las funciones
+     * activas correspondientes a esta película.
+     */
+    const {
+      data,
+      error
+    } =
+      await this.funcionService
+        .obtenerFuncionesPorPelicula(
+          this.idPelicula,
+          hoy
+        );
+
+
+    /*
+     * Si Supabase devuelve un error,
+     * lo mostramos para poder diagnosticarlo.
+     */
+    if (error) {
+
+      console.error(
+        'Error obteniendo funciones de la película:',
+        error
+      );
+
+      return;
+    }
+
+
+    /*
+     * PASO 5
+     *
+     * Guardamos las funciones encontradas.
+     *
+     * Si Supabase devuelve null,
+     * utilizamos un array vacío.
+     */
+    this.funciones =
+      data ?? [];
+
+
+    /*
+     * Actualizamos la vista después
+     * de las consultas asíncronas.
+     */
+    this.changeDetectorRef
+      .detectChanges();
+
+
+    /*
+     * Logs temporales de prueba.
+     */
+    console.log(
+      'PELÍCULA SELECCIONADA:',
+      this.pelicula
+    );
+
+    console.log(
+      'FUNCIONES DE LA PELÍCULA:',
+      this.funciones
+    );
+
   }
 
 }

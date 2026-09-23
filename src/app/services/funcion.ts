@@ -114,5 +114,110 @@ async desactivarFuncionSemanal(
     .eq('activa', true);
 }
 
+/*
+ * Obtiene todas las funciones activas
+ * desde una fecha determinada.
+ *
+ * Lo vamos a usar para construir
+ * la cartelera del cliente.
+ *
+ * Ejemplo:
+ *
+ * hoy = 2026-09-23
+ *
+ * traerá funciones:
+ * 23/09
+ * 24/09
+ * 25/09
+ * ...
+ *
+ * pero no funciones anteriores.
+ */
+async obtenerFuncionesActivasDesde(
+  fecha: string
+) {
+
+  return await supabase
+    .from('funciones')
+    .select('*')
+    .eq('activa', true)
+    .gte('fecha', fecha)
+    .order(
+      'fecha',
+      {
+        ascending: true
+      }
+    )
+    .order(
+      'hora',
+      {
+        ascending: true
+      }
+    );
+
+}
+
+/*
+ * Obtiene las funciones activas de una
+ * película desde una fecha determinada.
+ *
+ * Se utiliza cuando el cliente entra a:
+ *
+ * /pelicula/:id/funciones
+ */
+async obtenerFuncionesPorPelicula(
+  peliculaId: number,
+  fechaDesde: string
+) {
+
+  return await supabase
+    .from('funciones')
+    .select('*')
+    .eq('pelicula_id', peliculaId)
+    .eq('activa', true)
+    .gte('fecha', fechaDesde)
+    .order('fecha', {
+      ascending: true
+    })
+    .order('hora', {
+      ascending: true
+    });
+
+}
+
+/*
+ * Obtiene las funciones activas que pertenecen
+ * únicamente a una semana cinematográfica.
+ *
+ * La semana de CineBera funciona:
+ *
+ * jueves -> miércoles
+ *
+ * Ejemplo:
+ *
+ * 17/09/2026 -> 23/09/2026
+ */
+async obtenerFuncionesSemana(
+  fechaInicio: string,
+  fechaFin: string
+) {
+
+  return await supabase
+    .from('funciones')
+    .select('*')
+    .eq('activa', true)
+    .gte('fecha', fechaInicio)
+    .lte('fecha', fechaFin)
+    .order('fecha', {
+      ascending: true
+    })
+    .order('hora', {
+      ascending: true
+    });
+
+}
+
+
+
 
 }
