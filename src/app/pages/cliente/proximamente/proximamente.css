@@ -1,0 +1,29 @@
+.proximamente-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.proximamente-header {
+  margin-bottom: 24px;
+}
+
+.proximamente-header h1 {
+  margin-bottom: 8px;
+}
+
+.proximamente-header p {
+  color: #666666;
+}
+
+.proximamente-listado {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.sin-proximos-estrenos {
+  padding: 32px 0;
+  color: #666666;
+}

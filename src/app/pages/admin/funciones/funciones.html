@@ -1,0 +1,378 @@
+<section class="funciones-admin">
+
+  <h1>Funciones y Salas</h1>
+
+  <p>
+    Configurá las funciones disponibles en CineBera.
+  </p>
+
+
+  <!-- SELECCIÓN DE PELÍCULA -->
+  <div class="campo">
+
+    <label for="pelicula">
+      Película
+    </label>
+
+    <select
+      id="pelicula"
+      [(ngModel)]="peliculaIdSeleccionada">
+
+      <option [ngValue]="null">
+        Seleccionar película
+      </option>
+
+      @for (
+        pelicula of peliculas;
+        track pelicula.id
+      ) {
+
+        <option [ngValue]="pelicula.id">
+          {{ pelicula.titulo }}
+        </option>
+
+      }
+
+    </select>
+
+  </div>
+
+
+  <!-- SELECCIÓN DE SALA -->
+  <div class="campo">
+
+    <label for="sala">
+      Sala
+    </label>
+
+    <select
+      id="sala"
+      [(ngModel)]="salaIdSeleccionada">
+
+      <option [ngValue]="null">
+        Seleccionar sala
+      </option>
+
+      @for (
+        sala of salas;
+        track sala.id
+      ) {
+
+        <option [ngValue]="sala.id">
+          {{ sala.nombre }}
+        </option>
+
+      }
+
+    </select>
+
+ <!-- SEMANA CINEMATOGRÁFICA -->
+<div class="campo">
+
+  <label for="fechaInicioSemana">
+    Semana de programación
+  </label>
+
+  <select
+    id="fechaInicioSemana"
+    [(ngModel)]="fechaInicioSemana"
+    (change)="generarSemana()">
+
+    <option value="">
+      Seleccionar semana
+    </option>
+
+    @for (
+      semana of semanasDisponibles;
+      track semana.inicio
+    ) {
+
+      <option [value]="semana.inicio">
+        {{ semana.descripcion }}
+      </option>
+
+    }
+
+  </select>
+
+</div>
+
+<!-- HORA -->
+<div class="campo">
+
+  <label for="hora">
+    Hora
+  </label>
+
+  <input
+    id="hora"
+    type="time"
+    [(ngModel)]="hora">
+
+</div>
+
+
+<!-- FORMATO -->
+<div class="campo">
+
+  <label for="formato">
+    Formato
+  </label>
+
+  <select
+    id="formato"
+    [(ngModel)]="formato">
+
+    <option value="">
+      Seleccionar formato
+    </option>
+
+    <option value="2D">
+      2D
+    </option>
+
+    <option value="3D">
+      3D
+    </option>
+
+    <option value="4D">
+      4D
+    </option>
+
+    <option value="5D">
+      5D
+    </option>
+
+  </select>
+
+</div>
+
+
+<!-- IDIOMA -->
+<div class="campo">
+
+  <label for="idioma">
+    Idioma
+  </label>
+
+  <select
+    id="idioma"
+    [(ngModel)]="idioma">
+
+    <option value="">
+      Seleccionar idioma
+    </option>
+
+    <option value="Castellano">
+      Castellano
+    </option>
+
+    <option value="Subtitulado">
+      Subtitulado
+    </option>
+
+  </select>
+
+</div>
+
+<div class="acciones-funcion">
+
+  <button
+    type="button"
+    (click)="agregarFuncionTemporal()">
+
+    Agregar función
+
+  </button>
+
+</div>
+
+  </div>
+
+  @if (fechaInicioSemana) {
+
+  <section class="programacion-preview">
+
+    <!--
+      ENCABEZADO DE LA PROGRAMACIÓN
+    -->
+    <div class="programacion-encabezado">
+
+      <div>
+
+        <h2>
+          Programación semanal
+        </h2>
+
+        <p>
+          Los horarios se repetirán
+          de jueves a miércoles.
+        </p>
+
+      </div>
+
+
+      <div class="programacion-semana">
+
+        @if (fechasSemana.length > 0) {
+
+          <strong>
+            {{ formatearFecha(fechasSemana[0]) }}
+            →
+            {{ formatearFecha(fechasSemana[6]) }}
+          </strong>
+
+        }
+
+      </div>
+
+    </div>
+
+
+    <!--
+      RECORREMOS TODAS LAS SALAS.
+
+      Incluso mostramos las salas que
+      todavía no tienen funciones.
+    -->
+    <div class="salas-programacion">
+
+      @for (
+        sala of salas;
+        track sala.id
+      ) {
+
+        <section class="sala-programacion">
+
+
+          <!-- NOMBRE DE LA SALA -->
+
+          <div class="sala-encabezado">
+
+            <h3>
+              {{ sala.nombre }}
+            </h3>
+
+          </div>
+
+
+          <!--
+            FUNCIONES DE ESTA SALA
+          -->
+
+          <div class="funciones-sala">
+
+            @if (
+              obtenerFuncionesDeSala(sala.id).length === 0
+            ) {
+
+              <div class="sala-vacia">
+
+                Sin funciones programadas
+
+              </div>
+
+            }
+
+
+            @for (
+              funcion of obtenerFuncionesDeSala(sala.id);
+              track $index
+            ) {
+
+              <article class="funcion-card">
+
+
+                <!-- HORARIO -->
+
+                <div class="funcion-hora">
+
+                  {{ funcion.hora }}
+
+                </div>
+
+
+                <!-- PELÍCULA -->
+
+                <div class="funcion-datos">
+
+                  <strong>
+                    {{ funcion.peliculaTitulo }}
+                  </strong>
+
+
+                  <span>
+                    {{ funcion.formato }}
+                    ·
+                    {{ funcion.idioma }}
+                  </span>
+
+
+                  <span>
+                    Duración:
+                    {{ funcion.duracion }}
+                    min
+                  </span>
+
+
+                  <span>
+                    Finaliza:
+                    {{ funcion.horaFin }}
+                  </span>
+
+
+                  <span>
+                    Sala disponible:
+                    {{ funcion.salaDisponibleDesde }}
+                  </span>
+
+                </div>
+
+
+                <!-- ELIMINAR -->
+
+                <div class="funcion-acciones">
+
+                  <button
+                    type="button"
+                    (click)="eliminarFuncionTemporal(funcion)">
+
+                    Eliminar
+
+                  </button>
+
+                </div>
+
+              </article>
+
+            }
+
+          </div>
+
+        </section>
+
+      }
+
+    </div>
+
+  </section>
+
+}
+
+@if (programacionTemporal.length > 0) {
+
+  <div class="guardar-programacion">
+
+    <button
+      type="button"
+      (click)="guardarProgramacionSemanal()">
+
+      Guardar programación semanal
+
+    </button>
+
+  </div>
+
+}
+
+</section>

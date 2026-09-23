@@ -50,4 +50,37 @@ export class PeliculaCard {
 
   }
 
+  /*
+ * Convierte la fecha almacenada como:
+ *
+ * 2026-01-15
+ *
+ * al formato que queremos mostrar:
+ *
+ * 15/01/2026
+ *
+ * No modificamos el valor de Supabase.
+ * Solamente cambiamos cómo se muestra.
+ */
+formatearFecha(fecha: string): string {
+
+  if (!fecha) {
+    return '';
+  }
+
+  const partes = fecha.split('-');
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [
+    anio,
+    mes,
+    dia
+  ] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+}
+
 }

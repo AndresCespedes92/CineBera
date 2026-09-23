@@ -41,6 +41,18 @@ export const routes: Routes = [
       .then(modulo => modulo.Home)
 },
 
+{
+  path: 'proximamente',
+
+  loadComponent: () =>
+    import(
+      './pages/cliente/proximamente/proximamente'
+    ).then(
+      componente =>
+        componente.Proximamente
+    )
+},
+
 
 /*
  * FUNCIONES DE UNA PELÍCULA
@@ -118,6 +130,19 @@ export const routes: Routes = [
       loadComponent: () =>
         import('./pages/admin/peliculas/peliculas')
           .then(m => m.Peliculas)
+    },
+
+
+    {
+      path: 'funciones',
+
+      loadComponent: () =>
+        import(
+          './pages/admin/funciones/funciones'
+        ).then(
+          componente =>
+            componente.Funciones
+        )
     },
 
 

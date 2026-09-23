@@ -1,0 +1,54 @@
+<app-navbar></app-navbar>
+
+<main class="proximamente-page">
+
+  <section class="proximamente">
+
+    <header class="proximamente-header">
+
+      <h1>
+        Próximamente
+      </h1>
+
+      <p>
+        Próximos estrenos en CineBera.
+      </p>
+
+    </header>
+
+
+    @if (peliculas.length > 0) {
+
+      <div class="proximamente-listado">
+
+        @for (
+          pelicula of peliculas;
+          track pelicula.id
+        ) {
+
+          <app-pelicula-card
+            [pelicula]="pelicula"
+            (peliculaSeleccionada)="
+              seleccionarPelicula($event)
+            ">
+          </app-pelicula-card>
+
+        }
+
+      </div>
+
+    } @else {
+
+      <div class="sin-proximos-estrenos">
+
+        <p>
+          No hay próximos estrenos disponibles.
+        </p>
+
+      </div>
+
+    }
+
+  </section>
+
+</main>

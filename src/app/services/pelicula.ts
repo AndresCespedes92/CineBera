@@ -19,14 +19,6 @@ export class PeliculaService {
     // tu película actual...
   ];
 
-
-  obtenerPeliculas(): Pelicula[] {
-
-    return this.peliculas;
-
-  }
-
-
   obtenerPeliculaPorId(
     id: number
   ): Pelicula | undefined {
@@ -55,6 +47,8 @@ export class PeliculaService {
 
   }
 
+  
+
 
 /*
  * Obtiene las películas guardadas
@@ -74,6 +68,31 @@ async obtenerPeliculasSupabase() {
       {
         ascending: true
       }
+    );
+
+}
+
+async obtenerPeliculas(): Promise<Pelicula[]> {
+
+  const {
+    data,
+    error
+  } = await this.obtenerPeliculasSupabase();
+
+  if (error) {
+
+    console.error(
+      'Error obteniendo películas:',
+      error
+    );
+
+    return [];
+  }
+
+  return (data ?? [])
+    .map(
+      fila =>
+        this.mapearPeliculaSupabase(fila)
     );
 
 }
@@ -161,9 +180,14 @@ private mapearPeliculaSupabase(
 }
 
 /*
- * Obtiene las películas desde Supabase
- * y las transforma al modelo utilizado
- * por Angular.
+ * Obtiene únicamente las películas
+ * que actualmente pertenecen a la cartelera.
+ *
+ * Para estar en cartelera:
+ *
+ * 1. Debe estar visible.
+ * 2. Su fecha de estreno en CineBera
+ *    debe ser hoy o una fecha anterior.
  */
 async obtenerCartelera(): Promise<Pelicula[]> {
 
@@ -185,17 +209,82 @@ async obtenerCartelera(): Promise<Pelicula[]> {
 
 
   /*
-   * data es un array de filas Supabase.
+   * Creamos la fecha de hoy.
    *
-   * map() recorre ese array y convierte
-   * cada fila en una Pelicula.
+   * Ejemplo:
+   * 2026-09-22
    */
-  return (data ?? []).map(
-    fila =>
-      this.mapearPeliculaSupabase(fila)
-  );
+  const hoy =
+    new Date()
+      .toISOString()
+      .split('T')[0];
+
+
+  return (data ?? [])
+
+    /*
+     * Primero filtramos.
+     */
+    .filter(
+      fila =>
+        fila.visible === true &&
+        fila.fecha_estreno_cinebera <= hoy
+    )
+
+    /*
+     * Después transformamos cada fila
+     * Supabase al modelo Pelicula.
+     */
+    .map(
+      fila =>
+        this.mapearPeliculaSupabase(fila)
+    );
 
 }
 
+
+/*
+ * Obtiene películas que CineBera
+ * todavía no estrenó.
+ */
+async obtenerProximamente(): Promise<Pelicula[]> {
+
+  const {
+    data,
+    error
+  } = await this.obtenerPeliculasSupabase();
+
+
+  if (error) {
+
+    console.error(
+      'Error obteniendo próximos estrenos:',
+      error
+    );
+
+    return [];
+  }
+
+
+  const hoy =
+    new Date()
+      .toISOString()
+      .split('T')[0];
+
+
+  return (data ?? [])
+
+    .filter(
+      fila =>
+        fila.visible === true &&
+        fila.fecha_estreno_cinebera > hoy
+    )
+
+    .map(
+      fila =>
+        this.mapearPeliculaSupabase(fila)
+    );
+
+}
 
 }
