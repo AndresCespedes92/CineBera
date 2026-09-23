@@ -259,45 +259,88 @@ alCambiarPelicula(): void {
   this.idioma = '';
 }
 
+/*
+ * Se ejecuta cuando Angular
+ * carga esta pantalla.
+ */
+async ngOnInit(): Promise<void> {
+
   /*
-   * Se ejecuta cuando Angular
-   * carga esta pantalla.
+   * PASO 1
+   *
+   * Generamos las semanas disponibles.
+   *
+   * Esto es un cálculo local y no necesita
+   * información de Supabase.
    */
-  async ngOnInit(): Promise<void> {
-
-    /*
-     * Obtenemos las películas
-     * desde Supabase.
-     */
-    this.peliculas =
-      await this.peliculaService
-        .obtenerPeliculas();
+  this.generarSemanasDisponibles();
 
 
-    /*
-     * Obtenemos las salas activas
-     * desde Supabase.
-     */
-    this.salas =
-      await this.salaService
-        .obtenerSalasActivas();
+  /*
+   * PASO 2
+   *
+   * Seleccionamos automáticamente
+   * la semana cinematográfica actual.
+   */
+  if (this.semanasDisponibles.length > 0) {
 
-
-    /*
-     * Generamos las semanas que
-     * aparecerán en el dropdown.
-     */
-    this.generarSemanasDisponibles();
-
-
-    /*
-     * Actualizamos la vista después
-     * de las operaciones asíncronas.
-     */
-    this.changeDetectorRef
-      .detectChanges();
+    this.fechaInicioSemana =
+      this.semanasDisponibles[0].inicio;
 
   }
+
+
+  /*
+   * PASO 3
+   *
+   * Cargamos primero las películas.
+   *
+   * Necesitamos tenerlas disponibles antes
+   * de reconstruir la programación guardada.
+   */
+  this.peliculas =
+    await this.peliculaService
+      .obtenerPeliculas();
+
+
+  /*
+   * PASO 4
+   *
+   * Cargamos las salas.
+   *
+   * También deben existir antes de cargar
+   * las funciones guardadas.
+   */
+  this.salas =
+    await this.salaService
+      .obtenerSalasActivas();
+
+
+  /*
+   * PASO 5
+   *
+   * AHORA sí generamos la semana.
+   *
+   * generarSemana() podrá cargar la
+   * programación porque ya tenemos:
+   *
+   * - semana seleccionada
+   * - películas
+   * - salas
+   */
+  this.generarSemana();
+
+
+  /*
+   * PASO 6
+   *
+   * Actualizamos la vista después
+   * de terminar toda la inicialización.
+   */
+  this.changeDetectorRef
+    .detectChanges();
+
+}
 
 
   /*
