@@ -1,0 +1,180 @@
+/* Página completa */
+.butacas-page {
+  padding: 24px;
+  overflow-x: auto;
+}
+
+
+/* Pantalla del cine */
+.pantalla {
+  width: 850px;
+  margin: 30px auto 40px;
+
+  padding: 10px;
+
+  text-align: center;
+  font-weight: bold;
+
+  border: 2px solid #333;
+}
+
+
+/* Contenedor del mapa */
+.mapa-butacas {
+  width: max-content;
+  margin: 0 auto;
+}
+
+
+/*
+ * Cada fila contiene:
+ *
+ * letra
+ * sector izquierdo
+ * pasillo
+ * sector central
+ * pasillo
+ * sector derecho
+ */
+.fila {
+  display: flex;
+  align-items: center;
+
+  margin-bottom: 8px;
+}
+
+
+/* A, B, C... */
+.nombre-fila {
+  width: 30px;
+
+  font-weight: bold;
+  text-align: center;
+}
+
+
+/*
+ * Cada sector también utiliza flex
+ * para colocar las butacas horizontalmente.
+ */
+.sector {
+  display: flex;
+  gap: 4px;
+}
+
+
+/* Espacio físico entre sectores */
+.pasillo {
+  width: 30px;
+}
+
+
+/* Butaca */
+.sector button {
+  width: 30px;
+  height: 30px;
+
+  padding: 0;
+
+  border: 1px solid #555;
+  background: white;
+
+  cursor: pointer;
+}
+
+
+/* Fila J: espacio sin butacas */
+.fila-vacia {
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+
+  margin-bottom: 8px;
+}
+
+
+.fila-vacia span:first-child {
+  width: 30px;
+
+  font-weight: bold;
+  text-align: center;
+}
+
+
+.fila-vacia span:last-child {
+  width: 850px;
+
+  text-align: center;
+
+  font-size: 13px;
+}
+
+/* Butaca accesible */
+.butaca-accesible {
+  background-color: #d9d9d9 !important;
+  border: 2px solid #333 !important;
+}
+
+
+/* Butaca VIP */
+.butaca-vip {
+  background-color: #bdbdbd !important;
+  border: 2px solid #222 !important;
+  font-weight: bold;
+}
+
+
+/* Butaca seleccionada */
+.butaca-seleccionada {
+  background-color: #555 !important;
+  color: white;
+}
+
+
+/* Butaca ocupada */
+.butaca-ocupada {
+  background-color: #222 !important;
+  color: white;
+
+  cursor: not-allowed !important;
+  opacity: 0.55;
+}
+
+.resumen-seleccion {
+  width: 850px;
+  margin: 30px auto;
+  padding-top: 20px;
+  border-top: 1px solid #ccc;
+}
+
+.resumen-seleccion h2 {
+  margin-bottom: 10px;
+}
+
+.lista-seleccionadas {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.lista-seleccionadas span {
+  padding: 6px 10px;
+  border: 1px solid #555;
+  font-weight: bold;
+}
+
+/*
+ * Información de la tarifa utilizada para
+ * calcular el precio de las entradas.
+ */
+.informacion-precio {
+  margin: 15px 0;
+  padding: 12px;
+  border: 1px solid #ccc;
+}
+
+.informacion-precio p {
+  margin: 5px 0;
+}

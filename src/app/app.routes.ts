@@ -78,6 +78,14 @@ export const routes: Routes = [
       .then(m => m.FuncionesPelicula)
 },
 
+{
+  path: 'funcion/:id/butacas',
+
+  loadComponent: () =>
+    import('./pages/cliente/butacas/butacas')
+      .then(m => m.Butacas)
+},
+
 
 
 /*

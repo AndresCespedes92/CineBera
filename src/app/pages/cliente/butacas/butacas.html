@@ -1,0 +1,231 @@
+<main class="butacas-page">
+
+  <header>
+    <h1>Seleccioná tus butacas</h1>
+
+    <p>
+      Función #{{ idFuncion }}
+    </p>
+  </header>
+
+
+  <!--
+    Representación de la pantalla del cine.
+  -->
+  <section class="pantalla">
+    PANTALLA
+  </section>
+
+
+  <section class="mapa-butacas">
+
+    @for (fila of filasButacas; track fila[0].fila) {
+
+      <!--
+        Antes de K representamos visualmente
+        el espacio correspondiente a J.
+
+        J no tiene butacas, por eso no existe
+        dentro de filasButacas.
+      -->
+      @if (fila[0].fila === 'K') {
+
+        <div class="fila-vacia">
+          <span>J</span>
+
+          <span>
+            Espacio accesible
+          </span>
+        </div>
+
+      }
+
+
+      <div class="fila">
+
+        <!-- Nombre de la fila -->
+        <span class="nombre-fila">
+          {{ fila[0].fila }}
+        </span>
+
+
+        <!--
+          Sector izquierdo.
+
+          Filas normales/VIP: 4
+          Fila K: 2
+        -->
+        <div class="sector">
+
+          @for (
+            butaca of obtenerSectorIzquierdo(fila);
+            track butaca.numero
+          ) {
+
+            <button
+              type="button"
+              [appEstadoButaca]="butaca"
+              (click)="seleccionarButaca(butaca)"
+            >
+              {{ butaca.numero }}
+            </button>
+
+          }
+
+        </div>
+
+
+        <!-- Pasillo -->
+        <div class="pasillo"></div>
+
+
+        <!-- Sector central -->
+        <div class="sector">
+
+          @for (
+            butaca of obtenerSectorCentral(fila);
+            track butaca.numero
+          ) {
+
+            <button
+              type="button"
+              [appEstadoButaca]="butaca"
+              (click)="seleccionarButaca(butaca)"
+            >
+              {{ butaca.numero }}
+            </button>
+
+          }
+
+        </div>
+
+
+        <!-- Pasillo -->
+        <div class="pasillo"></div>
+
+
+        <!-- Sector derecho -->
+        <div class="sector">
+
+          @for (
+            butaca of obtenerSectorDerecho(fila);
+            track butaca.numero
+          ) {
+
+            <button
+              type="button"
+              [appEstadoButaca]="butaca"
+              (click)="seleccionarButaca(butaca)"
+            >
+              {{ butaca.numero }}
+            </button>
+
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+    <section class="resumen-seleccion">
+
+      <h2>Tu selección</h2>
+
+      <!--
+  Mostramos al usuario qué tarifa se está aplicando.
+  La decisión entre preventa y venta general se realiza
+  en el componente mediante estaEnPreventa().
+-->
+<div class="informacion-precio">
+
+  @if (estaEnPreventa()) {
+
+    <p>
+      Tarifa:
+      <strong>Preventa</strong>
+    </p>
+
+  } @else {
+
+    <p>
+      Tarifa:
+      <strong>Venta general</strong>
+    </p>
+
+  }
+
+  <!--
+    Este es el precio antes de aplicar
+    posibles recargos por tipo de butaca.
+  -->
+  <p>
+    Precio base:
+    <strong>
+      ${{ obtenerPrecioBase() }}
+    </strong>
+  </p>
+
+  <!--
+    Las butacas VIP tienen un recargo
+    del 30% sobre el precio base.
+  -->
+  <p>
+    Precio VIP:
+    <strong>
+      ${{ obtenerPrecioBase() * (1 + RECARGO_VIP) }}
+    </strong>
+  </p>
+
+</div>
+
+      @if (obtenerButacasSeleccionadas().length === 0) {
+
+        <p>
+          Todavía no seleccionaste ninguna butaca.
+        </p>
+
+      } @else {
+
+        <p>
+          Butacas seleccionadas:
+        </p>
+
+        <div class="lista-seleccionadas">
+
+          @for (
+            butaca of obtenerButacasSeleccionadas();
+            track butaca.fila + butaca.numero
+          ) {
+
+            <span>
+              {{ butaca.fila }}{{ butaca.numero }}
+              -
+              ${{ obtenerPrecioButaca(butaca) }}
+            </span>
+
+          }
+
+        </div>
+
+        <p>
+          Cantidad:
+          <strong>
+            {{ obtenerButacasSeleccionadas().length }}
+          </strong>
+        </p>
+
+        <p>
+          Total:
+          <strong>
+            ${{ calcularTotal() }}
+          </strong>
+        </p>
+
+      }
+
+    </section>
+
+  </section>
+
+</main>

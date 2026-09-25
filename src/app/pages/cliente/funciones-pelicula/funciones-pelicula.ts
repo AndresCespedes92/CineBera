@@ -5,7 +5,7 @@ import {
 } from '@angular/core';
 
 import {
-  ActivatedRoute
+  ActivatedRoute, Router
 } from '@angular/router';
 
 import { Sala } from '../../../models/sala';
@@ -82,7 +82,8 @@ salas: Sala[] = [];
     private peliculaService: PeliculaService,
     private funcionService: FuncionService,
     private changeDetectorRef: ChangeDetectorRef,
-    private salaService: SalaService
+    private salaService: SalaService,
+    private router: Router
   ) {}
 
 
@@ -331,6 +332,22 @@ obtenerNombreSala(
   return sala
     ? sala.nombre
     : 'Sala no disponible';
+}
+
+/*
+ * Navega desde la función seleccionada
+ * hacia la pantalla de butacas.
+ */
+elegirFuncion(
+  funcionId: number
+): void {
+
+  this.router.navigate([
+    '/funcion',
+    funcionId,
+    'butacas'
+  ]);
+
 }
 
 }

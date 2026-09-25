@@ -217,6 +217,28 @@ async obtenerFuncionesSemana(
 
 }
 
+async obtenerFuncionPorId(
+  idFuncion: number
+): Promise<any | null> {
+
+  const { data, error } = await supabase
+    .from('funciones')
+    .select('*')
+    .eq('id', idFuncion)
+    .single();
+
+  if (error) {
+    console.error(
+      'Error al obtener la función:',
+      error
+    );
+
+    return null;
+  }
+
+  return data;
+}
+
 
 
 
