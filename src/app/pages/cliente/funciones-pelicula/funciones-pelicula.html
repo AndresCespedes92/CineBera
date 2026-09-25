@@ -16,14 +16,77 @@
       </p>
     </header>
     <section>
-      <h2>
-        Funciones disponibles
-      </h2>
-      <p>
-        Próximamente mostraremos aquí
-        las funciones disponibles.
-      </p>
-    </section>
+
+  <h2>
+    Funciones disponibles
+  </h2>
+
+
+  <!--
+    Si existen funciones disponibles,
+    recorremos el array recibido desde Supabase.
+  -->
+  @if (funciones.length > 0) {
+
+    <div class="lista-funciones">
+
+      @for (funcion of funciones; track funcion.id) {
+
+        <article class="funcion">
+
+          <!-- Fecha de la función -->
+          <p>
+            <strong>Fecha:</strong>
+            {{ funcion.fecha }}
+          </p>
+
+          <!-- Hora -->
+          <p>
+            <strong>Hora:</strong>
+            {{ funcion.hora }}
+          </p>
+
+          <!-- Formato -->
+          <p>
+            <strong>Formato:</strong>
+            {{ funcion.formato }}
+          </p>
+
+          <!-- Idioma -->
+          <p>
+            <strong>Idioma:</strong>
+            {{ funcion.idioma }}
+          </p>
+
+          <p>
+            <strong>Sala:</strong>
+            {{ obtenerNombreSala(funcion.sala_id) }}
+          </p>
+
+          <!--
+            Más adelante este botón nos llevará
+            a la selección de butacas.
+          -->
+          <button type="button">
+            Elegir función
+          </button>
+
+        </article>
+
+      }
+
+    </div>
+
+  } @else {
+
+    <p>
+      No hay funciones disponibles
+      para esta película.
+    </p>
+
+  }
+
+</section>
   } @else {
     <!--
       Este bloque se muestra cuando el ID recibido

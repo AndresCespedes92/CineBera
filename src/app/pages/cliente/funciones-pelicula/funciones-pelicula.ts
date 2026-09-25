@@ -8,6 +8,10 @@ import {
   ActivatedRoute
 } from '@angular/router';
 
+import { Sala } from '../../../models/sala';
+
+import { SalaService } from '../../../services/sala';
+
 import {
   Pelicula
 } from '../../../models/pelicula';
@@ -31,6 +35,8 @@ import {
 })
 export class FuncionesPelicula implements OnInit {
 
+  
+
 
   /*
    * Película seleccionada por el cliente.
@@ -47,6 +53,15 @@ export class FuncionesPelicula implements OnInit {
    * qué información necesita esta pantalla.
    */
   funciones: any[] = [];
+
+  /*
+ * Salas activas del cine.
+ *
+ * Las usamos para transformar el sala_id
+ * de una función en un nombre entendible
+ * para el cliente.
+ */
+salas: Sala[] = [];
 
 
   /*
@@ -66,7 +81,8 @@ export class FuncionesPelicula implements OnInit {
     private route: ActivatedRoute,
     private peliculaService: PeliculaService,
     private funcionService: FuncionService,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private salaService: SalaService
   ) {}
 
 
@@ -111,35 +127,101 @@ export class FuncionesPelicula implements OnInit {
           this.idPelicula
         );
 
-
-    /*
-     * PASO 3
-     *
-     * Generamos la fecha de hoy
-     * para no traer funciones de
-     * días anteriores.
-     */
-    const hoy =
-      new Date()
-        .toISOString()
-        .split('T')[0];
+        /*
+ * También cargamos las salas activas
+ * para poder mostrar sus nombres.
+ */
+this.salas =
+  await this.salaService
+    .obtenerSalasActivas();
 
 
-    /*
-     * PASO 4
-     *
-     * Buscamos únicamente las funciones
-     * activas correspondientes a esta película.
-     */
-    const {
-      data,
-      error
-    } =
-      await this.funcionService
-        .obtenerFuncionesPorPelicula(
-          this.idPelicula,
-          hoy
-        );
+/*
+ * PASO 3
+ *
+ * Calculamos la semana cinematográfica actual.
+ *
+ * CineBera trabaja:
+ * jueves → miércoles.
+ */
+const hoy = new Date();
+
+const diasDesdeJueves =
+  (hoy.getDay() - 4 + 7) % 7;
+
+
+/*
+ * Buscamos el jueves que inició
+ * la semana cinematográfica actual.
+ */
+const inicioSemana =
+  new Date(hoy);
+
+inicioSemana.setDate(
+  hoy.getDate() - diasDesdeJueves
+);
+
+
+/*
+ * La semana termina el miércoles,
+ * seis días después.
+ */
+const finSemana =
+  new Date(inicioSemana);
+
+finSemana.setDate(
+  inicioSemana.getDate() + 6
+);
+
+
+/*
+ * Función auxiliar para convertir una fecha
+ * local al formato que utiliza Supabase:
+ *
+ * YYYY-MM-DD
+ */
+const convertirFechaLocal =
+  (fecha: Date): string => {
+
+    const anio =
+      fecha.getFullYear();
+
+    const mes =
+      String(
+        fecha.getMonth() + 1
+      ).padStart(2, '0');
+
+    const dia =
+      String(
+        fecha.getDate()
+      ).padStart(2, '0');
+
+    return `${anio}-${mes}-${dia}`;
+  };
+
+
+const fechaInicio =
+  convertirFechaLocal(inicioSemana);
+
+const fechaFin =
+  convertirFechaLocal(finSemana);
+
+
+/*
+ * PASO 4
+ *
+ * Traemos las funciones activas
+ * de la semana cinematográfica actual.
+ */
+const {
+  data,
+  error
+} =
+  await this.funcionService
+    .obtenerFuncionesSemana(
+      fechaInicio,
+      fechaFin
+    );
 
 
     /*
@@ -165,8 +247,46 @@ export class FuncionesPelicula implements OnInit {
      * Si Supabase devuelve null,
      * utilizamos un array vacío.
      */
-    this.funciones =
-      data ?? [];
+   this.funciones =
+  (data ?? [])
+    .filter(funcion => {
+
+      /*
+       * Primero verificamos que la función
+       * pertenezca a la película seleccionada.
+       */
+      if (
+        funcion.pelicula_id !==
+        this.idPelicula
+      ) {
+        return false;
+      }
+
+
+      /*
+       * Construimos la fecha y hora completa
+       * de la función.
+       *
+       * Ejemplo:
+       * fecha = 2026-09-24
+       * hora  = 18:30:00
+       *
+       * Resultado:
+       * 2026-09-24T18:30:00
+       */
+      const fechaHoraFuncion =
+        new Date(
+          `${funcion.fecha}T${funcion.hora}`
+        );
+
+
+      /*
+       * Solamente dejamos las funciones
+       * cuya fecha/hora todavía no pasó.
+       */
+      return fechaHoraFuncion > hoy;
+
+    });
 
 
     /*
@@ -191,5 +311,26 @@ export class FuncionesPelicula implements OnInit {
     );
 
   }
+
+  /*
+ * Recibe el ID de una sala
+ * y devuelve su nombre.
+ *
+ * Ejemplo:
+ * 3 → "Sala 3"
+ */
+obtenerNombreSala(
+  salaId: number
+): string {
+
+  const sala =
+    this.salas.find(
+      sala => sala.id === salaId
+    );
+
+  return sala
+    ? sala.nombre
+    : 'Sala no disponible';
+}
 
 }

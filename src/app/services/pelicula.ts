@@ -378,49 +378,85 @@ export class PeliculaService {
    */
   async obtenerProximamente(): Promise<Pelicula[]> {
 
-    const {
-      data,
+  const { data, error } =
+    await this.obtenerPeliculasSupabase();
+
+  if (error) {
+    console.error(
+      'Error al obtener películas próximas:',
       error
-    } = await this.obtenerPeliculasSupabase();
+    );
 
-
-    if (error) {
-
-      console.error(
-        'Error obteniendo próximos estrenos:',
-        error
-      );
-
-      return [];
-    }
-
-
-    /*
-     * Fecha actual en formato:
-     *
-     * YYYY-MM-DD
-     */
-    const hoy =
-      new Date()
-        .toISOString()
-        .split('T')[0];
-
-
-    return (data ?? [])
-
-      .filter(
-        fila =>
-          fila.visible === true &&
-          fila.fecha_estreno_cinebera > hoy
-      )
-
-      .map(
-        fila =>
-          this.mapearPeliculaSupabase(
-            fila
-          )
-      );
-
+    return [];
   }
+
+  // Obtenemos la fecha actual.
+  const hoy = new Date();
+
+  // getDay():
+  // domingo = 0
+  // lunes = 1
+  // ...
+  // jueves = 4
+  // miércoles = 3
+
+  // Calculamos cuántos días pasaron
+  // desde el último jueves.
+  const diasDesdeJueves =
+    (hoy.getDay() - 4 + 7) % 7;
+
+  // Encontramos el jueves que inició
+  // la semana cinematográfica actual.
+  const inicioSemana = new Date(hoy);
+
+  inicioSemana.setDate(
+    hoy.getDate() - diasDesdeJueves
+  );
+
+  // La semana termina 6 días después:
+  // miércoles.
+  const finSemana = new Date(inicioSemana);
+
+  finSemana.setDate(
+    inicioSemana.getDate() + 6
+  );
+
+  // Convertimos la fecha a YYYY-MM-DD
+  // usando fecha local.
+  const anio = finSemana.getFullYear();
+
+  const mes = String(
+    finSemana.getMonth() + 1
+  ).padStart(2, '0');
+
+  const dia = String(
+    finSemana.getDate()
+  ).padStart(2, '0');
+
+  const fechaFinSemana =
+    `${anio}-${mes}-${dia}`;
+
+  return (data ?? [])
+
+  
+
+    // La película debe estar habilitada.
+    .filter(
+      fila => fila.visible === true
+    )
+    
+    // Próximamente significa que se estrena
+    // después de terminar la semana actual.
+    .filter(
+      fila =>
+        fila.fecha_estreno_cinebera >
+        fechaFinSemana
+    )
+
+    .map(
+      fila =>
+        this.mapearPeliculaSupabase(fila)
+    );
+}
 
 }
