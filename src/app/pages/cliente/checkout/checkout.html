@@ -183,6 +183,20 @@
 
       </section>
 
+      <!--
+  Permite regresar al mapa sin abandonar
+  la operación de compra actual.
+
+  El temporizador tampoco se reinicia porque
+  su vencimiento continúa guardado en sessionStorage.
+-->
+<button
+  type="button"
+  (click)="modificarButacas()"
+  [disabled]="reservaVencida()">
+  Modificar butacas
+</button>
+
 
       <!--
         Este botón todavía no cobra.

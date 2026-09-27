@@ -25,11 +25,30 @@
 
   @if (segundosRestantes() === 0) {
 
+  <section class="reserva-vencida">
+
+    <h3>El tiempo de compra finalizó</h3>
+
     <p>
-      El tiempo para completar la compra finalizó.
+      Las butacas fueron liberadas.
+      Podés iniciar una nueva selección para esta función.
     </p>
 
-  }
+    <button
+      type="button"
+      (click)="iniciarNuevaSeleccion()">
+      Iniciar nueva selección
+    </button>
+
+    <button
+      type="button"
+      (click)="volverACartelera()">
+      Volver a cartelera
+    </button>
+
+  </section>
+
+}
 
 </section>
 
@@ -258,7 +277,7 @@
   <button
     type="button"
     (click)="continuarCompra()"
-  >
+    [disabled]="segundosRestantes() <= 0">
     Continuar
   </button>
 

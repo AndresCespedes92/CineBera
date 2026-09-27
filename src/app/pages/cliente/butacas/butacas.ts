@@ -139,6 +139,19 @@ private intervaloTemporizador:
 
 
   /*
+ * Token de la reserva que estamos editando.
+ *
+ * Normalmente vale null porque el usuario entra
+ * por primera vez al mapa de butacas.
+ *
+ * Solamente tendrá valor cuando venga desde Checkout:
+ *
+ * /funcion/25/butacas?reserva=abc123
+ */
+reservaTokenEdicion: string | null = null;
+
+
+  /*
    * Guarda la función que el usuario
    * seleccionó previamente.
    *
@@ -268,6 +281,35 @@ private intervaloTemporizador:
 
     this.idFuncion =
   Number(idRecibido);
+
+  /*
+ * Revisamos si además del ID de la función
+ * recibimos un token de reserva.
+ *
+ * snapshot.queryParamMap se utiliza para leer
+ * parámetros que aparecen después del "?".
+ *
+ * Ejemplo:
+ *
+ * /funcion/25/butacas?reserva=abc123
+ */
+this.reservaTokenEdicion =
+  this.route.snapshot
+    .queryParamMap
+    .get('reserva');
+
+
+/*
+ * Si vale null:
+ * estamos creando una reserva nueva.
+ *
+ * Si contiene un token:
+ * estamos modificando una reserva existente.
+ */
+console.log(
+  'Reserva en edición:',
+  this.reservaTokenEdicion
+);
 
 
 /*
@@ -730,6 +772,21 @@ this.iniciarRealtime();
 async continuarCompra(): Promise<void> {
 
   /*
+ * Aunque el botón esté deshabilitado visualmente,
+ * también protegemos la lógica TypeScript.
+ *
+ * La interfaz no debe ser nuestra única validación.
+ */
+if (this.segundosRestantes() <= 0) {
+
+  console.error(
+    'El tiempo para completar la compra finalizó.'
+  );
+
+  return;
+}
+
+  /*
    * Antes de crear una reserva en Supabase,
    * comprobamos la restricción de edad.
    */
@@ -803,22 +860,98 @@ const vencimientoOperacion =
     vencimientoGuardado
   );
 
+/*
+ * =====================================================
+ * CREAR O ACTUALIZAR LA RESERVA
+ * =====================================================
+ *
+ * Tenemos dos caminos posibles:
+ *
+ * 1. reservaTokenEdicion === null
+ *    → el usuario está reservando por primera vez.
+ *
+ * 2. reservaTokenEdicion tiene un token
+ *    → el usuario volvió desde Checkout y está
+ *      modificando una reserva existente.
+ */
+
+let reservaToken: string | null;
+
+
+/*
+ * CAMINO 1:
+ * estamos editando una reserva existente.
+ */
+if (this.reservaTokenEdicion) {
 
   /*
-   * Intentamos crear la reserva temporal.
+   * No generamos otro token.
    *
-   * Si funciona:
-   * devuelve un UUID.
+   * Le pedimos al servicio que compare:
    *
-   * Si falla:
-   * devuelve null.
+   * - las butacas anteriores;
+   * - las butacas seleccionadas ahora.
    */
-  const reservaToken =
-  await this.butacaService.reservarButacas(
-    this.idFuncion,
-    seleccionadas,
-    vencimientoOperacion
-  );
+  const actualizacionExitosa =
+    await this.butacaService.actualizarReserva(
+      this.reservaTokenEdicion,
+      this.idFuncion,
+      seleccionadas,
+      vencimientoOperacion
+    );
+
+
+  /*
+   * Si Supabase no pudo actualizar la reserva,
+   * detenemos el proceso.
+   */
+  if (!actualizacionExitosa) {
+
+    console.error(
+      'No fue posible actualizar la reserva.'
+    );
+
+    /*
+     * Volvemos a consultar Supabase para que
+     * el mapa represente el estado real.
+     */
+    await this.cargarButacasOcupadas();
+
+    return;
+  }
+
+
+  /*
+   * Conservamos exactamente el mismo token.
+   *
+   * Ejemplo:
+   *
+   * Antes:
+   * H5 + H6 → ABC123
+   *
+   * Después:
+   * H6 + H7 → ABC123
+   */
+  reservaToken =
+    this.reservaTokenEdicion;
+
+}
+
+
+/*
+ * CAMINO 2:
+ * es una reserva completamente nueva.
+ */
+else {
+
+  reservaToken =
+    await this.butacaService.reservarButacas(
+      this.idFuncion,
+      seleccionadas,
+      vencimientoOperacion
+    );
+
+}
 
 
   /*
@@ -1159,95 +1292,115 @@ const vencimientoOperacion =
 
 
   /*
-   * Compara el mapa físico generado
-   * con los registros de Supabase.
-   *
-   * Si coinciden:
-   *
-   * fila + número
-   *
-   * marcamos esa butaca como ocupada.
-   */
-  aplicarButacasOcupadas(): void {
+ * Aplica sobre el mapa físico la información
+ * recuperada desde Supabase.
+ *
+ * Ahora distinguimos entre:
+ *
+ * 1. una butaca bloqueada por otra operación;
+ * 2. una butaca que pertenece a MI reserva.
+ *
+ * Esto permite regresar desde Checkout y editar
+ * las butacas seleccionadas anteriormente.
+ */
+aplicarButacasOcupadas(): void {
 
 
-    /*
-     * Utilizamos update() porque queremos
-     * modificar el valor ACTUAL del Signal.
-     */
-    this.filasButacas.update(
+  this.filasButacas.update(
 
-      filasActuales =>
+    filasActuales =>
 
-        filasActuales.map(
+      filasActuales.map(
 
-          fila =>
+        fila =>
 
-            fila.map(
+          fila.map(
 
-              butaca => {
+            butaca => {
 
 
-                /*
-                 * some() devuelve true cuando
-                 * encuentra al menos un registro
-                 * que cumple la condición.
-                 *
-                 * Ejemplo:
-                 *
-                 * función 25
-                 * fila A
-                 * número 7
-                 */
-                const estaOcupada =
-                  this.butacasOcupadas.some(
+              /*
+               * Buscamos si existe un registro de
+               * Supabase para esta posición.
+               *
+               * A diferencia de some(), find()
+               * nos devuelve el OBJETO encontrado.
+               *
+               * Necesitamos el objeto porque queremos
+               * consultar su reserva_token.
+               */
+              const registro =
+                this.butacasOcupadas.find(
 
-                    registro =>
+                  ocupada =>
+                    ocupada.fila === butaca.fila &&
+                    ocupada.numero === butaca.numero
 
-                      registro.fila ===
-                        butaca.fila &&
-
-                      registro.numero ===
-                        butaca.numero
-
-                  );
+                );
 
 
-                /*
-                 * Si Supabase informa que esta
-                 * butaca está ocupada, generamos
-                 * un nuevo objeto con ese estado.
-                 */
-                if (
-                  estaOcupada
-                ) {
+              /*
+               * No existe ningún bloqueo.
+               *
+               * La butaca continúa disponible.
+               */
+              if (!registro) {
 
-                  return {
-
-                    ...butaca,
-
-                    estado: 'ocupada' as const
-
-                  };
-
-                }
-
-
-                /*
-                 * Si no está ocupada,
-                 * no modificamos la butaca.
-                 */
-                return butaca;
+                return {
+                  ...butaca,
+                  estado: 'disponible'
+                };
 
               }
 
-            )
 
-        )
+              /*
+               * La butaca pertenece a la reserva
+               * que estamos modificando.
+               *
+               * Por eso NO debemos bloquearla:
+               * debe aparecer seleccionada.
+               */
+              if (
+                this.reservaTokenEdicion &&
+                registro.reserva_token ===
+                  this.reservaTokenEdicion &&
+                registro.estado === 'reservada'
+              ) {
 
-    );
+                return {
+                  ...butaca,
+                  estado: 'seleccionada'
+                };
 
-  }
+              }
+
+
+              /*
+               * Si llegamos acá significa que:
+               *
+               * - pertenece a otra reserva, o
+               * - ya fue comprada definitivamente.
+               *
+               * En ambos casos el usuario actual
+               * no puede seleccionarla.
+               */
+              return {
+                ...butaca,
+                estado: 'ocupada'
+              };
+
+            }
+
+          )
+
+      )
+
+  );
+
+}
+
+
 
   /*
  * Inicia la escucha de cambios Realtime
@@ -1473,7 +1626,7 @@ iniciarTemporizador(): void {
      */
     vencimiento =
       Date.now() +
-      (10 * 60 * 1000);
+      (30 * 1000);
 
 
     sessionStorage.setItem(
@@ -1527,13 +1680,34 @@ private actualizarTemporizador(
    */
   if (diferencia <= 0) {
 
-    this.segundosRestantes.set(0);
+  /*
+   * El tiempo disponible para completar
+   * la operación terminó.
+   */
+  this.segundosRestantes.set(0);
 
-    this.detenerTemporizador();
+  /*
+   * Ya no necesitamos seguir ejecutando
+   * el setInterval cada segundo.
+   */
+  this.detenerTemporizador();
 
-    return;
+
+  /*
+   * Si tenemos un reservaTokenEdicion significa
+   * que el usuario llegó desde Checkout y existen
+   * butacas temporalmente reservadas en Supabase.
+   *
+   * En ese caso debemos liberarlas.
+   */
+  if (this.reservaTokenEdicion) {
+
+    void this.liberarReservaVencida();
 
   }
+
+  return;
+}
 
 
   /*
@@ -1573,6 +1747,197 @@ private detenerTemporizador(): void {
 
 }
 
+/*
+ * Libera la reserva cuando el tiempo termina
+ * mientras el usuario está en el mapa de butacas.
+ *
+ * Este caso ocurre principalmente cuando el usuario
+ * volvió desde Checkout para modificar su selección.
+ */
+private async liberarReservaVencida(): Promise<void> {
+
+  /*
+   * Sin token no existe una reserva persistida
+   * que podamos identificar.
+   */
+  if (!this.reservaTokenEdicion) {
+    return;
+  }
+
+
+  /*
+   * Pedimos al servicio que elimine todas las
+   * butacas temporales asociadas a este token.
+   */
+  const liberada =
+    await this.butacaService.liberarReserva(
+      this.reservaTokenEdicion
+    );
+
+
+  if (!liberada) {
+
+    console.error(
+      'No fue posible liberar la reserva vencida.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * La reserva dejó de existir en Supabase.
+   */
+  console.log(
+    'Reserva vencida liberada correctamente.'
+  );
+
+
+  /*
+   * También eliminamos el vencimiento local.
+   *
+   * De esta forma una futura operación no reutiliza
+   * accidentalmente un temporizador ya vencido.
+   */
+  const clave =
+    `cinebera-expira-funcion-${this.idFuncion}`;
+
+  sessionStorage.removeItem(clave);
+
+
+  /*
+   * El token ya no representa una reserva válida.
+   */
+  this.reservaTokenEdicion = null;
+
+  /*
+ * La reserva ya fue eliminada de Supabase,
+ * pero nuestras butacas siguen teniendo localmente
+ * el estado "seleccionada".
+ *
+ * Por eso también debemos limpiar el estado visual
+ * que mantiene Angular.
+ */
+this.filasButacas.update(
+
+  filasActuales =>
+
+    filasActuales.map(
+
+      fila =>
+
+        fila.map(
+
+          butaca => {
+
+            /*
+             * Solamente limpiamos las butacas que
+             * pertenecían a nuestra selección local.
+             *
+             * Las ocupadas por otros usuarios no
+             * deben modificarse.
+             */
+            if (butaca.estado === 'seleccionada') {
+
+              return {
+                ...butaca,
+                estado: 'disponible'
+              };
+
+            }
+
+            return butaca;
+
+          }
+
+        )
+
+    )
+
+);
+
+
+  /*
+   * Volvemos a consultar Supabase para que el mapa
+   * muestre las butacas recién liberadas.
+   */
+  await this.cargarButacasOcupadas();
+
+}
+
+
+/*
+ * Inicia una operación completamente nueva
+ * para la misma función.
+ *
+ * NO cerramos la sesión del usuario.
+ * Solamente descartamos los datos temporales
+ * correspondientes a la compra anterior.
+ */
+async iniciarNuevaSeleccion(): Promise<void> {
+
+  const clave =
+    `cinebera-expira-funcion-${this.idFuncion}`;
+
+
+  /*
+   * Nos aseguramos de no reutilizar
+   * un vencimiento anterior.
+   */
+  sessionStorage.removeItem(clave);
+
+
+  /*
+   * La reserva anterior ya venció,
+   * por lo que este token deja de representar
+   * la operación actual.
+   */
+  this.reservaTokenEdicion = null;
+
+
+  /*
+   * Quitamos también ?reserva=... de la URL.
+   *
+   * Seguimos en la misma función.
+   */
+  await this.router.navigate(
+    [
+      '/funcion',
+      this.idFuncion,
+      'butacas'
+    ],
+    {
+      queryParams: {}
+    }
+  );
+
+
+  /*
+   * Creamos los nuevos diez minutos.
+   */
+  this.iniciarTemporizador();
+
+}
+
+
+/*
+ * Abandona el proceso de compra y regresa
+ * a la cartelera principal.
+ *
+ * La sesión del usuario permanece abierta.
+ */
+async volverACartelera(): Promise<void> {
+
+  const clave =
+    `cinebera-expira-funcion-${this.idFuncion}`;
+
+  sessionStorage.removeItem(clave);
+
+  await this.router.navigate([
+    '/cartelera'
+  ]);
+
+}
 
 
 }

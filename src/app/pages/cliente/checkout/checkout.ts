@@ -823,20 +823,36 @@ private actualizarTemporizador(
     vencimiento - Date.now();
 
 
-  /*
-   * La operación llegó a su vencimiento.
-   */
   if (diferencia <= 0) {
 
-    this.segundosRestantes.set(0);
+  /*
+   * El contador llegó a cero.
+   *
+   * Primero actualizamos la interfaz para impedir
+   * que el usuario continúe con una reserva vencida.
+   */
+  this.segundosRestantes.set(0);
+  this.reservaVencida.set(true);
 
-    this.reservaVencida.set(true);
+  /*
+   * Ya no necesitamos ejecutar el intervalo
+   * cada segundo.
+   */
+  this.detenerTemporizador();
 
-    this.detenerTemporizador();
 
-    return;
+  /*
+   * Liberamos en Supabase las butacas pertenecientes
+   * a esta operación.
+   *
+   * No necesitamos bloquear la interfaz esperando
+   * el resultado, por eso el método que contiene
+   * este código puede seguir siendo void.
+   */
+  void this.liberarReservaVencida();
 
-  }
+  return;
+}
 
 
   /*
@@ -893,5 +909,132 @@ ngOnDestroy(): void {
   this.detenerTemporizador();
 
 }
+
+/*
+ * Permite volver al mapa de butacas para modificar
+ * una reserva que ya fue creada.
+ *
+ * IMPORTANTE:
+ * no creamos una reserva nueva.
+ *
+ * Enviamos el reservaToken actual mediante un
+ * query parameter para que Butacas pueda reconocer
+ * cuáles lugares pertenecen a esta operación.
+ *
+ * Ejemplo:
+ *
+ * /funcion/25/butacas?reserva=abc-123
+ */
+async modificarButacas(): Promise<void> {
+
+  /*
+   * Recuperamos la función que ya fue cargada
+   * para este checkout.
+   */
+  const funcionActual =
+    this.funcion();
+
+
+  /*
+   * Si todavía no tenemos la función,
+   * no sabemos a qué mapa de butacas regresar.
+   */
+  if (!funcionActual) {
+
+    console.error(
+      'No se encontró la función de la reserva.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * Volvemos al mismo mapa de butacas.
+   *
+   * El ID de la función viaja como route parameter:
+   *
+   * /funcion/25/butacas
+   *
+   * El token viaja como query parameter:
+   *
+   * ?reserva=abc-123
+   */
+  await this.router.navigate(
+    [
+      '/funcion',
+      funcionActual.id,
+      'butacas'
+    ],
+    {
+      queryParams: {
+        reserva:
+          this.reservaToken
+      }
+    }
+  );
+
+}
+
+/*
+ * Se ejecuta cuando finalizan los diez minutos.
+ *
+ * Su responsabilidad es sincronizar el vencimiento
+ * visual con el estado persistente de Supabase.
+ */
+private async liberarReservaVencida(): Promise<void> {
+
+  /*
+   * Sin token no podemos identificar qué reserva
+   * debemos liberar.
+   */
+  if (!this.reservaToken) {
+    return;
+  }
+
+
+  const liberada =
+    await this.butacaService.liberarReserva(
+      this.reservaToken
+    );
+
+
+  if (!liberada) {
+
+    console.error(
+      'No fue posible liberar la reserva vencida.'
+    );
+
+    return;
+  }
+
+
+  console.log(
+    'Reserva vencida liberada correctamente.'
+  );
+
+  /*
+ * La operación terminó.
+ *
+ * Eliminamos también el vencimiento guardado
+ * en esta pestaña para que una futura compra
+ * pueda comenzar con un temporizador nuevo.
+ */
+const funcionActual =
+  this.funcion();
+
+if (funcionActual) {
+
+  const clave =
+    `cinebera-expira-funcion-${funcionActual.id}`;
+
+  sessionStorage.removeItem(clave);
+
+}
+
+}
+
+
+
 
 }

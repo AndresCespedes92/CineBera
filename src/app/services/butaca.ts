@@ -303,6 +303,57 @@ async obtenerReservaPorToken(
   return data ?? [];
 }
 
+
+/*
+ * Libera todas las butacas pertenecientes
+ * a una reserva temporal.
+ *
+ * Usamos el reservaToken porque todas las butacas
+ * elegidas durante una misma operación de compra
+ * comparten ese identificador.
+ *
+ * Ejemplo:
+ *
+ * token ABC123
+ *   H6
+ *   H7
+ *
+ * Al eliminar por token liberamos ambas.
+ */
+async liberarReserva(
+  reservaToken: string
+): Promise<boolean> {
+
+  const { error } =
+    await supabase
+      .from('butacas_funcion')
+      .delete()
+      .eq('reserva_token', reservaToken)
+      .eq('estado', 'reservada');
+
+
+  /*
+   * Si Supabase devuelve un error,
+   * informamos que la operación no pudo completarse.
+   */
+  if (error) {
+
+    console.error(
+      'Error al liberar la reserva:',
+      error
+    );
+
+    return false;
+  }
+
+
+  /*
+   * Si no hubo error, las butacas temporales
+   * de esta reserva quedaron liberadas.
+   */
+  return true;
+}
+
 /*
  * =====================================================
  * ACTUALIZAR UNA RESERVA EXISTENTE
