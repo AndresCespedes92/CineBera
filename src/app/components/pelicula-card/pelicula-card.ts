@@ -8,6 +8,23 @@ import { Pelicula } from '../../models/pelicula';
   templateUrl: './pelicula-card.html',
 })
 export class PeliculaCard {
+
+
+  /*
+ * Indica si la tarjeta debe mostrar
+ * el botón que permite ver las funciones.
+ *
+ * Por defecto es true porque en Cartelera
+ * las películas deben permitir acceder
+ * normalmente a sus funciones.
+ *
+ * El componente padre puede cambiarlo
+ * cuando necesite otro comportamiento.
+ */
+@Input()
+mostrarBotonFunciones: boolean = true;
+
+
 /*
    * La película no pertenece originalmente a este componente.
    *

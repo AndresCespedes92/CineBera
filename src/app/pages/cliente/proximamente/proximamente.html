@@ -28,10 +28,32 @@
 
           <app-pelicula-card
             [pelicula]="pelicula"
+
+            [mostrarBotonFunciones]="
+              estaEnPreventa(pelicula)
+            "
+
             (peliculaSeleccionada)="
               seleccionarPelicula($event)
             ">
           </app-pelicula-card>
+
+          <!--
+            Esta sección solamente existe en el DOM
+            cuando faltan entre 1 y 7 días para
+            el estreno de la película.
+          -->
+          <div
+            *appEnPreventa="pelicula"
+            class="preventa-info"
+          >
+
+            <strong>
+              Preventa disponible
+            </strong>
+
+
+</div>
 
         }
 

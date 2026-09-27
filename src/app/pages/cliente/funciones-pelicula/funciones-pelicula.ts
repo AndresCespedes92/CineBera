@@ -201,11 +201,85 @@ const convertirFechaLocal =
   };
 
 
-const fechaInicio =
+/*
+ * Por defecto consultamos la semana
+ * cinematográfica actual.
+ *
+ * Esto corresponde a una película que
+ * ya está en cartelera.
+ */
+let fechaInicio =
   convertirFechaLocal(inicioSemana);
 
-const fechaFin =
+let fechaFin =
   convertirFechaLocal(finSemana);
+
+
+/*
+ * Si la película todavía no se estrenó
+ * en CineBera, estamos entrando desde
+ * Próximamente / Preventa.
+ *
+ * En ese caso no debemos consultar la
+ * semana actual, porque sus funciones
+ * pueden pertenecer a la semana siguiente.
+ */
+if (
+  this.pelicula &&
+  this.pelicula.fechaEstreno > fechaFin
+) {
+
+  /*
+   * La consulta comienza exactamente en
+   * la fecha de estreno de CineBera.
+   *
+   * Ejemplo:
+   * Super Mario → 01/10/2026.
+   */
+  fechaInicio =
+    this.pelicula.fechaEstreno;
+
+
+  /*
+   * Calculamos hasta qué día permitimos
+   * consultar funciones de preventa.
+   *
+   * Tomamos el estreno y buscamos el
+   * miércoles que termina esa nueva
+   * semana cinematográfica.
+   */
+  const fechaEstreno =
+    new Date(
+      `${this.pelicula.fechaEstreno}T00:00:00`
+    );
+
+
+  /*
+   * Calculamos cuántos días hay desde
+   * el estreno hasta el próximo miércoles.
+   *
+   * getDay():
+   * domingo = 0
+   * miércoles = 3
+   */
+  const diasHastaMiercoles =
+    (3 - fechaEstreno.getDay() + 7) % 7;
+
+
+  const finSemanaPreventa =
+    new Date(fechaEstreno);
+
+  finSemanaPreventa.setDate(
+    fechaEstreno.getDate() +
+    diasHastaMiercoles
+  );
+
+
+  fechaFin =
+    convertirFechaLocal(
+      finSemanaPreventa
+    );
+}
 
 
 /*

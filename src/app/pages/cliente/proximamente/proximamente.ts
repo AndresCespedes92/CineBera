@@ -5,6 +5,10 @@ import {
 } from '@angular/core';
 
 import {
+  EnPreventa
+} from '../../../directives/en-preventa';
+
+import {
   Router
 } from '@angular/router';
 
@@ -30,13 +34,36 @@ import {
 
   imports: [
     Navbar,
-    PeliculaCard
+    PeliculaCard,
+    EnPreventa
   ],
 
   templateUrl: './proximamente.html',
   styleUrl: './proximamente.css'
 })
 export class Proximamente implements OnInit {
+
+
+  /*
+ * Consulta al servicio si la película
+ * se encuentra dentro de la ventana
+ * de preventa.
+ *
+ * El componente no conoce la regla
+ * de los 7 días.
+ *
+ * Solamente pregunta por el resultado.
+ */
+estaEnPreventa(
+  pelicula: Pelicula
+): boolean {
+
+  return this.peliculaService
+    .estaEnPreventa(
+      pelicula
+    );
+
+}
 
 
   /*

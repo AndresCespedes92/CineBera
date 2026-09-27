@@ -459,4 +459,83 @@ export class PeliculaService {
     );
 }
 
+
+/*
+ * Determina si una película se encuentra
+ * actualmente dentro de la ventana de preventa.
+ *
+ * Regla de negocio de CineBera:
+ *
+ * - estreno futuro
+ * - faltan como máximo 7 días
+ *
+ * Centralizamos esta regla en el servicio
+ * para evitar repetirla en distintos componentes
+ * o directivas.
+ */
+estaEnPreventa(
+  pelicula: Pelicula
+): boolean {
+
+  /*
+   * Trabajamos desde las 00:00 para que
+   * la hora actual no modifique el cálculo.
+   */
+  const hoy = new Date();
+
+  hoy.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  /*
+   * fechaEstreno representa la fecha
+   * definida por CineBera.
+   *
+   * T00:00:00 hace que JavaScript interprete
+   * la fecha en horario local.
+   */
+  const estreno =
+    new Date(
+      `${pelicula.fechaEstreno}T00:00:00`
+    );
+
+
+  /*
+   * Calculamos cuántos milisegundos faltan
+   * desde hoy hasta el estreno.
+   */
+  const diferenciaMilisegundos =
+    estreno.getTime() -
+    hoy.getTime();
+
+
+  /*
+   * Convertimos los milisegundos a días.
+   */
+  const milisegundosPorDia =
+    1000 * 60 * 60 * 24;
+
+  const diasHastaEstreno =
+    Math.ceil(
+      diferenciaMilisegundos /
+      milisegundosPorDia
+    );
+
+
+  /*
+   * Preventa disponible solamente
+   * entre 1 y 7 días antes del estreno.
+   */
+  return (
+    diasHastaEstreno >= 1 &&
+    diasHastaEstreno <= 7
+  );
+
+}
+
+
 }

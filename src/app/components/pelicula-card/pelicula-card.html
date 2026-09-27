@@ -53,13 +53,24 @@
       el componente hijo emite la película
       seleccionada hacia Home.
     -->
-    <button
-      type="button"
-      (click)="verFunciones()">
+    <!--
+  El componente padre decide si esta acción
+  debe estar disponible.
 
-      Ver funciones
+  En Cartelera normalmente será true.
+  En Próximamente dependerá de si la película
+  ya entró en la ventana de preventa.
+-->
+@if (mostrarBotonFunciones) {
 
-    </button>
+  <button
+    type="button"
+    (click)="verFunciones()"
+  >
+    Ver funciones
+  </button>
+
+}
 
   </div>
 
