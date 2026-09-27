@@ -470,6 +470,115 @@ await this.cargarCandyDeEntrada(
 }
 
 /*
+ * Confirma la entrega del pedido Candy.
+ *
+ * Esta acción es independiente de validar
+ * la entrada para ingresar a la sala.
+ */
+async entregarCandy(): Promise<void> {
+
+  /*
+   * Recuperamos el pedido que actualmente
+   * está cargado en pantalla.
+   */
+  const pedidoActual =
+    this.pedidoCandy();
+
+
+  /*
+   * Si no existe pedido Candy,
+   * no hay nada para entregar.
+   */
+  if (!pedidoActual) {
+    return;
+  }
+
+
+  /*
+   * Evitamos intentar entregar nuevamente
+   * un pedido que ya sabemos que fue entregado.
+   */
+  if (pedidoActual.entregado) {
+
+    this.mensaje.set(
+      'El pedido Candy ya fue entregado.'
+    );
+
+    return;
+  }
+
+
+  this.procesando.set(true);
+
+
+  /*
+   * CandyService realiza el UPDATE real
+   * contra Supabase.
+   *
+   * Supabase solamente permitirá el cambio
+   * si entregado continúa siendo false.
+   */
+  const pedidoEntregado =
+    await this.candyService.entregarPedido(
+      pedidoActual.id
+    );
+
+
+  this.procesando.set(false);
+
+
+  /*
+   * null significa que no se pudo realizar
+   * la actualización.
+   *
+   * Por ejemplo, otro empleado pudo haber
+   * entregado el pedido unos segundos antes.
+   */
+  if (!pedidoEntregado) {
+
+    this.mensaje.set(
+      'El pedido Candy no pudo ser entregado. Puede haber sido entregado anteriormente.'
+    );
+
+    /*
+     * Volvemos a consultar el estado real
+     * usando la entrada actualmente cargada.
+     */
+    const entradaActual =
+      this.entrada();
+
+    if (entradaActual) {
+
+      await this.cargarCandyDeEntrada(
+        entradaActual
+      );
+
+    }
+
+    return;
+  }
+
+
+  /*
+   * Actualizamos el Signal con la información
+   * real que acaba de devolver Supabase.
+   *
+   * Angular actualizará automáticamente
+   * el HTML que depende de pedidoCandy().
+   */
+  this.pedidoCandy.set(
+    pedidoEntregado
+  );
+
+
+  this.mensaje.set(
+    'Pedido Candy entregado correctamente.'
+  );
+
+}
+
+
+/*
  * Limpia la entrada actual y vuelve
  * a habilitar el lector QR.
  */

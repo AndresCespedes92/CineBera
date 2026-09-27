@@ -211,25 +211,41 @@
 
 
     <!--
-      La entrega del Candy tiene su propio estado.
-      
-      No depende de entrada.utilizada.
-    -->
-    @if (pedido.entregado) {
+  El estado del Candy es independiente
+  del estado de utilización de la entrada.
+-->
+@if (pedido.entregado) {
 
-      <p>
-        Estado:
-        Candy entregado
-      </p>
+  <p>
+    Estado:
+    Candy entregado
+  </p>
 
+} @else {
+
+  <p>
+    Estado:
+    Pendiente de entrega
+  </p>
+
+
+  <!--
+    El botón solamente existe mientras
+    el pedido continúa pendiente.
+  -->
+  <button
+    type="button"
+    (click)="entregarCandy()"
+    [disabled]="procesando()"
+  >
+    @if (procesando()) {
+      Procesando...
     } @else {
-
-      <p>
-        Estado:
-        Pendiente de entrega
-      </p>
-
+      Entregar Candy
     }
+  </button>
+
+}
 
   </section>
 

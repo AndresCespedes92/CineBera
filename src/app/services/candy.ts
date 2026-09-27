@@ -400,4 +400,106 @@ async obtenerPedidoPorCompra(
 }
 
 
+/*
+ * Marca un pedido Candy como entregado.
+ *
+ * La condición:
+ *
+ *   .eq('entregado', false)
+ *
+ * es importante porque solamente permitimos
+ * entregar un pedido que todavía está pendiente.
+ *
+ * Esto ayuda a evitar una doble entrega.
+ */
+async entregarPedido(
+  pedidoId: number
+): Promise<PedidoCandy | null> {
+
+  const {
+    data: pedido,
+    error
+  } =
+    await supabase
+      .from('pedidos_candy')
+      .update({
+        entregado: true,
+
+        /*
+         * Guardamos también cuándo se realizó
+         * efectivamente la entrega.
+         */
+        entregado_at:
+          new Date().toISOString()
+      })
+
+      /*
+       * Actualizamos solamente el pedido
+       * que estamos intentando entregar.
+       */
+      .eq(
+        'id',
+        pedidoId
+      )
+
+      /*
+       * Además debe continuar pendiente.
+       *
+       * Si otro empleado ya lo entregó,
+       * esta condición dejará de cumplirse.
+       */
+      .eq(
+        'entregado',
+        false
+      )
+
+      /*
+       * Queremos recibir el registro
+       * actualizado.
+       */
+      .select()
+
+      /*
+       * Puede devolver uno o ninguno.
+       *
+       * Ninguno puede significar que el pedido
+       * ya había sido entregado.
+       */
+      .maybeSingle();
+
+
+  if (error) {
+
+    console.error(
+      'Error entregando pedido Candy:',
+      error
+    );
+
+    return null;
+  }
+
+
+  /*
+   * Si no se actualizó ningún registro,
+   * no consideramos válida la entrega.
+   */
+  if (!pedido) {
+    return null;
+  }
+
+
+  /*
+   * Después de actualizar necesitamos devolver
+   * un PedidoCandy completo.
+   *
+   * Reutilizamos nuestro método de consulta
+   * para recuperar también sus detalles.
+   */
+  return await this.obtenerPedidoPorCompra(
+    pedido.compra_id
+  );
+
+}
+
+
 }
