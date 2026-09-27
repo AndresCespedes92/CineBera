@@ -1,0 +1,72 @@
+<!--
+  Mientras esperamos la respuesta de Supabase,
+  mostramos un estado de carga.
+-->
+@if (cargando()) {
+
+  <p>Cargando entrada...</p>
+
+}
+
+<!--
+  Cuando termina la carga y existe una entrada,
+  mostramos sus datos básicos.
+-->
+@else if (entrada(); as entradaActual) {
+
+  <main>
+
+    <h1>Tu entrada</h1>
+
+
+    <p>
+      <strong>Código:</strong>
+      {{ entradaActual.codigo }}
+    </p>
+
+
+    <p>
+      <strong>Código manual:</strong>
+      {{ entradaActual.codigo_manual }}
+    </p>
+
+
+    <p>
+      <strong>Estado:</strong>
+
+      @if (entradaActual.utilizada) {
+
+        Utilizada
+
+      } @else {
+
+        Válida
+
+      }
+
+    </p>
+
+
+    <!--
+      Más adelante vamos a colocar acá:
+      - QR
+      - película
+      - función
+      - sala
+      - butacas
+      - PDF
+    -->
+
+  </main>
+
+}
+
+<!--
+  Si Supabase terminó de responder pero no
+  encontró una entrada con ese código.
+-->
+@else {
+
+  <p>La entrada solicitada no existe.</p>
+
+}

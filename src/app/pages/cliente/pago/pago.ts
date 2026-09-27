@@ -5,7 +5,8 @@ import {
 } from '@angular/core';
 
 import {
-  ActivatedRoute
+  ActivatedRoute,
+  Router
 } from '@angular/router';
 
 import {
@@ -19,6 +20,8 @@ import {
 import {
   ButacaService
 } from '../../../services/butaca';
+
+import { EntradaService } from '../../../services/entrada';
 
 
 @Component({
@@ -47,15 +50,18 @@ export class Pago implements OnInit {
     signal<boolean>(true);
 
 
+
   constructor(
   private route: ActivatedRoute,
+  private router: Router,
   private compraService: CompraService,
 
   /*
    * Lo necesitamos para convertir
    * las reservas en ocupaciones definitivas.
    */
-  private butacaService: ButacaService
+  private butacaService: ButacaService,
+  private entradaService: EntradaService
 ) {}
 
 
@@ -154,99 +160,143 @@ export class Pago implements OnInit {
  */
 async confirmarPago(): Promise<void> {
 
-  const compraActual =
-    this.compra();
+  /*
+   * Obtenemos el valor actual del Signal.
+   *
+   * Recordá:
+   * this.compra es el Signal.
+   * this.compra() es su valor actual.
+   */
+  const compraActual = this.compra();
 
 
   /*
-   * No podemos confirmar algo
-   * que no existe.
+   * Si por algún motivo no tenemos una compra
+   * cargada, no podemos continuar.
    */
   if (!compraActual) {
-
-    console.error(
-      'No existe una compra para confirmar.'
-    );
-
     return;
   }
 
 
   /*
-   * Evitamos intentar cobrar nuevamente
-   * una compra que ya está pagada.
+   * Evitamos volver a pagar una compra
+   * que ya fue confirmada.
    */
   if (compraActual.estado !== 'pendiente') {
-
-    console.log(
-      'La compra ya fue procesada.'
-    );
-
     return;
   }
 
 
   /*
    * PASO 1:
-   *
-   * confirmamos la compra.
+   * Marcamos la compra como pagada.
    */
   const compraConfirmada =
-    await this.compraService
-      .confirmarCompra(
-        compraActual.id
-      );
+    await this.compraService.confirmarCompra(
+      compraActual.id
+    );
 
 
+  /*
+   * Si Supabase no pudo confirmar la compra,
+   * detenemos el proceso.
+   */
   if (!compraConfirmada) {
 
     console.error(
-      'No fue posible confirmar el pago.'
+      'No se pudo confirmar la compra.'
     );
 
     return;
+
   }
 
 
   /*
    * PASO 2:
-   *
-   * convertimos las butacas temporales
-   * en butacas definitivamente ocupadas.
+   * Las butacas que estaban temporalmente
+   * reservadas pasan a estar ocupadas.
    */
   const butacasConfirmadas =
-    await this.butacaService
-      .confirmarButacasReserva(
-        compraActual.reserva_token
-      );
+    await this.butacaService.confirmarButacasReserva(
+      compraConfirmada.reserva_token
+    );
 
 
   if (!butacasConfirmadas) {
 
     console.error(
-      'La compra fue confirmada pero hubo un problema con las butacas.'
+      'La compra fue pagada, pero no se pudieron confirmar las butacas.'
     );
 
     return;
+
   }
 
 
   /*
-   * Actualizamos nuestro Signal.
-   *
-   * No necesitamos volver a consultar
-   * toda la compra porque confirmarCompra()
-   * ya nos devolvió la fila actualizada.
+   * Actualizamos el Signal para que Angular
+   * refleje inmediatamente el nuevo estado.
    */
-  this.compra.set(
-    compraConfirmada
-  );
+  this.compra.set(compraConfirmada);
 
 
-  console.log(
-    'Pago confirmado correctamente:',
-    compraConfirmada
-  );
+  /*
+   * PASO 3:
+   * Antes de crear una entrada preguntamos
+   * si ya existe una para esta compra.
+   *
+   * Esto evita duplicados si posteriormente
+   * el usuario recarga o repite alguna acción.
+   */
+  let entrada =
+    await this.entradaService.obtenerEntradaPorCompra(
+      compraConfirmada.id
+    );
+
+
+  /*
+   * Si todavía no existe, la creamos.
+   */
+  if (!entrada) {
+
+    entrada =
+      await this.entradaService.crearEntrada(
+        compraConfirmada.id
+      );
+
+  }
+
+
+  /*
+   * Si tampoco pudimos crearla,
+   * detenemos la navegación.
+   */
+  if (!entrada) {
+
+    console.error(
+      'El pago fue confirmado, pero no se pudo generar la entrada.'
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * PASO 4:
+   * Navegamos utilizando el código público
+   * de la entrada, no su ID interno.
+   *
+   * Ejemplo:
+   *
+   * /entrada/550e8400-e29b-41d4-a716-446655440000
+   */
+  await this.router.navigate([
+  '/entrada',
+  entrada.codigo
+]);
 
 }
 

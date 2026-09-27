@@ -70,6 +70,20 @@ export const routes: Routes = [
 
 {
   /*
+   * El código de la entrada viaja como parámetro dinámico.
+   *
+   * Ejemplo:
+   * /entrada/550e8400-e29b-41d4-a716-446655440000
+   */
+  path: 'entrada/:codigo',
+
+  loadComponent: () =>
+    import('./pages/cliente/entrada/entrada')
+      .then(m => m.Entrada)
+},
+
+{
+  /*
    * El token identifica la reserva que
    * el cliente está intentando comprar.
    *
