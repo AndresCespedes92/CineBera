@@ -34,14 +34,14 @@ export class EstadoButaca implements OnChanges {
    * Se ejecuta cuando cambia el valor
    * recibido por la directiva.
    */
-  ngOnChanges(): void {
+ngOnChanges(): void {
 
-    if (!this.appEstadoButaca) {
-      return;
-    }
-
-    this.actualizarApariencia();
+  if (!this.appEstadoButaca) {
+    return;
   }
+
+  this.actualizarApariencia();
+}
 
 
   private actualizarApariencia(): void {

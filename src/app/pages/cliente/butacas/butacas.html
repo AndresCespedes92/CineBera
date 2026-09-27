@@ -19,7 +19,7 @@
 
   <section class="mapa-butacas">
 
-    @for (fila of filasButacas; track fila[0].fila) {
+    @for (fila of filasButacas(); track fila[0].fila) {
 
       <!--
         Antes de K representamos visualmente
@@ -221,6 +221,23 @@
             ${{ calcularTotal() }}
           </strong>
         </p>
+
+        @if (obtenerButacasSeleccionadas().length > 0) {
+
+  <!--
+    Continuar no significa que la compra esté pagada.
+
+    Primero intentamos reservar las butacas para
+    evitar que otro cliente compre los mismos lugares.
+  -->
+  <button
+    type="button"
+    (click)="continuarCompra()"
+  >
+    Continuar
+  </button>
+
+}
 
       }
 

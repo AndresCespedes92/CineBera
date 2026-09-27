@@ -1,0 +1,69 @@
+<main>
+
+  <h1>
+    Pago
+  </h1>
+
+
+  @if (cargando()) {
+
+    <p>
+      Cargando compra...
+    </p>
+
+  } @else {
+
+
+    @if (compra(); as compraActual) {
+
+      <section>
+
+        <p>
+          Compra #{{ compraActual.id }}
+        </p>
+
+
+        <p>
+          Estado:
+          {{ compraActual.estado }}
+        </p>
+
+
+        <h2>
+          Total a pagar:
+          ${{ compraActual.total }}
+        </h2>
+
+
+        <!--
+          Por ahora simulamos un pago aprobado.
+
+          Más adelante podremos reemplazar esta acción
+          por un medio de pago real si fuera necesario.
+        -->
+        <button
+          type="button"
+          (click)="confirmarPago()"
+        >
+          Confirmar pago
+        </button>
+
+      </section>
+
+          @if (compra()?.estado === 'pagada') {
+              <p>
+                Pago confirmado correctamente.
+              </p>
+            }
+
+    } @else {
+
+      <p>
+        No se encontró la compra.
+      </p>
+
+    }
+
+  }
+
+</main>

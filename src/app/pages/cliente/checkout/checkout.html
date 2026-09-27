@@ -1,0 +1,174 @@
+<main>
+
+  <h1>
+    Resumen de compra
+  </h1>
+
+
+  @if (cargando()) {
+
+    <p>
+      Cargando información de la reserva...
+    </p>
+
+  } @else {
+
+
+    @if (
+      butacasReservadas().length === 0
+    ) {
+
+      <p>
+        La reserva no existe o ya no está disponible.
+      </p>
+
+    } @else {
+
+
+      <!-- DATOS DE LA PELÍCULA -->
+
+      @if (pelicula(); as peliculaActual) {
+
+        <section>
+
+          <h2>
+            {{ peliculaActual.titulo }}
+          </h2>
+
+
+          <p>
+            Tarifa:
+            @if (estaEnPreventa()) {
+              Preventa
+            } @else {
+              Venta general
+            }
+          </p>
+
+        </section>
+
+      }
+
+
+      <!-- DATOS DE LA FUNCIÓN -->
+
+      @if (funcion(); as funcionActual) {
+
+        <section>
+
+          <h3>
+            Función
+          </h3>
+
+
+          <p>
+            Fecha:
+            {{ funcionActual.fecha }}
+          </p>
+
+
+          <p>
+            Hora:
+            {{ funcionActual.hora }}
+          </p>
+
+
+          <p>
+            Formato:
+            {{ funcionActual.formato }}
+          </p>
+
+
+          <p>
+            Idioma:
+            {{ funcionActual.idioma }}
+          </p>
+
+
+          @if (sala(); as salaActual) {
+
+            <p>
+              Sala:
+              {{ salaActual.nombre }}
+            </p>
+
+          }
+
+        </section>
+
+      }
+
+
+      <!-- BUTACAS -->
+
+      <section>
+
+        <h3>
+          Butacas
+        </h3>
+
+
+        @for (
+          butaca of butacasReservadas();
+          track butaca.id
+        ) {
+
+          <div>
+
+            <span>
+              {{ butaca.fila }}{{ butaca.numero }}
+            </span>
+
+            <span>
+              -
+              {{ obtenerTipoButaca(butaca) }}
+            </span>
+
+            <span>
+              -
+              ${{ obtenerPrecioButaca(butaca) }}
+            </span>
+
+          </div>
+
+        }
+
+      </section>
+
+
+      <!-- TOTAL -->
+
+      <section>
+
+        <p>
+          Cantidad de entradas:
+          {{ butacasReservadas().length }}
+        </p>
+
+
+        <h2>
+          Total:
+          ${{ calcularTotal() }}
+        </h2>
+
+      </section>
+
+
+      <!--
+        Este botón todavía no cobra.
+
+        Primero crea o recupera una compra
+        pendiente y luego avanza hacia Pago.
+      -->
+      <button
+        type="button"
+        (click)="irAlPago()"
+      >
+        Ir al pago
+      </button>
+
+    }
+
+  }
+
+</main>

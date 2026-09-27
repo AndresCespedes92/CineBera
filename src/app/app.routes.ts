@@ -53,6 +53,35 @@ export const routes: Routes = [
     )
 },
 
+{
+  /*
+   * :id representa el ID de la compra
+   * que queremos pagar.
+   *
+   * Ejemplo:
+   * /pago/15
+   */
+  path: 'pago/:id',
+
+  loadComponent: () =>
+    import('./pages/cliente/pago/pago')
+      .then(m => m.Pago)
+},
+
+{
+  /*
+   * El token identifica la reserva que
+   * el cliente está intentando comprar.
+   *
+   * Ejemplo:
+   * /checkout/550e8400-e29b-...
+   */
+  path: 'checkout/:token',
+
+  loadComponent: () =>
+    import('./pages/cliente/checkout/checkout')
+      .then(m => m.Checkout)
+},
 
 /*
  * FUNCIONES DE UNA PELÍCULA
