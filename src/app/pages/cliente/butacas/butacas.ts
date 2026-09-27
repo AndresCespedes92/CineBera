@@ -6,190 +6,102 @@ import {
   computed
 } from '@angular/core';
 
-import { Usuario } from '../../../services/usuario';
-import { Auth } from '../../../services/auth';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
+
+import { NgClass } from '@angular/common';
 
 import {
   ActivatedRoute,
   Router
 } from '@angular/router';
 
-import {
-  Butaca
-} from '../../../models/butaca';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
+import { Butaca } from '../../../models/butaca';
+import { ButacaFuncion } from '../../../models/butaca-funcion';
+import { Pelicula } from '../../../models/pelicula';
+
+import { EstadoButaca } from '../../../directives/estado-butaca';
+
+import { FuncionService } from '../../../services/funcion';
+import { PeliculaService } from '../../../services/pelicula';
+import { ButacaService } from '../../../services/butaca';
+import { Usuario } from '../../../services/usuario';
+import { Auth } from '../../../services/auth';
 
 import {
-  EstadoButaca
-} from '../../../directives/estado-butaca';
+  fechaNacimientoValidator
+} from '../../../validators/fecha-nacimiento.validator';
 
-import {
-  FuncionService
-} from '../../../services/funcion';
-
-import {
-  PeliculaService
-} from '../../../services/pelicula';
-
-import {
-  Pelicula
-} from '../../../models/pelicula';
-
-import {
-  ButacaService
-} from '../../../services/butaca';
-
-import {
-  ButacaFuncion
-} from '../../../models/butaca-funcion';
-
-import {
-  RealtimeChannel
-} from '@supabase/supabase-js';
-
-import {
-  supabase
-} from '../../../supabase';
+import { supabase } from '../../../supabase';
 
 
 @Component({
   selector: 'app-butacas',
+
+  /*
+   * EstadoButaca:
+   * directiva propia que modifica visualmente cada asiento.
+   *
+   * ReactiveFormsModule:
+   * necesario para el formulario de edad del usuario anónimo.
+   *
+   * NgClass:
+   * permite mostrar visualmente campos válidos/inválidos.
+   */
   imports: [
-    EstadoButaca
+    EstadoButaca,
+    ReactiveFormsModule,
+    NgClass
   ],
+
   templateUrl: './butacas.html',
   styleUrl: './butacas.css'
 })
 export class Butacas implements OnInit, OnDestroy {
 
-  /*
- * Mensaje relacionado específicamente
- * con restricciones de edad.
- */
-mensajeEdad = signal<string>('');
 
-/*
- * Cantidad de segundos que le quedan al usuario
- * para completar la operación.
- *
- * Es un Signal porque la pantalla debe reaccionar
- * cada vez que cambia el tiempo.
- */
-segundosRestantes = signal<number>(0);
-
-
-/*
- * Valor derivado de segundosRestantes.
- *
- * Ejemplo:
- *
- * 598 segundos
- *      ↓
- * "09:58"
- *
- * computed() se vuelve a calcular automáticamente
- * cuando cambia segundosRestantes().
- */
-tiempoRestante = computed(() => {
-
-  const segundos =
-    this.segundosRestantes();
-
-  const minutos =
-    Math.floor(segundos / 60);
-
-  const segundosSobrantes =
-    segundos % 60;
-
-  return (
-    String(minutos).padStart(2, '0') +
-    ':' +
-    String(segundosSobrantes).padStart(2, '0')
-  );
-
-});
-
-
-/*
- * Guardamos la referencia del setInterval
- * para poder detenerlo cuando corresponda.
- */
-private intervaloTemporizador:
-  ReturnType<typeof setInterval> | null = null;
-
-      /*
-    * Guarda la conexión Realtime actualmente
-    * utilizada por esta pantalla.
-    *
-    * Al principio no existe porque todavía
-    * no nos suscribimos.
-    */
-    private canalRealtime:
-      RealtimeChannel | null = null
-
+  // =====================================================
+  // DATOS GENERALES
+  // =====================================================
 
   /*
-   * ID de la función seleccionada.
+   * ID de la función que llega mediante la URL.
    *
    * Ejemplo:
-   * /funcion/37/butacas
    *
-   * idFuncion = 37
+   * /funcion/25/butacas
+   *
+   * idFuncion = 25
    */
   idFuncion: number = 0;
 
 
   /*
- * Token de la reserva que estamos editando.
- *
- * Normalmente vale null porque el usuario entra
- * por primera vez al mapa de butacas.
- *
- * Solamente tendrá valor cuando venga desde Checkout:
- *
- * /funcion/25/butacas?reserva=abc123
- */
-reservaTokenEdicion: string | null = null;
+   * Si venimos desde Checkout para modificar butacas,
+   * recibimos el token mediante query param:
+   *
+   * ?reserva=TOKEN
+   */
+  reservaTokenEdicion: string | null = null;
 
 
   /*
-   * Guarda la función que el usuario
-   * seleccionó previamente.
-   *
-   * Desde acá podemos obtener:
-   * - película
-   * - sala
-   * - fecha
-   * - horario
-   * - formato
-   * - idioma
+   * Función y película actualmente seleccionadas.
    */
   funcion: any | null = null;
 
-
-  /*
-   * Guarda la película asociada a la función.
-   *
-   * La necesitamos principalmente para conocer:
-   * - precio normal
-   * - precio preventa
-   * - fecha de estreno
-   */
   pelicula: Pelicula | null = null;
 
 
   /*
-   * Registros que devuelve Supabase desde
-   * la tabla butacas_funcion.
-   *
-   * IMPORTANTE:
-   *
-   * acá NO están las 546 butacas físicas.
-   *
-   * Solamente guardamos las butacas que tienen
-   * algún estado persistido para esta función,
-   * por ejemplo:
-   *
-   * A7 → ocupada
+   * Supabase solamente guarda butacas que tienen
+   * un estado persistido: reservada u ocupada.
    */
   butacasOcupadas: ButacaFuncion[] = [];
 
@@ -197,108 +109,230 @@ reservaTokenEdicion: string | null = null;
   /*
    * Recargo aplicado a las butacas VIP.
    *
-   * 0.30 representa un 30%.
+   * 0.30 = 30%.
    */
   readonly RECARGO_VIP = 0.30;
 
 
+  // =====================================================
+  // MAPA REACTIVO DE BUTACAS
+  // =====================================================
+
   /*
-   * SIGNAL PRINCIPAL DE ESTA PANTALLA.
+   * Signal que contiene todo el mapa de la sala.
    *
-   * Contiene el mapa completo de la sala.
-   *
-   * Antes utilizábamos:
-   *
-   * filasButacas: Butaca[][] = [];
-   *
-   * Ahora utilizamos un Signal porque el mapa
-   * cambia dinámicamente:
-   *
-   * 1. Generamos las butacas como disponibles.
-   * 2. Supabase responde cuáles están ocupadas.
-   * 3. El usuario selecciona/deselecciona.
-   *
-   * Cuando actualizamos este Signal,
-   * Angular sabe que el estado cambió.
+   * Angular actualiza automáticamente la pantalla
+   * cuando utilizamos set() o update().
    */
-  filasButacas = signal<Butaca[][]>([]);
+  filasButacas =
+    signal<Butaca[][]>([]);
+
+
+  // =====================================================
+  // RESTRICCIÓN DE EDAD
+  // =====================================================
 
   /*
- * =====================================================
- * VALIDACIÓN DE EDAD PARA USUARIO ANÓNIMO
- * =====================================================
- *
- * Si el usuario no inició sesión y la película tiene
- * restricción +13 o +18, necesitamos pedirle su fecha
- * de nacimiento antes de permitir la reserva.
- */
+   * Mensaje que mostramos cuando existe
+   * algún problema relacionado con la edad.
+   */
+  mensajeEdad =
+    signal<string>('');
 
 
-/*
- * Controla si debemos mostrar en pantalla
- * el formulario para ingresar la fecha de nacimiento.
- */
-mostrarValidacionEdadAnonimo =
-  signal<boolean>(false);
+  /*
+   * Controla si debemos mostrar el formulario
+   * de edad para un visitante anónimo.
+   */
+  mostrarValidacionEdadAnonimo =
+    signal<boolean>(false);
 
 
-/*
- * Guarda temporalmente la fecha ingresada.
- *
- * No la guardamos todavía en Supabase porque el
- * usuario anónimo no posee un perfil.
- */
-fechaNacimientoAnonimo: string = '';
+  /*
+   * Opciones utilizadas por los tres selects.
+   *
+   * Es el mismo criterio utilizado en Registro.
+   */
+  dias = Array.from(
+    { length: 31 },
+    (_, indice) => indice + 1
+  );
 
+
+  meses = [
+    { numero: 1, nombre: 'Enero' },
+    { numero: 2, nombre: 'Febrero' },
+    { numero: 3, nombre: 'Marzo' },
+    { numero: 4, nombre: 'Abril' },
+    { numero: 5, nombre: 'Mayo' },
+    { numero: 6, nombre: 'Junio' },
+    { numero: 7, nombre: 'Julio' },
+    { numero: 8, nombre: 'Agosto' },
+    { numero: 9, nombre: 'Septiembre' },
+    { numero: 10, nombre: 'Octubre' },
+    { numero: 11, nombre: 'Noviembre' },
+    { numero: 12, nombre: 'Diciembre' }
+  ];
+
+
+  anioActual =
+    new Date().getFullYear();
+
+
+  anios = Array.from(
+    { length: 100 },
+    (_, indice) => this.anioActual - indice
+  );
+
+
+  /*
+   * Formulario utilizado únicamente para comprobar
+   * la edad del comprador anónimo.
+   *
+   * No crea un perfil ni registra al usuario.
+   */
+  edadAnonimoForm = new FormGroup(
+    {
+
+      diaNacimiento:
+        new FormControl<number | null>(
+          null,
+          {
+            validators: [
+              Validators.required
+            ]
+          }
+        ),
+
+      mesNacimiento:
+        new FormControl<number | null>(
+          null,
+          {
+            validators: [
+              Validators.required
+            ]
+          }
+        ),
+
+      anioNacimiento:
+        new FormControl<number | null>(
+          null,
+          {
+            validators: [
+              Validators.required
+            ]
+          }
+        )
+
+    },
+    {
+      /*
+       * Este validator analiza día + mes + año juntos.
+       *
+       * Ejemplo:
+       * 31 / febrero / 2000
+       *
+       * Los números existen individualmente,
+       * pero juntos no forman una fecha válida.
+       */
+      validators: [
+        fechaNacimientoValidator
+      ]
+    }
+  );
+
+
+  // =====================================================
+  // TEMPORIZADOR
+  // =====================================================
+
+  /*
+   * Cantidad de segundos restantes.
+   */
+  segundosRestantes =
+    signal<number>(0);
+
+
+  /*
+   * computed() deriva un valor a partir del Signal
+   * segundosRestantes.
+   *
+   * Ejemplo:
+   * 598 → "09:58"
+   */
+  tiempoRestante = computed(() => {
+
+    const segundos =
+      this.segundosRestantes();
+
+    const minutos =
+      Math.floor(segundos / 60);
+
+    const segundosSobrantes =
+      segundos % 60;
+
+    return (
+      String(minutos).padStart(2, '0') +
+      ':' +
+      String(segundosSobrantes).padStart(2, '0')
+    );
+
+  });
+
+
+  /*
+   * Guardamos la referencia del setInterval
+   * para poder detenerlo posteriormente.
+   */
+  private intervaloTemporizador:
+    ReturnType<typeof setInterval> | null = null;
+
+
+  // =====================================================
+  // SUPABASE REALTIME
+  // =====================================================
+
+  /*
+   * Referencia al canal Realtime activo.
+   *
+   * La utilizamos para eliminar la suscripción
+   * cuando abandonamos la pantalla.
+   */
+  private canalRealtime:
+    RealtimeChannel | null = null;
+
+
+  // =====================================================
+  // CONSTRUCTOR / INYECCIÓN DE DEPENDENCIAS
+  // =====================================================
 
   constructor(
 
-    /*
-     * ActivatedRoute permite leer información
-     * que llega mediante la URL.
-     */
     private route: ActivatedRoute,
 
-    /*
-     * Servicio encargado de consultar funciones.
-     */
     private funcionService: FuncionService,
 
-    /*
-     * Servicio encargado de consultar películas.
-     */
     private peliculaService: PeliculaService,
 
-    /*
-     * Servicio encargado de consultar el estado
-     * de las butacas en Supabase.
-     */
     private butacaService: ButacaService,
 
     private router: Router,
 
     private authService: Auth,
+
     private usuarioService: Usuario
 
-    
   ) {}
 
 
-  /*
-   * ngOnInit se ejecuta cuando Angular
-   * inicializa este componente.
-   */
+  // =====================================================
+  // INICIALIZACIÓN
+  // =====================================================
+
   ngOnInit(): void {
 
-
     /*
-     * Leemos el ID recibido por la URL.
-     *
-     * Ejemplo:
-     *
-     * /funcion/25/butacas
-     *
-     * idRecibido = "25"
+     * Leemos el parámetro dinámico de la URL.
      */
     const idRecibido =
       this.route.snapshot
@@ -307,145 +341,105 @@ fechaNacimientoAnonimo: string = '';
 
 
     this.idFuncion =
-  Number(idRecibido);
-
-  /*
- * Revisamos si además del ID de la función
- * recibimos un token de reserva.
- *
- * snapshot.queryParamMap se utiliza para leer
- * parámetros que aparecen después del "?".
- *
- * Ejemplo:
- *
- * /funcion/25/butacas?reserva=abc123
- */
-this.reservaTokenEdicion =
-  this.route.snapshot
-    .queryParamMap
-    .get('reserva');
-
-
-/*
- * Si vale null:
- * estamos creando una reserva nueva.
- *
- * Si contiene un token:
- * estamos modificando una reserva existente.
- */
-console.log(
-  'Reserva en edición:',
-  this.reservaTokenEdicion
-);
-
-
-/*
- * =====================================================
- * TEMPORIZADOR DE COMPRA
- * =====================================================
- *
- * En este punto ya conocemos el ID de la función.
- *
- * Esto es importante porque iniciarTemporizador()
- * utiliza ese ID para guardar el vencimiento en:
- *
- * sessionStorage
- *
- * Ejemplo:
- *
- * cinebera-expira-funcion-25
- *
- * De esta manera cada función puede tener
- * su propia operación de compra.
- */
-this.iniciarTemporizador();
-
-
-/*
- * Una vez que conocemos qué función estamos
- * visualizando, podemos escuchar sus cambios
- * mediante Supabase Realtime.
- */
-this.iniciarRealtime();
+      Number(idRecibido);
 
 
     /*
-     * Primero generamos físicamente el mapa.
-     *
-     * Esto debe ocurrir ANTES de aplicar las
-     * ocupaciones obtenidas desde Supabase.
+     * Comprobamos si estamos modificando
+     * una reserva existente.
+     */
+    this.reservaTokenEdicion =
+      this.route.snapshot
+        .queryParamMap
+        .get('reserva');
+
+
+    console.log(
+      'Reserva en edición:',
+      this.reservaTokenEdicion
+    );
+
+
+    /*
+     * Iniciamos el temporizador antes de comenzar
+     * la operación de compra.
+     */
+    this.iniciarTemporizador();
+
+
+    /*
+     * Escuchamos cambios remotos en las butacas.
+     */
+    this.iniciarRealtime();
+
+
+    /*
+     * Primero generamos el mapa físico.
      */
     this.generarMapaSala();
 
 
     /*
-     * Cargamos la información comercial:
-     *
-     * función → película → precios.
+     * Después cargamos función y película.
      */
     this.cargarDatosFuncion();
 
 
     /*
-     * Consultamos qué butacas están ocupadas
-     * específicamente para esta función.
+     * Finalmente aplicamos las ocupaciones
+     * existentes en Supabase.
      */
     this.cargarButacasOcupadas();
 
+  }
+
+
+  // =====================================================
+  // DESTRUCCIÓN DEL COMPONENTE
+  // =====================================================
+
+  ngOnDestroy(): void {
+
+    /*
+     * Detenemos solamente el intervalo.
+     *
+     * NO eliminamos sessionStorage porque el usuario
+     * puede estar navegando hacia Checkout.
+     */
+    this.detenerTemporizador();
+
+
+    /*
+     * Cerramos la suscripción Realtime.
+     */
+    if (this.canalRealtime) {
+
+      supabase.removeChannel(
+        this.canalRealtime
+      );
+
+      this.canalRealtime = null;
+
+    }
 
   }
 
-/*
- * Angular ejecuta este método automáticamente
- * cuando abandonamos la pantalla.
- *
- * Cerramos Realtime para no dejar una
- * suscripción funcionando innecesariamente.
- */
-    ngOnDestroy(): void {
 
-      /*
-        * Detenemos el reloj del componente.
-        *
-        * IMPORTANTE:
-        * no eliminamos sessionStorage porque queremos
-        * que el tiempo continúe si vamos a Checkout
-        * y después volvemos a Butacas.
-        */
-        this.detenerTemporizador();
+  // =====================================================
+  // GENERACIÓN DEL MAPA
+  // =====================================================
 
-      if (this.canalRealtime) {
-
-        supabase.removeChannel(
-          this.canalRealtime
-        );
-
-                
-
-        this.canalRealtime = null;
-
-      }
-
-    }
-  /*
-   * =====================================================
-   * GENERACIÓN DEL MAPA
-   * =====================================================
-   *
-   * Generamos las 20 filas efectivas de butacas.
-   *
-   * J NO tiene butacas porque representa
-   * espacio físico.
-   */
   generarMapaSala(): void {
 
-
+    /*
+     * J representa espacio físico sin butacas.
+     *
+     * Por eso no aparece en este array.
+     */
     const filas = [
 
       'A', 'B', 'C', 'D', 'E',
       'F', 'G', 'H', 'I',
-
-      // J queda físicamente vacía.
 
       'K',
 
@@ -457,29 +451,20 @@ this.iniciarRealtime();
     ];
 
 
-    /*
-     * Array temporal.
-     *
-     * Construimos todo el mapa acá y solamente
-     * cuando está terminado actualizamos el Signal.
-     */
     const mapaSala: Butaca[][] = [];
 
 
     for (const fila of filas) {
 
-
       const butacasFila: Butaca[] = [];
 
 
       /*
-       * La fila K es accesible.
-       *
        * K:
-       * 2 + 10 + 2 = 14
+       * 2 + 10 + 2 = 14 accesibles.
        *
        * Resto:
-       * 4 + 20 + 4 = 28
+       * 4 + 20 + 4 = 28.
        */
       const cantidad =
         fila === 'K'
@@ -488,8 +473,7 @@ this.iniciarRealtime();
 
 
       /*
-       * Las filas R, S y T pertenecen
-       * al sector VIP.
+       * R, S y T son VIP.
        */
       const esVip =
         fila === 'R' ||
@@ -497,21 +481,17 @@ this.iniciarRealtime();
         fila === 'T';
 
 
-      /*
-       * Generamos cada butaca de la fila.
-       */
       for (
         let numero = 1;
         numero <= cantidad;
         numero++
       ) {
 
-
         butacasFila.push({
 
-          fila: fila,
+          fila,
 
-          numero: numero,
+          numero,
 
           tipo:
             fila === 'K'
@@ -521,11 +501,10 @@ this.iniciarRealtime();
                 : 'normal',
 
           /*
-           * Inicialmente todas se consideran
-           * disponibles.
+           * Todas nacen disponibles.
            *
-           * Después Supabase puede cambiar
-           * algunas a "ocupada".
+           * Luego aplicamos la información
+           * persistida en Supabase.
            */
           estado: 'disponible'
 
@@ -534,10 +513,6 @@ this.iniciarRealtime();
       }
 
 
-      /*
-       * Agregamos la fila terminada
-       * al mapa temporal.
-       */
       mapaSala.push(
         butacasFila
       );
@@ -546,11 +521,7 @@ this.iniciarRealtime();
 
 
     /*
-     * set() reemplaza el valor completo
-     * almacenado por el Signal.
-     *
-     * Además notifica a Angular que
-     * este estado cambió.
+     * Actualizamos todo el Signal de una vez.
      */
     this.filasButacas.set(
       mapaSala
@@ -559,29 +530,18 @@ this.iniciarRealtime();
   }
 
 
-  /*
-   * =====================================================
-   * DISTRIBUCIÓN VISUAL DE LA SALA
-   * =====================================================
-   */
+  // =====================================================
+  // DISTRIBUCIÓN VISUAL
+  // =====================================================
 
-
-  /*
-   * Devuelve las butacas del sector izquierdo.
-   *
-   * Normal/VIP → 4
-   * Accesible   → 2
-   */
   obtenerSectorIzquierdo(
     fila: Butaca[]
   ): Butaca[] {
-
 
     const cantidad =
       fila[0].tipo === 'accesible'
         ? 2
         : 4;
-
 
     return fila.slice(
       0,
@@ -591,19 +551,9 @@ this.iniciarRealtime();
   }
 
 
-  /*
-   * Devuelve el sector central.
-   *
-   * Normal/VIP:
-   * números 5 a 24.
-   *
-   * Accesible:
-   * números 3 a 12.
-   */
   obtenerSectorCentral(
     fila: Butaca[]
   ): Butaca[] {
-
 
     if (
       fila[0].tipo === 'accesible'
@@ -625,16 +575,9 @@ this.iniciarRealtime();
   }
 
 
-  /*
-   * Devuelve el sector derecho.
-   *
-   * Normal/VIP → últimos 4.
-   * Accesible   → últimos 2.
-   */
   obtenerSectorDerecho(
     fila: Butaca[]
   ): Butaca[] {
-
 
     if (
       fila[0].tipo === 'accesible'
@@ -656,24 +599,18 @@ this.iniciarRealtime();
   }
 
 
-  /*
-   * =====================================================
-   * SELECCIÓN DE BUTACAS
-   * =====================================================
-   */
+  // =====================================================
+  // SELECCIÓN DE BUTACAS
+  // =====================================================
 
-
-  /*
-   * Selecciona o deselecciona una butaca.
-   *
-   * IMPORTANTE:
-   * una butaca ocupada no puede modificarse.
-   */
   seleccionarButaca(
     butaca: Butaca
   ): void {
 
-
+    /*
+     * Una butaca ocupada por otra operación
+     * no puede modificarse.
+     */
     if (
       butaca.estado === 'ocupada'
     ) {
@@ -684,13 +621,9 @@ this.iniciarRealtime();
 
 
     /*
-     * Si estaba disponible:
+     * Alternamos:
      *
-     * disponible → seleccionada
-     *
-     * Si ya estaba seleccionada:
-     *
-     * seleccionada → disponible
+     * disponible ↔ seleccionada
      */
     const nuevoEstado =
       butaca.estado === 'disponible'
@@ -699,11 +632,8 @@ this.iniciarRealtime();
 
 
     /*
-     * update() permite modificar el Signal
-     * utilizando su valor actual.
-     *
-     * "filasActuales" representa el Butaca[][]
-     * que actualmente contiene el Signal.
+     * Creamos nuevas referencias para que
+     * el Signal notifique correctamente el cambio.
      */
     this.filasButacas.update(
 
@@ -717,26 +647,11 @@ this.iniciarRealtime();
 
               asiento => {
 
-
-                /*
-                 * Buscamos exactamente la butaca
-                 * sobre la que hizo click el usuario.
-                 */
                 if (
                   asiento.fila === butaca.fila &&
                   asiento.numero === butaca.numero
                 ) {
 
-
-                  /*
-                   * Creamos un NUEVO objeto.
-                   *
-                   * El spread (...) copia todas
-                   * las propiedades existentes.
-                   *
-                   * Luego reemplazamos solamente
-                   * el estado.
-                   */
                   return {
 
                     ...asiento,
@@ -748,10 +663,6 @@ this.iniciarRealtime();
                 }
 
 
-                /*
-                 * Las demás butacas permanecen
-                 * exactamente iguales.
-                 */
                 return asiento;
 
               }
@@ -766,21 +677,11 @@ this.iniciarRealtime();
 
 
   /*
-   * Devuelve solamente las butacas
-   * seleccionadas actualmente.
+   * Convierte Butaca[][] en Butaca[]
+   * y conserva únicamente las seleccionadas.
    */
   obtenerButacasSeleccionadas(): Butaca[] {
 
-
-    /*
-     * filasButacas() LEE el valor del Signal.
-     *
-     * flat():
-     * transforma Butaca[][] en Butaca[].
-     *
-     * filter():
-     * conserva solamente las seleccionadas.
-     */
     return this.filasButacas()
       .flat()
       .filter(
@@ -791,276 +692,209 @@ this.iniciarRealtime();
   }
 
 
-/*
- * Intenta reservar las butacas seleccionadas
- * y, si la reserva es exitosa, lleva al cliente
- * a la pantalla de checkout.
- */
-async continuarCompra(): Promise<void> {
+  // =====================================================
+  // CONTINUAR COMPRA
+  // =====================================================
 
-  /*
- * Aunque el botón esté deshabilitado visualmente,
- * también protegemos la lógica TypeScript.
- *
- * La interfaz no debe ser nuestra única validación.
- */
-if (this.segundosRestantes() <= 0) {
-
-  console.error(
-    'El tiempo para completar la compra finalizó.'
-  );
-
-  return;
-}
-
-  /*
-   * Antes de crear una reserva en Supabase,
-   * comprobamos la restricción de edad.
-   */
-  const edadValida =
-    await this.validarRestriccionEdad();
-
-
-  if (!edadValida) {
+  async continuarCompra(): Promise<void> {
 
     /*
-     * No llegamos a reservarButacas().
-     *
-     * Por lo tanto no bloqueamos asientos
-     * innecesariamente en Supabase.
+     * Primera barrera:
+     * una operación vencida no puede continuar.
      */
-    return;
+    if (
+      this.segundosRestantes() <= 0
+    ) {
 
-  }
+      console.error(
+        'El tiempo para completar la compra finalizó.'
+      );
+
+      return;
+
+    }
 
 
-  // DESDE ACÁ continúa el código que ya teníamos.
+    /*
+     * Validamos edad ANTES de reservar.
+     *
+     * Así una persona que no cumple la restricción
+     * no bloquea butacas innecesariamente.
+     */
+    const edadValida =
+      await this.validarRestriccionEdad();
 
-  const seleccionadas =
-    this.obtenerButacasSeleccionadas();
+
+    if (!edadValida) {
+
+      return;
+
+    }
 
 
-  /*
-   * No permitimos continuar sin seleccionar
-   * al menos una butaca.
-   */
-  if (seleccionadas.length === 0) {
+    const seleccionadas =
+      this.obtenerButacasSeleccionadas();
+
+
+    /*
+     * Debe existir al menos una butaca.
+     */
+    if (
+      seleccionadas.length === 0
+    ) {
+
+      console.log(
+        'Debe seleccionar al menos una butaca.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+     * Recuperamos el mismo vencimiento que nació
+     * al entrar al mapa.
+     */
+    const claveVencimiento =
+      `cinebera-expira-funcion-${this.idFuncion}`;
+
+
+    const vencimientoGuardado =
+      sessionStorage.getItem(
+        claveVencimiento
+      );
+
+
+    if (!vencimientoGuardado) {
+
+      console.error(
+        'No se encontró el vencimiento de la operación.'
+      );
+
+      return;
+
+    }
+
+
+    const vencimientoOperacion =
+      Number(
+        vencimientoGuardado
+      );
+
+
+    /*
+     * El token puede provenir de una reserva
+     * existente o de una reserva nueva.
+     */
+    let reservaToken: string | null;
+
+
+    // -----------------------------------------------------
+    // EDITAR RESERVA EXISTENTE
+    // -----------------------------------------------------
+
+    if (this.reservaTokenEdicion) {
+
+      const actualizacionExitosa =
+        await this.butacaService.actualizarReserva(
+
+          this.reservaTokenEdicion,
+
+          this.idFuncion,
+
+          seleccionadas,
+
+          vencimientoOperacion
+
+        );
+
+
+      if (!actualizacionExitosa) {
+
+        console.error(
+          'No fue posible actualizar la reserva.'
+        );
+
+        await this.cargarButacasOcupadas();
+
+        return;
+
+      }
+
+
+      /*
+       * Conservamos el mismo token.
+       */
+      reservaToken =
+        this.reservaTokenEdicion;
+
+    }
+
+
+    // -----------------------------------------------------
+    // CREAR RESERVA NUEVA
+    // -----------------------------------------------------
+
+    else {
+
+      reservaToken =
+        await this.butacaService.reservarButacas(
+
+          this.idFuncion,
+
+          seleccionadas,
+
+          vencimientoOperacion
+
+        );
+
+    }
+
+
+    /*
+     * Si Supabase no pudo crear/actualizar
+     * la reserva, detenemos el proceso.
+     */
+    if (!reservaToken) {
+
+      console.error(
+        'No fue posible reservar las butacas.'
+      );
+
+      await this.cargarButacasOcupadas();
+
+      return;
+
+    }
+
 
     console.log(
-      'Debe seleccionar al menos una butaca.'
-    );
-
-    return;
-  }
-
-  /*
- * Recuperamos el vencimiento que nació cuando
- * entramos a la pantalla de Butacas.
- *
- * Ese mismo vencimiento viajará a Supabase.
- */
-const claveVencimiento =
-  `cinebera-expira-funcion-${this.idFuncion}`;
-
-const vencimientoGuardado =
-  sessionStorage.getItem(
-    claveVencimiento
-  );
-
-
-/*
- * Si por alguna razón no existe el vencimiento,
- * no permitimos crear una reserva inconsistente.
- */
-if (!vencimientoGuardado) {
-
-  console.error(
-    'No se encontró el vencimiento de la operación.'
-  );
-
-  return;
-}
-
-
-const vencimientoOperacion =
-  Number(
-    vencimientoGuardado
-  );
-
-/*
- * =====================================================
- * CREAR O ACTUALIZAR LA RESERVA
- * =====================================================
- *
- * Tenemos dos caminos posibles:
- *
- * 1. reservaTokenEdicion === null
- *    → el usuario está reservando por primera vez.
- *
- * 2. reservaTokenEdicion tiene un token
- *    → el usuario volvió desde Checkout y está
- *      modificando una reserva existente.
- */
-
-let reservaToken: string | null;
-
-
-/*
- * CAMINO 1:
- * estamos editando una reserva existente.
- */
-if (this.reservaTokenEdicion) {
-
-  /*
-   * No generamos otro token.
-   *
-   * Le pedimos al servicio que compare:
-   *
-   * - las butacas anteriores;
-   * - las butacas seleccionadas ahora.
-   */
-  const actualizacionExitosa =
-    await this.butacaService.actualizarReserva(
-      this.reservaTokenEdicion,
-      this.idFuncion,
-      seleccionadas,
-      vencimientoOperacion
-    );
-
-
-  /*
-   * Si Supabase no pudo actualizar la reserva,
-   * detenemos el proceso.
-   */
-  if (!actualizacionExitosa) {
-
-    console.error(
-      'No fue posible actualizar la reserva.'
-    );
-
-    /*
-     * Volvemos a consultar Supabase para que
-     * el mapa represente el estado real.
-     */
-    await this.cargarButacasOcupadas();
-
-    return;
-  }
-
-
-  /*
-   * Conservamos exactamente el mismo token.
-   *
-   * Ejemplo:
-   *
-   * Antes:
-   * H5 + H6 → ABC123
-   *
-   * Después:
-   * H6 + H7 → ABC123
-   */
-  reservaToken =
-    this.reservaTokenEdicion;
-
-}
-
-
-/*
- * CAMINO 2:
- * es una reserva completamente nueva.
- */
-else {
-
-  reservaToken =
-    await this.butacaService.reservarButacas(
-      this.idFuncion,
-      seleccionadas,
-      vencimientoOperacion
-    );
-
-}
-
-
-  /*
-   * CAMINO DE ERROR
-   *
-   * Si no recibimos token significa que
-   * Supabase no pudo crear la reserva.
-   */
-  if (!reservaToken) {
-
-    console.error(
-      'No fue posible reservar las butacas.'
+      'Reserva creada:',
+      reservaToken
     );
 
 
     /*
-     * Recargamos la ocupación porque una posible
-     * causa es que otro cliente haya reservado
-     * alguna de estas butacas antes que nosotros.
+     * Navegamos al checkout utilizando
+     * el token como parámetro dinámico.
      */
-    await this.cargarButacasOcupadas();
+    await this.router.navigate([
 
+      '/checkout',
 
-    /*
-     * return termina el método.
-     *
-     * Por lo tanto, si hubo un error,
-     * nunca llegamos al router.navigate().
-     */
-    return;
+      reservaToken
+
+    ]);
+
   }
 
 
-  /*
-   * CAMINO EXITOSO
-   *
-   * Si llegamos hasta acá significa que:
-   *
-   * reservaToken !== null
-   *
-   * Ejemplo:
-   * "550e8400-e29b-41d4-a716-446655440000"
-   */
-  console.log(
-    'Reserva creada:',
-    reservaToken
-  );
+  // =====================================================
+  // FUNCIÓN Y PELÍCULA
+  // =====================================================
 
-
-  /*
-   * Navegamos al checkout.
-   *
-   * El token viaja como parámetro dinámico
-   * dentro de la URL.
-   *
-   * Ejemplo:
-   *
-   * /checkout/550e8400-e29b-41d4-a716-446655440000
-   */
-  await this.router.navigate([
-    '/checkout',
-    reservaToken
-  ]);
-
-}
-
-
-  /*
-   * =====================================================
-   * INFORMACIÓN DE LA FUNCIÓN Y PELÍCULA
-   * =====================================================
-   */
-
-
-  /*
-   * Obtiene la función seleccionada.
-   *
-   * Después utiliza pelicula_id para
-   * obtener la película correspondiente.
-   */
   async cargarDatosFuncion(): Promise<void> {
-
 
     this.funcion =
       await this.funcionService
@@ -1069,9 +903,7 @@ else {
         );
 
 
-    if (
-      !this.funcion
-    ) {
+    if (!this.funcion) {
 
       return;
 
@@ -1087,57 +919,31 @@ else {
   }
 
 
-  /*
-   * =====================================================
-   * PRECIOS
-   * =====================================================
-   */
+  // =====================================================
+  // PREVENTA Y PRECIOS
+  // =====================================================
 
-
-  /*
-   * Determina si actualmente estamos
-   * dentro del período de preventa.
-   *
-   * La preventa comienza 7 días antes
-   * del estreno configurado en CineBera.
-   */
   estaEnPreventa(): boolean {
 
-
-    if (
-      !this.pelicula
-    ) {
+    if (!this.pelicula) {
 
       return false;
 
     }
 
 
-    /*
-     * Convertimos la fecha almacenada
-     * en la película a un objeto Date.
-     */
     const fechaEstreno =
       new Date(
         `${this.pelicula.fechaEstreno}T00:00:00`
       );
 
 
-    /*
-     * Creamos una COPIA.
-     *
-     * Así no modificamos accidentalmente
-     * fechaEstreno.
-     */
     const inicioPreventa =
       new Date(
         fechaEstreno
       );
 
 
-    /*
-     * Retrocedemos 7 días.
-     */
     inicioPreventa.setDate(
       inicioPreventa.getDate() - 7
     );
@@ -1147,11 +953,6 @@ else {
       new Date();
 
 
-    /*
-     * Estamos en preventa cuando:
-     *
-     * inicioPreventa <= ahora < fechaEstreno
-     */
     return (
       ahora >= inicioPreventa &&
       ahora < fechaEstreno
@@ -1160,17 +961,9 @@ else {
   }
 
 
-  /*
-   * Obtiene el precio base correspondiente.
-   *
-   * Todavía NO aplica recargo VIP.
-   */
   obtenerPrecioBase(): number {
 
-
-    if (
-      !this.pelicula
-    ) {
+    if (!this.pelicula) {
 
       return 0;
 
@@ -1193,21 +986,16 @@ else {
   }
 
 
-  /*
-   * Calcula el precio individual
-   * de una butaca.
-   */
   obtenerPrecioButaca(
     butaca: Butaca
   ): number {
-
 
     const precioBase =
       this.obtenerPrecioBase();
 
 
     /*
-     * VIP tiene un recargo del 30%.
+     * Las VIP tienen 30% de recargo.
      */
     if (
       butaca.tipo === 'vip'
@@ -1219,21 +1007,12 @@ else {
     }
 
 
-    /*
-     * Normal y accesible mantienen
-     * el precio base.
-     */
     return precioBase;
 
   }
 
 
-  /*
-   * Calcula el total correspondiente
-   * a todas las butacas seleccionadas.
-   */
   calcularTotal(): number {
-
 
     return this
       .obtenerButacasSeleccionadas()
@@ -1256,20 +1035,11 @@ else {
   }
 
 
-  /*
-   * =====================================================
-   * OCUPACIÓN DESDE SUPABASE
-   * =====================================================
-   */
+  // =====================================================
+  // OCUPACIÓN DESDE SUPABASE
+  // =====================================================
 
-
-  /*
-   * Consulta qué butacas tienen un registro
-   * asociado a la función actual.
-   */
   async cargarButacasOcupadas(): Promise<void> {
-
-
 
     this.butacasOcupadas =
       await this.butacaService
@@ -1278,760 +1048,731 @@ else {
         );
 
 
-    /*
-     * Debug temporal.
-     *
-     * Nos permite verificar qué información
-     * realmente devolvió Supabase.
-     */
     console.log(
       'BUTACAS RECIBIDAS DE SUPABASE:',
       this.butacasOcupadas
     );
 
 
-    /*
-     * Aplicamos esos registros
-     * sobre el mapa generado.
-     */
     this.aplicarButacasOcupadas();
 
+  }
 
-    /*
-     * Debug temporal para comprobar A7.
-     *
-     * IMPORTANTE:
-     * como filasButacas ahora es Signal,
-     * debemos leerlo utilizando ().
-     */
-    const a7 =
-      this.filasButacas()
-        .flat()
-        .find(
 
-          butaca =>
-            butaca.fila === 'A' &&
-            butaca.numero === 7
+  /*
+   * Aplica los registros persistidos en Supabase
+   * sobre nuestro mapa físico generado en Angular.
+   */
+  aplicarButacasOcupadas(): void {
+
+    this.filasButacas.update(
+
+      filasActuales =>
+
+        filasActuales.map(
+
+          fila =>
+
+            fila.map(
+
+              butaca => {
+
+                /*
+                 * Buscamos el registro persistido
+                 * correspondiente a esta posición.
+                 */
+                const registro =
+                  this.butacasOcupadas.find(
+
+                    ocupada =>
+                      ocupada.fila === butaca.fila &&
+                      ocupada.numero === butaca.numero
+
+                  );
+
+
+                /*
+                 * Sin registro → disponible.
+                 */
+                if (!registro) {
+
+                  return {
+
+                    ...butaca,
+
+                    estado: 'disponible'
+
+                  };
+
+                }
+
+
+                /*
+                 * Si pertenece a la reserva que estamos
+                 * editando, debe aparecer seleccionada.
+                 */
+                if (
+
+                  this.reservaTokenEdicion &&
+
+                  registro.reserva_token ===
+                    this.reservaTokenEdicion &&
+
+                  registro.estado === 'reservada'
+
+                ) {
+
+                  return {
+
+                    ...butaca,
+
+                    estado: 'seleccionada'
+
+                  };
+
+                }
+
+
+                /*
+                 * Cualquier otra reserva o compra
+                 * aparece bloqueada.
+                 */
+                return {
+
+                  ...butaca,
+
+                  estado: 'ocupada'
+
+                };
+
+              }
+
+            )
+
+        )
+
+    );
+
+  }
+
+
+  // =====================================================
+  // SUPABASE REALTIME
+  // =====================================================
+
+  iniciarRealtime(): void {
+
+    this.canalRealtime =
+      this.butacaService
+        .suscribirseACambiosButacas(
+
+          this.idFuncion,
+
+          async () => {
+
+            console.log(
+              'Cambio Realtime detectado en butacas'
+            );
+
+
+            /*
+             * Ante un cambio remoto volvemos a consultar
+             * el estado real de Supabase.
+             */
+            await this.cargarButacasOcupadas();
+
+          }
 
         );
 
   }
 
 
-  /*
- * Aplica sobre el mapa físico la información
- * recuperada desde Supabase.
- *
- * Ahora distinguimos entre:
- *
- * 1. una butaca bloqueada por otra operación;
- * 2. una butaca que pertenece a MI reserva.
- *
- * Esto permite regresar desde Checkout y editar
- * las butacas seleccionadas anteriormente.
- */
-aplicarButacasOcupadas(): void {
+  // =====================================================
+  // VALIDACIÓN DE EDAD
+  // =====================================================
+
+  async validarRestriccionEdad(): Promise<boolean> {
+
+    /*
+     * Sin película todavía no podemos conocer
+     * su clasificación.
+     */
+    if (!this.pelicula) {
+
+      return false;
+
+    }
 
 
-  this.filasButacas.update(
+    /*
+     * ATP no tiene edad mínima.
+     *
+     * No necesitamos preguntar fecha de nacimiento.
+     */
+    if (
+      this.pelicula.clasificacionEdad === 'ATP'
+    ) {
 
-    filasActuales =>
+      this.mensajeEdad.set('');
 
-      filasActuales.map(
+      this.mostrarValidacionEdadAnonimo.set(false);
 
-        fila =>
+      return true;
 
-          fila.map(
-
-            butaca => {
-
-
-              /*
-               * Buscamos si existe un registro de
-               * Supabase para esta posición.
-               *
-               * A diferencia de some(), find()
-               * nos devuelve el OBJETO encontrado.
-               *
-               * Necesitamos el objeto porque queremos
-               * consultar su reserva_token.
-               */
-              const registro =
-                this.butacasOcupadas.find(
-
-                  ocupada =>
-                    ocupada.fila === butaca.fila &&
-                    ocupada.numero === butaca.numero
-
-                );
+    }
 
 
-              /*
-               * No existe ningún bloqueo.
-               *
-               * La butaca continúa disponible.
-               */
-              if (!registro) {
-
-                return {
-                  ...butaca,
-                  estado: 'disponible'
-                };
-
-              }
+    /*
+     * Averiguamos si existe una sesión.
+     */
+    const sesion =
+      await this.authService.obtenerSesion();
 
 
-              /*
-               * La butaca pertenece a la reserva
-               * que estamos modificando.
-               *
-               * Por eso NO debemos bloquearla:
-               * debe aparecer seleccionada.
-               */
-              if (
-                this.reservaTokenEdicion &&
-                registro.reserva_token ===
-                  this.reservaTokenEdicion &&
-                registro.estado === 'reservada'
-              ) {
+    // -----------------------------------------------------
+    // USUARIO ANÓNIMO
+    // -----------------------------------------------------
 
-                return {
-                  ...butaca,
-                  estado: 'seleccionada'
-                };
+    if (!sesion?.user?.id) {
 
-              }
+      /*
+       * Si todavía no tenemos una fecha válida,
+       * mostramos el formulario.
+       */
+      if (
+        this.edadAnonimoForm.invalid
+      ) {
 
+        this.mostrarValidacionEdadAnonimo.set(
+          true
+        );
 
-              /*
-               * Si llegamos acá significa que:
-               *
-               * - pertenece a otra reserva, o
-               * - ya fue comprada definitivamente.
-               *
-               * En ambos casos el usuario actual
-               * no puede seleccionarla.
-               */
-              return {
-                ...butaca,
-                estado: 'ocupada'
-              };
-
-            }
-
-          )
-
-      )
-
-  );
-
-}
-
-
-
-  /*
- * Inicia la escucha de cambios Realtime
- * para la función que estamos visualizando.
- */
-iniciarRealtime(): void {
-
-  /*
-   * Le pedimos al ButacaService que
-   * escuche cambios de ESTA función.
-   */
-  this.canalRealtime =
-    this.butacaService
-      .suscribirseACambiosButacas(
-
-        this.idFuncion,
 
         /*
-         * Esta función se ejecutará cada vez
-         * que Supabase informe un cambio.
-         *
-         * Por ahora usamos una estrategia simple:
-         *
-         * hubo cambio
-         *      ↓
-         * volvemos a consultar las butacas
-         *      ↓
-         * actualizamos nuestro Signal
+         * Permite que Angular muestre visualmente
+         * los errores de los controles.
          */
-        async () => {
+        this.edadAnonimoForm.markAllAsTouched();
 
-          console.log(
-            'Cambio Realtime detectado en butacas'
+
+        this.mensajeEdad.set(
+          `Esta película es ${this.pelicula.clasificacionEdad}. ` +
+          `Ingresá una fecha de nacimiento válida para continuar.`
+        );
+
+
+        return false;
+
+      }
+
+
+      /*
+       * Como el formulario es válido y los controles
+       * son required, sabemos que existen valores.
+       */
+      const dia =
+        this.edadAnonimoForm
+          .controls
+          .diaNacimiento
+          .value!;
+
+
+      const mes =
+        this.edadAnonimoForm
+          .controls
+          .mesNacimiento
+          .value!;
+
+
+      const anio =
+        this.edadAnonimoForm
+          .controls
+          .anioNacimiento
+          .value!;
+
+
+      /*
+       * Convertimos los tres controles al formato
+       * utilizado por calcularEdad():
+       *
+       * YYYY-MM-DD
+       */
+      const fechaNacimiento =
+        `${anio}-` +
+        `${String(mes).padStart(2, '0')}-` +
+        `${String(dia).padStart(2, '0')}`;
+
+
+      const edad =
+        this.usuarioService.calcularEdad(
+          fechaNacimiento
+        );
+
+
+      const puedeComprar =
+        this.usuarioService.cumpleRestriccionEdad(
+
+          edad,
+
+          this.pelicula.clasificacionEdad
+
+        );
+
+
+      if (!puedeComprar) {
+
+        this.mostrarValidacionEdadAnonimo.set(
+          true
+        );
+
+
+        this.mensajeEdad.set(
+          `Esta película es ${this.pelicula.clasificacionEdad}. ` +
+          `No cumplís con la edad mínima requerida para comprar la entrada.`
+        );
+
+
+        return false;
+
+      }
+
+
+      /*
+       * Anónimo + fecha válida + edad suficiente.
+       */
+      this.mostrarValidacionEdadAnonimo.set(
+        false
+      );
+
+      this.mensajeEdad.set('');
+
+
+      return true;
+
+    }
+
+
+    // -----------------------------------------------------
+    // USUARIO REGISTRADO
+    // -----------------------------------------------------
+
+    /*
+     * Para un usuario registrado NO preguntamos
+     * nuevamente la fecha.
+     *
+     * Utilizamos la que ya existe en su perfil.
+     */
+    const respuestaPerfil =
+      await this.usuarioService.obtenerPerfil(
+        sesion.user.id
+      );
+
+
+    /*
+     * obtenerPerfil() devuelve la respuesta completa
+     * de Supabase, por eso accedemos a data.
+     */
+    const perfil =
+      respuestaPerfil.data;
+
+
+    if (!perfil?.fecha_nacimiento) {
+
+      this.mensajeEdad.set(
+        'No pudimos verificar tu edad.'
+      );
+
+      return false;
+
+    }
+
+
+    const edad =
+      this.usuarioService.calcularEdad(
+        perfil.fecha_nacimiento
+      );
+
+
+    const puedeComprar =
+      this.usuarioService.cumpleRestriccionEdad(
+
+        edad,
+
+        this.pelicula.clasificacionEdad
+
+      );
+
+
+    if (!puedeComprar) {
+
+      this.mensajeEdad.set(
+        `Esta película es ${this.pelicula.clasificacionEdad}. ` +
+        `No cumplís con la edad mínima requerida para comprar la entrada.`
+      );
+
+
+      return false;
+
+    }
+
+
+    this.mensajeEdad.set('');
+
+
+    return true;
+
+  }
+
+
+  // =====================================================
+  // TEMPORIZADOR DE COMPRA
+  // =====================================================
+
+  iniciarTemporizador(): void {
+
+    /*
+     * Evitamos dejar dos intervalos funcionando
+     * si este método se ejecuta nuevamente.
+     */
+    this.detenerTemporizador();
+
+
+    const clave =
+      `cinebera-expira-funcion-${this.idFuncion}`;
+
+
+    const vencimientoGuardado =
+      sessionStorage.getItem(
+        clave
+      );
+
+
+    let vencimiento: number;
+
+
+    if (vencimientoGuardado) {
+
+      /*
+       * Ya existe una operación.
+       *
+       * Recuperamos SU vencimiento en lugar
+       * de otorgar otros diez minutos.
+       */
+      vencimiento =
+        Number(
+          vencimientoGuardado
+        );
+
+    } else {
+
+      /*
+       * Nueva operación.
+       *
+       * 10 minutos:
+       *
+       * 10 × 60 × 1000 milisegundos.
+       */
+      vencimiento =
+        Date.now() +
+        (10 * 60 * 1000);
+
+
+      sessionStorage.setItem(
+
+        clave,
+
+        String(vencimiento)
+
+      );
+
+    }
+
+
+    /*
+     * Actualizamos inmediatamente.
+     */
+    this.actualizarTemporizador(
+      vencimiento
+    );
+
+
+    /*
+     * Después actualizamos cada segundo.
+     */
+    this.intervaloTemporizador =
+      setInterval(
+        () => {
+
+          this.actualizarTemporizador(
+            vencimiento
           );
 
-          await this.cargarButacasOcupadas();
-
-        }
-
+        },
+        1000
       );
 
-}
-
-/*
- * Comprueba si el usuario actual cumple
- * la restricción de edad de la película.
- *
- * ATP no requiere ningún control adicional.
- */
-async validarRestriccionEdad(): Promise<boolean> {
-
-  /*
-   * Si todavía no cargamos la película,
-   * no podemos validar la clasificación.
-   */
-  if (!this.pelicula) {
-    return false;
   }
 
 
-  /*
-   * ATP significa que no existe una
-   * edad mínima para comprar.
-   */
-  if (this.pelicula.clasificacionEdad === 'ATP') {
-    return true;
-  }
+  private actualizarTemporizador(
+    vencimiento: number
+  ): void {
+
+    const diferencia =
+      vencimiento - Date.now();
 
 
-  /*
-   * Obtenemos la sesión actual para saber
-   * qué usuario está intentando comprar.
-   */
-  const sesion =
-    await this.authService.obtenerSesion();
+    if (
+      diferencia <= 0
+    ) {
+
+      this.segundosRestantes.set(0);
+
+      this.detenerTemporizador();
 
 
-  /*
- * =====================================================
- * USUARIO ANÓNIMO
- * =====================================================
- *
- * Como no existe un perfil en Supabase, no tenemos
- * una fecha de nacimiento asociada al usuario.
- *
- * En lugar de dejarlo pasar automáticamente,
- * mostramos el formulario de validación de edad.
- */
-if (!sesion?.user?.id) {
+      /*
+       * Si veníamos editando una reserva,
+       * debemos liberar esas butacas.
+       */
+      if (
+        this.reservaTokenEdicion
+      ) {
 
-  /*
-   * Si todavía no ingresó una fecha,
-   * mostramos el formulario y detenemos la compra.
-   */
-  if (!this.fechaNacimientoAnonimo) {
+        void this.liberarReservaVencida();
 
-    this.mostrarValidacionEdadAnonimo.set(true);
-
-    this.mensajeEdad.set(
-      `Esta película es ${this.pelicula.clasificacionEdad}. ` +
-      `Ingresá tu fecha de nacimiento para continuar.`
-    );
-
-    return false;
-  }
+      }
 
 
-  /*
-   * Si ya ingresó una fecha, calculamos su edad
-   * utilizando exactamente la misma lógica que
-   * usamos para los usuarios registrados.
-   */
-  const edad =
-    this.usuarioService.calcularEdad(
-      this.fechaNacimientoAnonimo
-    );
+      return;
+
+    }
 
 
-  /*
-   * Comparamos la edad contra la clasificación
-   * de la película: ATP, +13 o +18.
-   */
-  const puedeComprar =
-    this.usuarioService.cumpleRestriccionEdad(
-      edad,
-      this.pelicula.clasificacionEdad
-    );
-
-
-  /*
-   * Si no cumple la edad mínima,
-   * detenemos la operación.
-   */
-  if (!puedeComprar) {
-
-    this.mensajeEdad.set(
-      `Esta película es ${this.pelicula.clasificacionEdad}. ` +
-      `No cumplís con la edad mínima requerida para comprar la entrada.`
-    );
-
-    return false;
-  }
-
-
-  /*
-   * La edad fue validada correctamente.
-   *
-   * Ya no necesitamos mostrar el formulario.
-   */
-  this.mostrarValidacionEdadAnonimo.set(false);
-
-  this.mensajeEdad.set('');
-
-  return true;
-}
-
-
-  /*
-   * Buscamos el perfil, porque la fecha de
-   * nacimiento está guardada en perfiles.
-   *
-   * Ajustá solamente esta llamada si tu
-   * obtenerPerfil() tiene otro nombre/firma.
-   */
-  /*
- * obtenerPerfil() devuelve la respuesta de Supabase.
- *
- * Esa respuesta contiene:
- *
- * {
- *   data: { ...perfil... },
- *   error: ...
- * }
- *
- * Por eso extraemos solamente "data".
- */
-const respuestaPerfil =
-  await this.usuarioService.obtenerPerfil(
-    sesion.user.id
-  );
-
-
-/*
- * Nos quedamos con el registro real
- * que está dentro de data.
- */
-const perfil =
-  respuestaPerfil.data;
-
-
-  /*
-   * Si el usuario está registrado pero por algún
-   * motivo no podemos obtener su fecha de nacimiento,
-   * no permitimos continuar con una película restringida.
-   */
-  if (!perfil?.fecha_nacimiento) {
-
-    this.mensajeEdad.set(
-      'No pudimos verificar tu edad.'
-    );
-
-    return false;
-
-  }
-
-
-  /*
-   * Reutilizamos el método que acabamos
-   * de crear en UsuarioService.
-   */
-  const edad =
-    this.usuarioService.calcularEdad(
-      perfil.fecha_nacimiento
-    );
-
-
-  /*
-   * Segunda responsabilidad:
-   * comprobar la edad calculada contra
-   * la clasificación de la película.
-   */
-  const puedeComprar =
-    this.usuarioService.cumpleRestriccionEdad(
-      edad,
-      this.pelicula.clasificacionEdad
-    );
-
-
-  if (!puedeComprar) {
-
-    this.mensajeEdad.set(
-      `Esta película es ${this.pelicula.clasificacionEdad}. ` +
-      `No cumplís con la edad mínima requerida para comprar la entrada.`
-    );
-
-    return false;
-
-  }
-
-
-  return true;
-
-}
-
-/*
- * Inicia el tiempo disponible para comprar.
- *
- * Si el usuario ya había comenzado esta misma
- * operación, recuperamos el vencimiento existente
- * en lugar de darle otros 10 minutos.
- */
-iniciarTemporizador(): void {
-
-  /*
-   * Usamos la función como parte de la clave.
-   *
-   * Así una operación para la función 25
-   * no se mezcla con una operación para la 40.
-   */
-  const clave =
-    `cinebera-expira-funcion-${this.idFuncion}`;
-
-
-  const vencimientoGuardado =
-    sessionStorage.getItem(clave);
-
-
-  let vencimiento: number;
-
-
-  if (vencimientoGuardado) {
-
-    /*
-     * Ya existía una operación.
-     *
-     * Recuperamos la fecha de vencimiento.
-     */
-    vencimiento =
-      Number(vencimientoGuardado);
-
-  } else {
-
-    /*
-     * Primera vez que entra.
-     *
-     * Date.now() trabaja en milisegundos.
-     *
-     * 10 minutos:
-     * 10 × 60 × 1000
-     */
-    vencimiento =
-      Date.now() +
-      (30 * 1000);
-
-
-    sessionStorage.setItem(
-      clave,
-      String(vencimiento)
-    );
-
-  }
-
-
-  /*
-   * Actualizamos inmediatamente para que
-   * el usuario no tenga que esperar un segundo
-   * para ver 10:00.
-   */
-  this.actualizarTemporizador(
-    vencimiento
-  );
-
-
-  /*
-   * Cada segundo volvemos a calcular
-   * cuánto tiempo queda.
-   */
-  this.intervaloTemporizador =
-    setInterval(() => {
-
-      this.actualizarTemporizador(
-        vencimiento
+    const segundos =
+      Math.ceil(
+        diferencia / 1000
       );
 
-    }, 1000);
 
-}
-
-/*
- * Compara la hora actual contra
- * el vencimiento de la operación.
- */
-private actualizarTemporizador(
-  vencimiento: number
-): void {
-
-  const diferencia =
-    vencimiento - Date.now();
-
-
-  /*
-   * Si llegamos a cero,
-   * la operación venció.
-   */
-  if (diferencia <= 0) {
-
-  /*
-   * El tiempo disponible para completar
-   * la operación terminó.
-   */
-  this.segundosRestantes.set(0);
-
-  /*
-   * Ya no necesitamos seguir ejecutando
-   * el setInterval cada segundo.
-   */
-  this.detenerTemporizador();
-
-
-  /*
-   * Si tenemos un reservaTokenEdicion significa
-   * que el usuario llegó desde Checkout y existen
-   * butacas temporalmente reservadas en Supabase.
-   *
-   * En ese caso debemos liberarlas.
-   */
-  if (this.reservaTokenEdicion) {
-
-    void this.liberarReservaVencida();
+    this.segundosRestantes.set(
+      segundos
+    );
 
   }
 
-  return;
-}
-
 
   /*
-   * Convertimos milisegundos a segundos.
-   *
-   * Math.ceil evita mostrar 09:59
-   * inmediatamente después de comenzar.
+   * Detiene el reloj local pero conserva
+   * el vencimiento en sessionStorage.
    */
-  const segundos =
-    Math.ceil(
-      diferencia / 1000
-    );
+  private detenerTemporizador(): void {
 
-
-  this.segundosRestantes.set(
-    segundos
-  );
-
-}
-
-/*
- * Detiene solamente el setInterval.
- *
- * No modifica el vencimiento guardado.
- */
-private detenerTemporizador(): void {
-
-  if (this.intervaloTemporizador) {
-
-    clearInterval(
+    if (
       this.intervaloTemporizador
-    );
+    ) {
 
-    this.intervaloTemporizador = null;
+      clearInterval(
+        this.intervaloTemporizador
+      );
+
+
+      this.intervaloTemporizador = null;
+
+    }
 
   }
 
-}
 
-/*
- * Libera la reserva cuando el tiempo termina
- * mientras el usuario está en el mapa de butacas.
- *
- * Este caso ocurre principalmente cuando el usuario
- * volvió desde Checkout para modificar su selección.
- */
-private async liberarReservaVencida(): Promise<void> {
+  // =====================================================
+  // RESERVA VENCIDA
+  // =====================================================
 
-  /*
-   * Sin token no existe una reserva persistida
-   * que podamos identificar.
-   */
-  if (!this.reservaTokenEdicion) {
-    return;
-  }
+  private async liberarReservaVencida(): Promise<void> {
+
+    if (
+      !this.reservaTokenEdicion
+    ) {
+
+      return;
+
+    }
 
 
-  /*
-   * Pedimos al servicio que elimine todas las
-   * butacas temporales asociadas a este token.
-   */
-  const liberada =
-    await this.butacaService.liberarReserva(
-      this.reservaTokenEdicion
+    const liberada =
+      await this.butacaService.liberarReserva(
+        this.reservaTokenEdicion
+      );
+
+
+    if (!liberada) {
+
+      console.error(
+        'No fue posible liberar la reserva vencida.'
+      );
+
+      return;
+
+    }
+
+
+    console.log(
+      'Reserva vencida liberada correctamente.'
     );
 
 
-  if (!liberada) {
+    /*
+     * Eliminamos también el temporizador local.
+     */
+    const clave =
+      `cinebera-expira-funcion-${this.idFuncion}`;
 
-    console.error(
-      'No fue posible liberar la reserva vencida.'
+
+    sessionStorage.removeItem(
+      clave
     );
 
-    return;
-  }
+
+    /*
+     * El token dejó de representar
+     * una reserva válida.
+     */
+    this.reservaTokenEdicion = null;
 
 
-  /*
-   * La reserva dejó de existir en Supabase.
-   */
-  console.log(
-    'Reserva vencida liberada correctamente.'
-  );
+    /*
+     * Limpiamos visualmente las butacas
+     * seleccionadas de nuestra operación.
+     */
+    this.filasButacas.update(
+
+      filasActuales =>
+
+        filasActuales.map(
+
+          fila =>
+
+            fila.map(
+
+              butaca => {
+
+                if (
+                  butaca.estado === 'seleccionada'
+                ) {
+
+                  return {
+
+                    ...butaca,
+
+                    estado: 'disponible'
+
+                  };
+
+                }
 
 
-  /*
-   * También eliminamos el vencimiento local.
-   *
-   * De esta forma una futura operación no reutiliza
-   * accidentalmente un temporizador ya vencido.
-   */
-  const clave =
-    `cinebera-expira-funcion-${this.idFuncion}`;
+                return butaca;
 
-  sessionStorage.removeItem(clave);
+              }
 
-
-  /*
-   * El token ya no representa una reserva válida.
-   */
-  this.reservaTokenEdicion = null;
-
-  /*
- * La reserva ya fue eliminada de Supabase,
- * pero nuestras butacas siguen teniendo localmente
- * el estado "seleccionada".
- *
- * Por eso también debemos limpiar el estado visual
- * que mantiene Angular.
- */
-this.filasButacas.update(
-
-  filasActuales =>
-
-    filasActuales.map(
-
-      fila =>
-
-        fila.map(
-
-          butaca => {
-
-            /*
-             * Solamente limpiamos las butacas que
-             * pertenecían a nuestra selección local.
-             *
-             * Las ocupadas por otros usuarios no
-             * deben modificarse.
-             */
-            if (butaca.estado === 'seleccionada') {
-
-              return {
-                ...butaca,
-                estado: 'disponible'
-              };
-
-            }
-
-            return butaca;
-
-          }
+            )
 
         )
 
-    )
-
-);
+    );
 
 
-  /*
-   * Volvemos a consultar Supabase para que el mapa
-   * muestre las butacas recién liberadas.
-   */
-  await this.cargarButacasOcupadas();
+    /*
+     * Finalmente sincronizamos nuevamente
+     * con Supabase.
+     */
+    await this.cargarButacasOcupadas();
 
-}
-
-
-/*
- * Inicia una operación completamente nueva
- * para la misma función.
- *
- * NO cerramos la sesión del usuario.
- * Solamente descartamos los datos temporales
- * correspondientes a la compra anterior.
- */
-async iniciarNuevaSeleccion(): Promise<void> {
-
-  const clave =
-    `cinebera-expira-funcion-${this.idFuncion}`;
+  }
 
 
-  /*
-   * Nos aseguramos de no reutilizar
-   * un vencimiento anterior.
-   */
-  sessionStorage.removeItem(clave);
+  // =====================================================
+  // NUEVA SELECCIÓN
+  // =====================================================
+
+  async iniciarNuevaSeleccion(): Promise<void> {
+
+    const clave =
+      `cinebera-expira-funcion-${this.idFuncion}`;
 
 
-  /*
-   * La reserva anterior ya venció,
-   * por lo que este token deja de representar
-   * la operación actual.
-   */
-  this.reservaTokenEdicion = null;
+    /*
+     * Eliminamos el vencimiento anterior.
+     */
+    sessionStorage.removeItem(
+      clave
+    );
 
 
-  /*
-   * Quitamos también ?reserva=... de la URL.
-   *
-   * Seguimos en la misma función.
-   */
-  await this.router.navigate(
-    [
-      '/funcion',
-      this.idFuncion,
-      'butacas'
-    ],
-    {
-      queryParams: {}
-    }
-  );
+    this.reservaTokenEdicion = null;
 
 
-  /*
-   * Creamos los nuevos diez minutos.
-   */
-  this.iniciarTemporizador();
+    /*
+     * Limpiamos también la validación temporal
+     * del comprador anónimo.
+     *
+     * Una nueva operación debe comenzar limpia.
+     */
+    this.edadAnonimoForm.reset();
 
-}
+    this.mostrarValidacionEdadAnonimo.set(
+      false
+    );
+
+    this.mensajeEdad.set('');
 
 
-/*
- * Abandona el proceso de compra y regresa
- * a la cartelera principal.
- *
- * La sesión del usuario permanece abierta.
- */
-async volverACartelera(): Promise<void> {
+    /*
+     * Quitamos ?reserva=TOKEN de la URL.
+     */
+    await this.router.navigate(
 
-  const clave =
-    `cinebera-expira-funcion-${this.idFuncion}`;
+      [
+        '/funcion',
+        this.idFuncion,
+        'butacas'
+      ],
 
-  sessionStorage.removeItem(clave);
+      {
+        queryParams: {}
+      }
 
-  await this.router.navigate([
-    '/cartelera'
-  ]);
+    );
 
-}
 
+    /*
+     * Creamos un nuevo período de diez minutos.
+     */
+    this.iniciarTemporizador();
+
+  }
+
+
+  // =====================================================
+  // VOLVER A CARTELERA
+  // =====================================================
+
+  async volverACartelera(): Promise<void> {
+
+    const clave =
+      `cinebera-expira-funcion-${this.idFuncion}`;
+
+
+    sessionStorage.removeItem(
+      clave
+    );
+
+
+    await this.router.navigate([
+      '/cartelera'
+    ]);
+
+  }
 
 }

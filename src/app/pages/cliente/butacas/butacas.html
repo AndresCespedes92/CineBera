@@ -1,104 +1,173 @@
 <main class="butacas-page">
 
+  <!-- =====================================================
+       ENCABEZADO
+       ===================================================== -->
+
   <header>
-    <h1>Seleccioná tus butacas</h1>
+
+    <h1>
+      Seleccioná tus butacas
+    </h1>
 
     <p>
       Función #{{ idFuncion }}
     </p>
+
   </header>
 
-  <!--
-  Tiempo disponible para completar
-  la operación de compra.
--->
-<section>
 
-  <strong>
-    Tiempo para completar la compra:
-  </strong>
+  <!-- =====================================================
+       TEMPORIZADOR DE COMPRA
+       =====================================================
 
-  <span>
-    {{ tiempoRestante() }}
-  </span>
+       tiempoRestante() es un computed Signal.
 
+       Ejemplo:
+       segundosRestantes = 598
+                ↓
+       tiempoRestante = "09:58"
+  -->
+
+  <section class="temporizador">
+
+    <strong>
+      Tiempo para completar la compra:
+    </strong>
+
+    <span>
+      {{ tiempoRestante() }}
+    </span>
+
+  </section>
+
+
+  <!-- =====================================================
+       OPERACIÓN VENCIDA
+       =====================================================
+
+       Cuando el contador llega a cero ya no permitimos
+       continuar con la operación actual.
+
+       El usuario puede:
+       - iniciar una nueva selección;
+       - volver a la cartelera.
+  -->
 
   @if (segundosRestantes() === 0) {
 
-  <section class="reserva-vencida">
+    <section class="reserva-vencida">
 
-    <h3>El tiempo de compra finalizó</h3>
+      <h3>
+        El tiempo de compra finalizó
+      </h3>
 
-    <p>
-      Las butacas fueron liberadas.
-      Podés iniciar una nueva selección para esta función.
-    </p>
+      <p>
+        Las butacas fueron liberadas.
+        Podés iniciar una nueva selección para esta función.
+      </p>
 
-    <button
-      type="button"
-      (click)="iniciarNuevaSeleccion()">
-      Iniciar nueva selección
-    </button>
+      <button
+        type="button"
+        (click)="iniciarNuevaSeleccion()">
+        Iniciar nueva selección
+      </button>
 
-    <button
-      type="button"
-      (click)="volverACartelera()">
-      Volver a cartelera
-    </button>
+      <button
+        type="button"
+        (click)="volverACartelera()">
+        Volver a cartelera
+      </button>
 
-  </section>
+    </section>
 
-}
-
-</section>
+  }
 
 
-  <!--
-    Representación de la pantalla del cine.
-  -->
+  <!-- =====================================================
+       PANTALLA DEL CINE
+       ===================================================== -->
+
   <section class="pantalla">
+
     PANTALLA
+
   </section>
 
+
+  <!-- =====================================================
+       MAPA DE BUTACAS
+       ===================================================== -->
 
   <section class="mapa-butacas">
 
-    @for (fila of filasButacas(); track fila[0].fila) {
+    <!--
+      filasButacas es un Signal.
+
+      Por eso lo leemos utilizando:
+
+      filasButacas()
+
+      Cada elemento representa una fila completa.
+    -->
+
+    @for (
+      fila of filasButacas();
+      track fila[0].fila
+    ) {
+
 
       <!--
-        Antes de K representamos visualmente
-        el espacio correspondiente a J.
+        La fila J no contiene butacas.
 
-        J no tiene butacas, por eso no existe
-        dentro de filasButacas.
+        Antes de mostrar K agregamos visualmente
+        ese espacio físico.
       -->
+
       @if (fila[0].fila === 'K') {
 
         <div class="fila-vacia">
-          <span>J</span>
+
+          <span>
+            J
+          </span>
 
           <span>
             Espacio accesible
           </span>
+
         </div>
 
       }
 
 
+      <!-- =================================================
+           FILA
+           ================================================= -->
+
       <div class="fila">
 
+
         <!-- Nombre de la fila -->
+
         <span class="nombre-fila">
+
           {{ fila[0].fila }}
+
         </span>
 
 
-        <!--
-          Sector izquierdo.
+        <!-- =================================================
+             SECTOR IZQUIERDO
+             =================================================
 
-          Filas normales/VIP: 4
-          Fila K: 2
+             Normal / VIP:
+             4 butacas.
+
+             Accesible:
+             2 butacas.
         -->
+
         <div class="sector">
 
           @for (
@@ -111,7 +180,9 @@
               [appEstadoButaca]="butaca"
               (click)="seleccionarButaca(butaca)"
             >
+
               {{ butaca.numero }}
+
             </button>
 
           }
@@ -120,10 +191,14 @@
 
 
         <!-- Pasillo -->
+
         <div class="pasillo"></div>
 
 
-        <!-- Sector central -->
+        <!-- =================================================
+             SECTOR CENTRAL
+             ================================================= -->
+
         <div class="sector">
 
           @for (
@@ -136,7 +211,9 @@
               [appEstadoButaca]="butaca"
               (click)="seleccionarButaca(butaca)"
             >
+
               {{ butaca.numero }}
+
             </button>
 
           }
@@ -145,10 +222,14 @@
 
 
         <!-- Pasillo -->
+
         <div class="pasillo"></div>
 
 
-        <!-- Sector derecho -->
+        <!-- =================================================
+             SECTOR DERECHO
+             ================================================= -->
+
         <div class="sector">
 
           @for (
@@ -161,7 +242,9 @@
               [appEstadoButaca]="butaca"
               (click)="seleccionarButaca(butaca)"
             >
+
               {{ butaca.numero }}
+
             </button>
 
           }
@@ -172,68 +255,111 @@
 
     }
 
+
+    <!-- =====================================================
+         RESUMEN DE SELECCIÓN
+         ===================================================== -->
+
     <section class="resumen-seleccion">
 
-      <h2>Tu selección</h2>
+      <h2>
+        Tu selección
+      </h2>
 
-      <!--
-  Mostramos al usuario qué tarifa se está aplicando.
-  La decisión entre preventa y venta general se realiza
-  en el componente mediante estaEnPreventa().
--->
-<div class="informacion-precio">
 
-  @if (estaEnPreventa()) {
+      <!-- ===================================================
+           INFORMACIÓN DE PRECIOS
+           =================================================== -->
 
-    <p>
-      Tarifa:
-      <strong>Preventa</strong>
-    </p>
+      <div class="informacion-precio">
 
-  } @else {
+        <!--
+          La decisión entre preventa y venta general
+          se realiza en el componente TypeScript.
+        -->
 
-    <p>
-      Tarifa:
-      <strong>Venta general</strong>
-    </p>
+        @if (estaEnPreventa()) {
 
-  }
+          <p>
 
-  <!--
-    Este es el precio antes de aplicar
-    posibles recargos por tipo de butaca.
-  -->
-  <p>
-    Precio base:
-    <strong>
-      ${{ obtenerPrecioBase() }}
-    </strong>
-  </p>
+            Tarifa:
 
-  <!--
-    Las butacas VIP tienen un recargo
-    del 30% sobre el precio base.
-  -->
-  <p>
-    Precio VIP:
-    <strong>
-      ${{ obtenerPrecioBase() * (1 + RECARGO_VIP) }}
-    </strong>
-  </p>
+            <strong>
+              Preventa
+            </strong>
 
-</div>
+          </p>
 
-      @if (obtenerButacasSeleccionadas().length === 0) {
+        } @else {
+
+          <p>
+
+            Tarifa:
+
+            <strong>
+              Venta general
+            </strong>
+
+          </p>
+
+        }
+
+
+        <!-- Precio antes del recargo VIP -->
+
+        <p>
+
+          Precio base:
+
+          <strong>
+            ${{ obtenerPrecioBase() }}
+          </strong>
+
+        </p>
+
+
+        <!--
+          VIP tiene 30% adicional.
+        -->
+
+        <p>
+
+          Precio VIP:
+
+          <strong>
+            ${{ obtenerPrecioBase() * (1 + RECARGO_VIP) }}
+          </strong>
+
+        </p>
+
+      </div>
+
+
+      <!-- ===================================================
+           SIN BUTACAS SELECCIONADAS
+           =================================================== -->
+
+      @if (
+        obtenerButacasSeleccionadas().length === 0
+      ) {
 
         <p>
           Todavía no seleccionaste ninguna butaca.
         </p>
 
-      } @else {
+      }
+
+
+      <!-- ===================================================
+           CON BUTACAS SELECCIONADAS
+           =================================================== -->
+
+      @else {
 
         <p>
           Butacas seleccionadas:
         </p>
+
 
         <div class="lista-seleccionadas">
 
@@ -243,61 +369,421 @@
           ) {
 
             <span>
+
               {{ butaca.fila }}{{ butaca.numero }}
               -
               ${{ obtenerPrecioButaca(butaca) }}
+
             </span>
 
           }
 
         </div>
 
+
         <p>
+
           Cantidad:
+
           <strong>
             {{ obtenerButacasSeleccionadas().length }}
           </strong>
+
         </p>
 
+
         <p>
+
           Total:
+
           <strong>
             ${{ calcularTotal() }}
           </strong>
+
         </p>
 
-        @if (obtenerButacasSeleccionadas().length > 0) {
 
-  <!--
-    Continuar no significa que la compra esté pagada.
+        <!--
+          Continuar NO significa que la compra
+          ya esté pagada.
 
-    Primero intentamos reservar las butacas para
-    evitar que otro cliente compre los mismos lugares.
-  -->
-  <button
-    type="button"
-    (click)="continuarCompra()"
-    [disabled]="segundosRestantes() <= 0">
-    Continuar
-  </button>
+          Primero intentamos reservar las butacas
+          temporalmente en Supabase.
+        -->
 
-  <!--
-  Solamente mostramos esta sección cuando
-  existe un mensaje relacionado con la edad.
--->
-@if (mensajeEdad()) {
-
-  <p>
-    {{ mensajeEdad() }}
-  </p>
-
-}
-
-}
+        <button
+          type="button"
+          (click)="continuarCompra()"
+          [disabled]="segundosRestantes() <= 0">
+          Continuar
+        </button>
 
       }
 
     </section>
+
+
+    <!-- =====================================================
+         VALIDACIÓN DE EDAD PARA USUARIO ANÓNIMO
+         =====================================================
+
+         Este formulario aparece únicamente cuando:
+
+         1. No existe una sesión iniciada.
+         2. La película es +13 o +18.
+         3. El usuario intenta continuar.
+         4. validarRestriccionEdad() activa el Signal.
+
+         IMPORTANTE:
+
+         Para una película ATP este formulario
+         nunca debería aparecer.
+    -->
+
+    @if (mostrarValidacionEdadAnonimo()) {
+
+      <section class="validacion-edad">
+
+
+        <h3>
+          Verificación de edad
+        </h3>
+
+
+        <p>
+          Esta película tiene una restricción de edad.
+          Ingresá tu fecha de nacimiento para continuar.
+        </p>
+
+
+        <!--
+          edadAnonimoForm es un FormGroup.
+
+          Los tres <select> están conectados
+          individualmente mediante formControlName.
+
+          Es el mismo concepto utilizado en Registro.
+        -->
+
+        <div
+          class="fecha-nacimiento"
+          [formGroup]="edadAnonimoForm"
+        >
+
+
+          <!-- ===============================================
+               DÍA
+               =============================================== -->
+
+          <select
+            formControlName="diaNacimiento"
+
+            [ngClass]="{
+
+              'input-valido':
+
+                edadAnonimoForm.controls.diaNacimiento.valid &&
+
+                edadAnonimoForm.controls.diaNacimiento.touched &&
+
+                !edadAnonimoForm.hasError('fechaInvalida') &&
+
+                !edadAnonimoForm.hasError('fechaFutura'),
+
+
+              'input-invalido':
+
+                edadAnonimoForm.controls.diaNacimiento.touched &&
+
+                (
+                  edadAnonimoForm.controls.diaNacimiento.invalid ||
+
+                  edadAnonimoForm.hasError('fechaInvalida') ||
+
+                  edadAnonimoForm.hasError('fechaFutura')
+                )
+
+            }"
+          >
+
+            <option [ngValue]="null">
+              Día
+            </option>
+
+
+            @for (
+              dia of dias;
+              track dia
+            ) {
+
+              <option [ngValue]="dia">
+
+                {{ dia }}
+
+              </option>
+
+            }
+
+          </select>
+
+
+          <!-- ===============================================
+               MES
+               =============================================== -->
+
+          <select
+            formControlName="mesNacimiento"
+
+            [ngClass]="{
+
+              'input-valido':
+
+                edadAnonimoForm.controls.mesNacimiento.valid &&
+
+                edadAnonimoForm.controls.mesNacimiento.touched &&
+
+                !edadAnonimoForm.hasError('fechaInvalida') &&
+
+                !edadAnonimoForm.hasError('fechaFutura'),
+
+
+              'input-invalido':
+
+                edadAnonimoForm.controls.mesNacimiento.touched &&
+
+                (
+                  edadAnonimoForm.controls.mesNacimiento.invalid ||
+
+                  edadAnonimoForm.hasError('fechaInvalida') ||
+
+                  edadAnonimoForm.hasError('fechaFutura')
+                )
+
+            }"
+          >
+
+            <option [ngValue]="null">
+              Mes
+            </option>
+
+
+            @for (
+              mes of meses;
+              track mes.numero
+            ) {
+
+              <option [ngValue]="mes.numero">
+
+                {{ mes.nombre }}
+
+              </option>
+
+            }
+
+          </select>
+
+
+          <!-- ===============================================
+               AÑO
+               =============================================== -->
+
+          <select
+            formControlName="anioNacimiento"
+
+            [ngClass]="{
+
+              'input-valido':
+
+                edadAnonimoForm.controls.anioNacimiento.valid &&
+
+                edadAnonimoForm.controls.anioNacimiento.touched &&
+
+                !edadAnonimoForm.hasError('fechaInvalida') &&
+
+                !edadAnonimoForm.hasError('fechaFutura'),
+
+
+              'input-invalido':
+
+                edadAnonimoForm.controls.anioNacimiento.touched &&
+
+                (
+                  edadAnonimoForm.controls.anioNacimiento.invalid ||
+
+                  edadAnonimoForm.hasError('fechaInvalida') ||
+
+                  edadAnonimoForm.hasError('fechaFutura')
+                )
+
+            }"
+          >
+
+            <option [ngValue]="null">
+              Año
+            </option>
+
+
+            @for (
+              anio of anios;
+              track anio
+            ) {
+
+              <option [ngValue]="anio">
+
+                {{ anio }}
+
+              </option>
+
+            }
+
+          </select>
+
+        </div>
+
+
+        <!-- =================================================
+             ERROR: CAMPOS VACÍOS
+             =================================================
+
+             required pertenece a cada FormControl.
+        -->
+
+        @if (
+
+          (
+            edadAnonimoForm.controls.diaNacimiento.touched ||
+            edadAnonimoForm.controls.mesNacimiento.touched ||
+            edadAnonimoForm.controls.anioNacimiento.touched
+          )
+
+          &&
+
+          (
+            edadAnonimoForm.controls.diaNacimiento.hasError('required') ||
+            edadAnonimoForm.controls.mesNacimiento.hasError('required') ||
+            edadAnonimoForm.controls.anioNacimiento.hasError('required')
+          )
+
+        ) {
+
+          <small class="error">
+
+            Completá día, mes y año.
+
+          </small>
+
+        }
+
+
+        <!-- =================================================
+             ERROR: FECHA INEXISTENTE
+             =================================================
+
+             Este error pertenece al FormGroup porque surge
+             de analizar los tres controles juntos.
+
+             Ejemplo:
+             31 / 02 / 2000.
+        -->
+
+        @if (
+
+          edadAnonimoForm.hasError('fechaInvalida') &&
+
+          (
+            edadAnonimoForm.controls.diaNacimiento.touched ||
+            edadAnonimoForm.controls.mesNacimiento.touched ||
+            edadAnonimoForm.controls.anioNacimiento.touched
+          )
+
+        ) {
+
+          <small class="error">
+
+            La fecha ingresada no existe.
+
+          </small>
+
+        }
+
+
+        <!-- =================================================
+             ERROR: FECHA FUTURA
+             ================================================= -->
+
+        @if (
+
+          edadAnonimoForm.hasError('fechaFutura') &&
+
+          (
+            edadAnonimoForm.controls.diaNacimiento.touched ||
+            edadAnonimoForm.controls.mesNacimiento.touched ||
+            edadAnonimoForm.controls.anioNacimiento.touched
+          )
+
+        ) {
+
+          <small class="error">
+
+            La fecha de nacimiento no puede ser futura.
+
+          </small>
+
+        }
+
+
+        <!-- =================================================
+             MENSAJE DE RESTRICCIÓN DE EDAD
+             =================================================
+
+             Ejemplo:
+
+             "Esta película es +18.
+              No cumplís con la edad mínima requerida..."
+        -->
+
+        @if (mensajeEdad()) {
+
+          <p class="mensaje-edad">
+
+            {{ mensajeEdad() }}
+
+          </p>
+
+        }
+
+
+        <!-- =================================================
+             REINTENTAR
+             =================================================
+
+             Importante:
+
+             Seleccionar la fecha NO dispara automáticamente
+             una compra.
+
+             El usuario confirma nuevamente que quiere
+             continuar.
+
+             Se vuelve a ejecutar continuarCompra(),
+             que vuelve a pasar por validarRestriccionEdad().
+        -->
+
+        <button
+          type="button"
+          (click)="continuarCompra()"
+          [disabled]="segundosRestantes() <= 0"
+        >
+
+          Verificar edad y continuar
+
+        </button>
+
+
+      </section>
+
+    }
+
 
   </section>
 
