@@ -146,6 +146,95 @@
 
       </p>
 
+      <!-- =========================================================
+     PEDIDO CANDY
+     =========================================================
+     
+     pedidoCandy() es un Signal.
+     
+     Si existe un pedido asociado a la compra de esta entrada,
+     mostramos sus productos y su estado de entrega.
+     
+     El QR sigue siendo el mismo QR de la entrada.
+========================================================= -->
+
+@if (pedidoCandy(); as pedido) {
+
+  <section class="pedido-candy">
+
+    <h2>
+      Pedido Candy
+    </h2>
+
+
+    <!--
+      Recorremos todos los productos
+      pertenecientes al pedido.
+    -->
+    @for (
+      detalle of pedido.detalles;
+      track detalle.id
+    ) {
+
+      <article class="detalle-candy">
+
+        <strong>
+          {{ detalle.nombreProducto }}
+        </strong>
+
+        <span>
+          Cantidad:
+          {{ detalle.cantidad }}
+        </span>
+
+        <span>
+          ${{ detalle.precioUnitario }}
+          c/u
+        </span>
+
+        <span>
+          Subtotal:
+          ${{ detalle.subtotal }}
+        </span>
+
+      </article>
+
+    }
+
+
+    <p>
+      <strong>
+        Total Candy:
+        ${{ pedido.total }}
+      </strong>
+    </p>
+
+
+    <!--
+      La entrega del Candy tiene su propio estado.
+      
+      No depende de entrada.utilizada.
+    -->
+    @if (pedido.entregado) {
+
+      <p>
+        Estado:
+        Candy entregado
+      </p>
+
+    } @else {
+
+      <p>
+        Estado:
+        Pendiente de entrega
+      </p>
+
+    }
+
+  </section>
+
+}
+
 
       <!--
         Solamente permitimos autorizar el ingreso

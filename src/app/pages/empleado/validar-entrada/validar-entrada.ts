@@ -14,6 +14,14 @@ import { FormsModule } from '@angular/forms';
 import { EntradaService } from '../../../services/entrada';
 import { Entrada } from '../../../models/entrada';
 
+import {
+  CandyService
+} from '../../../services/candy';
+
+import {
+  PedidoCandy
+} from '../../../models/pedido-candy';
+
 
 @Component({
   selector: 'app-validar-entrada',
@@ -38,6 +46,8 @@ import { Entrada } from '../../../models/entrada';
 })
 export class ValidarEntrada {
 
+  
+
 
   /*
    * Guarda lo que escribe el empleado.
@@ -55,6 +65,18 @@ export class ValidarEntrada {
    * una entrada seleccionada.
    */
   entrada = signal<Entrada | null>(null);
+
+  /*
+ * Pedido Candy asociado a la misma compra
+ * que originó la entrada.
+ *
+ * null puede significar:
+ *
+ * - todavía no buscamos Candy
+ * - la compra no tiene pedido Candy
+ */
+pedidoCandy =
+  signal<PedidoCandy | null>(null);
 
 
   /*
@@ -82,9 +104,63 @@ export class ValidarEntrada {
 scannerActivo = signal<boolean>(true);
 
 
-  constructor(
-    private entradaService: EntradaService
-  ) {}
+ constructor(
+  private entradaService: EntradaService,
+
+  /*
+   * Angular crea/injecta el servicio.
+   *
+   * Lo utilizaremos para consultar el pedido
+   * Candy asociado a la compra de la entrada.
+   */
+  private candyService: CandyService
+) {}
+
+/*
+ * Busca el pedido Candy asociado a una entrada.
+ *
+ * Tanto la búsqueda manual como el QR terminan
+ * obteniendo un objeto Entrada.
+ *
+ * Por eso centralizamos acá la lógica de Candy
+ * en lugar de repetirla en ambos caminos.
+ */
+async cargarCandyDeEntrada(
+  entradaEncontrada: Entrada
+): Promise<void> {
+
+  /*
+   * Limpiamos cualquier pedido anterior.
+   *
+   * Esto evita mostrar accidentalmente
+   * el Candy de la entrada previamente escaneada.
+   */
+  this.pedidoCandy.set(null);
+
+
+  /*
+   * La entrada conoce la compra que la originó:
+   *
+   * entrada.compra_id
+   *
+   * Usamos ese ID para buscar el pedido Candy.
+   */
+  const pedido =
+    await this.candyService
+      .obtenerPedidoPorCompra(
+        entradaEncontrada.compra_id
+      );
+
+
+  /*
+   * pedido puede ser:
+   *
+   * PedidoCandy → compró Candy.
+   * null        → no compró Candy.
+   */
+  this.pedidoCandy.set(pedido);
+
+}
 
 
   /*
@@ -147,6 +223,14 @@ scannerActivo = signal<boolean>(true);
     this.entrada.set(
       entradaEncontrada
     );
+
+    /*
+ * Además de mostrar la entrada,
+ * buscamos si su compra tiene Candy.
+ */
+await this.cargarCandyDeEntrada(
+  entradaEncontrada
+);
 
 
     /*
@@ -347,6 +431,17 @@ async qrLeido(resultado: string): Promise<void> {
 
 
   /*
+ * El QR identifica la entrada.
+ *
+ * Desde la entrada obtenemos compra_id
+ * y desde la compra buscamos Candy.
+ */
+await this.cargarCandyDeEntrada(
+  entradaEncontrada
+);
+
+
+  /*
    * Si ya fue utilizada, NO permitimos
    * volver a autorizar el ingreso.
    */
@@ -381,6 +476,12 @@ async qrLeido(resultado: string): Promise<void> {
 escanearOtraEntrada(): void {
 
   this.entrada.set(null);
+
+  /*
+   * También debemos limpiar el Candy
+   * relacionado con la entrada anterior.
+   */
+  this.pedidoCandy.set(null);
 
   this.mensaje.set('');
 

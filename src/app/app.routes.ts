@@ -69,6 +69,20 @@ export const routes: Routes = [
 },
 
 {
+  path: 'candy',
+
+  /*
+   * Lazy loading:
+   * Angular carga el componente Candy
+   * solamente cuando el usuario entra
+   * a /candy.
+   */
+  loadComponent: () =>
+    import('./pages/cliente/candy/candy')
+      .then(m => m.Candy)
+},
+
+{
   /*
    * El código de la entrada viaja como parámetro dinámico.
    *

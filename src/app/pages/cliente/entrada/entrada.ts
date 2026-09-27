@@ -67,6 +67,10 @@ import {
   ButacaService
 } from '../../../services/butaca';
 
+import {
+  Router
+} from '@angular/router';
+
 
 @Component({
   selector: 'app-entrada',
@@ -195,7 +199,9 @@ export class Entrada implements OnInit {
     private funcionService: FuncionService,
     private peliculaService: PeliculaService,
     private salaService: SalaService,
-    private butacaService: ButacaService
+    private butacaService: ButacaService,
+    private router: Router
+
 
   ) {}
 
@@ -894,6 +900,37 @@ descargarPDF(): void {
    */
   pdf.save(
     nombreArchivo
+  );
+
+}
+
+/*
+ * Navega hacia Candy llevando el ID
+ * de la compra actual.
+ *
+ * No usamos un route parameter como:
+ *
+ * /candy/42
+ *
+ * sino un query parameter:
+ *
+ * /candy?compra=42
+ *
+ * porque Candy también puede existir como
+ * una sección general del sitio y la compra
+ * es información adicional del contexto.
+ */
+irACandy(
+  compraId: number
+): void {
+
+  this.router.navigate(
+    ['/candy'],
+    {
+      queryParams: {
+        compra: compraId
+      }
+    }
   );
 
 }

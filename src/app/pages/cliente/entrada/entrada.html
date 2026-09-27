@@ -255,6 +255,23 @@
 
   </article>
 
+  <!--
+  Enviamos el ID de la compra como query parameter.
+  
+  De esta forma Candy sabe a qué compra/entrada
+  debe asociar el pedido.
+-->
+@if (compra(); as compraActual) {
+
+  <button
+    type="button"
+    (click)="irACandy(compraActual.id)"
+  >
+    Agregar Candy
+  </button>
+
+}
+
 
   <!--
     Este botón queda FUERA del ticket.
