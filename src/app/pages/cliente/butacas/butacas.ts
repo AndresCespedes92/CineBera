@@ -223,6 +223,33 @@ reservaTokenEdicion: string | null = null;
    */
   filasButacas = signal<Butaca[][]>([]);
 
+  /*
+ * =====================================================
+ * VALIDACIÓN DE EDAD PARA USUARIO ANÓNIMO
+ * =====================================================
+ *
+ * Si el usuario no inició sesión y la película tiene
+ * restricción +13 o +18, necesitamos pedirle su fecha
+ * de nacimiento antes de permitir la reserva.
+ */
+
+
+/*
+ * Controla si debemos mostrar en pantalla
+ * el formulario para ingresar la fecha de nacimiento.
+ */
+mostrarValidacionEdadAnonimo =
+  signal<boolean>(false);
+
+
+/*
+ * Guarda temporalmente la fecha ingresada.
+ *
+ * No la guardamos todavía en Supabase porque el
+ * usuario anónimo no posee un perfil.
+ */
+fechaNacimientoAnonimo: string = '';
+
 
   constructor(
 
@@ -1479,16 +1506,83 @@ async validarRestriccionEdad(): Promise<boolean> {
 
 
   /*
-   * Si no hay usuario autenticado, no podemos
-   * aplicar la edad desde un perfil.
-   *
-   * IMPORTANTE:
-   * esto lo resolveremos aparte cuando hagamos
-   * completamente la compra anónima.
+ * =====================================================
+ * USUARIO ANÓNIMO
+ * =====================================================
+ *
+ * Como no existe un perfil en Supabase, no tenemos
+ * una fecha de nacimiento asociada al usuario.
+ *
+ * En lugar de dejarlo pasar automáticamente,
+ * mostramos el formulario de validación de edad.
+ */
+if (!sesion?.user?.id) {
+
+  /*
+   * Si todavía no ingresó una fecha,
+   * mostramos el formulario y detenemos la compra.
    */
-  if (!sesion?.user?.id) {
-    return true;
+  if (!this.fechaNacimientoAnonimo) {
+
+    this.mostrarValidacionEdadAnonimo.set(true);
+
+    this.mensajeEdad.set(
+      `Esta película es ${this.pelicula.clasificacionEdad}. ` +
+      `Ingresá tu fecha de nacimiento para continuar.`
+    );
+
+    return false;
   }
+
+
+  /*
+   * Si ya ingresó una fecha, calculamos su edad
+   * utilizando exactamente la misma lógica que
+   * usamos para los usuarios registrados.
+   */
+  const edad =
+    this.usuarioService.calcularEdad(
+      this.fechaNacimientoAnonimo
+    );
+
+
+  /*
+   * Comparamos la edad contra la clasificación
+   * de la película: ATP, +13 o +18.
+   */
+  const puedeComprar =
+    this.usuarioService.cumpleRestriccionEdad(
+      edad,
+      this.pelicula.clasificacionEdad
+    );
+
+
+  /*
+   * Si no cumple la edad mínima,
+   * detenemos la operación.
+   */
+  if (!puedeComprar) {
+
+    this.mensajeEdad.set(
+      `Esta película es ${this.pelicula.clasificacionEdad}. ` +
+      `No cumplís con la edad mínima requerida para comprar la entrada.`
+    );
+
+    return false;
+  }
+
+
+  /*
+   * La edad fue validada correctamente.
+   *
+   * Ya no necesitamos mostrar el formulario.
+   */
+  this.mostrarValidacionEdadAnonimo.set(false);
+
+  this.mensajeEdad.set('');
+
+  return true;
+}
 
 
   /*

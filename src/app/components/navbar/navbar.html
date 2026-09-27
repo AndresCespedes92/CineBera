@@ -2,8 +2,7 @@
 
   <!--
     Logo/nombre de la aplicación.
-
-    Al hacer click vuelve a la cartelera principal.
+    Siempre vuelve a la cartelera.
   -->
   <a
     class="navbar-logo"
@@ -12,9 +11,16 @@
   </a>
 
 
-  <!-- Navegación principal del cliente -->
+  <!-- =========================
+       NAVEGACIÓN PRINCIPAL
+       ========================= -->
   <div class="navbar-links">
 
+    <!--
+      Estas opciones son públicas.
+      Pueden utilizarlas tanto visitantes
+      como usuarios registrados.
+    -->
     <a routerLink="/">
       Cartelera
     </a>
@@ -23,31 +29,84 @@
       Próximamente
     </a>
 
-    <a routerLink="/mis-peliculas">
-      Mis películas
-    </a>
 
-    <a routerLink="/perfil">
-      Mi perfil
-    </a>
+    <!--
+      Estas opciones pertenecen al usuario.
+
+      Por eso solamente tienen sentido cuando
+      existe una sesión autenticada.
+    -->
+    @if (usuarioAutenticado()) {
+
+      <a routerLink="/mis-peliculas">
+        Mis películas
+      </a>
+
+      <a routerLink="/perfil">
+        Mi perfil
+      </a>
+
+    }
 
   </div>
 
 
-  <!--
-    Por ahora mostramos siempre Ingresar.
-
-    Más adelante, cuando implementemos autenticación,
-    vamos a poder mostrar distintas opciones según
-    exista o no un usuario autenticado.
-  -->
+  <!-- =========================
+       ESTADO DE AUTENTICACIÓN
+       ========================= -->
   <div class="navbar-auth">
 
-    <a
-      class="boton-ingresar"
-      routerLink="/login">
-      Ingresar
-    </a>
+    @if (usuarioAutenticado()) {
+
+      <!--
+        CASO 1:
+        existe una sesión de Supabase Auth.
+      -->
+      <span class="navbar-usuario">
+
+        @if (nombreUsuario()) {
+          Hola, {{ nombreUsuario() }}
+        } @else {
+          Sesión iniciada
+        }
+
+      </span>
+
+
+      <!--
+        Acá usamos Event Binding.
+
+        HTML detecta el click y ejecuta
+        cerrarSesion() en TypeScript.
+      -->
+      <button
+        type="button"
+        class="boton-salir"
+        (click)="cerrarSesion()">
+        Cerrar sesión
+      </button>
+
+    } @else {
+
+      <!--
+        CASO 2:
+        no existe sesión.
+
+        Por lo tanto estamos navegando
+        como visitante/anónimo.
+      -->
+      <a
+        class="boton-ingresar"
+        routerLink="/login">
+        Iniciar sesión
+      </a>
+
+      <a
+        routerLink="/registro">
+        Crear cuenta
+      </a>
+
+    }
 
   </div>
 

@@ -283,6 +283,27 @@ async confirmarPago(): Promise<void> {
 
   }
 
+  /*
+ * =====================================================
+ * FINALIZAR LA OPERACIÓN TEMPORAL
+ * =====================================================
+ *
+ * La compra ya fue pagada correctamente.
+ *
+ * Por lo tanto, el temporizador utilizado durante
+ * la selección y el checkout ya no tiene sentido.
+ *
+ * IMPORTANTE:
+ * solamente eliminamos el estado temporal de compra.
+ * NO cerramos la sesión del usuario.
+ */
+const claveTemporizador =
+  `cinebera-expira-funcion-${compraActual.funcion_id}`;
+
+sessionStorage.removeItem(
+  claveTemporizador
+);
+
 
   /*
    * PASO 4:
