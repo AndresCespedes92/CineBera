@@ -26,127 +26,135 @@
 -->
 @else if (entrada(); as entradaActual) {
 
-  <main>
+  <main class="pagina-entrada">
 
-    <header>
+  <!--
+    Esta tarjeta representa visualmente la entrada.
 
-      <h1>CineBera</h1>
+    Más adelante el PDF utilizará la misma información,
+    aunque no dependerá directamente de este HTML.
+  -->
+  <article class="ticket">
 
-      <p>Entrada digital</p>
+    <!-- =========================
+         ENCABEZADO
+         ========================= -->
+    <header class="ticket__header">
+
+      <div>
+        <h1>CineBera</h1>
+        <p>Entrada digital</p>
+      </div>
+
+      @if (entradaActual.utilizada) {
+        <span class="ticket__estado">
+          UTILIZADA
+        </span>
+      } @else {
+        <span class="ticket__estado">
+          VÁLIDA
+        </span>
+      }
 
     </header>
 
 
-    <!--
-      ==================================================
-      PELÍCULA
-      ==================================================
-    -->
+    <!-- =========================
+         PELÍCULA
+         ========================= -->
     @if (pelicula(); as peliculaActual) {
 
-      <section>
+      <section class="ticket__pelicula">
+
+        <p class="ticket__etiqueta">
+          PELÍCULA
+        </p>
 
         <h2>
           {{ peliculaActual.titulo }}
         </h2>
 
-
-        <p>
-          <strong>Clasificación:</strong>
+        <span>
           {{ peliculaActual.clasificacionEdad }}
-        </p>
+        </span>
 
       </section>
 
     }
 
 
-    <!--
-      ==================================================
-      DATOS DE LA FUNCIÓN
-      ==================================================
-
-      La fecha, hora, formato e idioma pertenecen
-      a la función concreta elegida por el cliente,
-      no a la película en general.
-    -->
+    <!-- =========================
+         INFORMACIÓN DE LA FUNCIÓN
+         ========================= -->
     @if (funcion(); as funcionActual) {
 
-      <section>
+      <section class="ticket__datos">
 
-        <h2>Función</h2>
+        <div>
+          <span>Fecha</span>
 
-
-        <p>
-          <strong>Fecha:</strong>
-          {{ funcionActual.fecha }}
-        </p>
-
-
-        <p>
-          <strong>Hora:</strong>
-          {{ funcionActual.hora }}
-        </p>
+          <strong>
+            {{ funcionActual.fecha | date:'dd/MM/yyyy' }}
+          </strong>
+        </div>
 
 
-        <p>
-          <strong>Formato:</strong>
-          {{ funcionActual.formato }}
-        </p>
+        <div>
+          <span>Hora</span>
+
+          <strong>
+            {{ funcionActual.hora.slice(0, 5) }}
+          </strong>
+        </div>
 
 
-        <p>
-          <strong>Idioma:</strong>
-          {{ funcionActual.idioma }}
-        </p>
+        <div>
+          <span>Formato</span>
 
-      </section>
+          <strong>
+            {{ funcionActual.formato }}
+          </strong>
+        </div>
 
-    }
 
+        <div>
+          <span>Idioma</span>
 
-    <!--
-      ==================================================
-      SALA
-      ==================================================
-    -->
-    @if (sala(); as salaActual) {
-
-      <section>
-
-        <h2>Sala</h2>
-
-        <!--
-          Por ahora mostramos el nombre de la sala.
-          Si el objeto usa otra propiedad, lo veremos
-          inmediatamente en pantalla/compilación.
-        -->
-        <p>
-          <strong>Sala:</strong>
-          {{ salaActual.nombre }}
-        </p>
+          <strong>
+            {{ funcionActual.idioma }}
+          </strong>
+        </div>
 
       </section>
 
     }
 
 
-    <!--
-      ==================================================
-      BUTACAS
-      ==================================================
+    <!-- =========================
+         SALA Y BUTACAS
+         ========================= -->
+    <section class="ticket__ubicacion">
 
-      Recorremos las butacas asociadas al mismo
-      reserva_token de la compra.
-    -->
-    <section>
+      @if (sala(); as salaActual) {
 
-      <h2>Butacas</h2>
+        <div>
+
+          <span>Sala</span>
+
+          <strong>
+            {{ salaActual.nombre }}
+          </strong>
+
+        </div>
+
+      }
 
 
-      @if (butacas().length > 0) {
+      <div>
 
-        <p>
+        <span>Butacas</span>
+
+        <strong>
 
           @for (
             butaca of butacas();
@@ -154,51 +162,29 @@
             let ultima = $last
           ) {
 
-            <!--
-              Ejemplo:
-              H6 - H7
-
-              $last nos permite saber cuándo estamos
-              mostrando la última butaca del array.
-            -->
-            <strong>
-              {{ butaca.fila }}{{ butaca.numero }}
-            </strong>
+            {{ butaca.fila }}{{ butaca.numero }}
 
             @if (!ultima) {
-              <span> - </span>
+              <span> · </span>
             }
 
           }
 
-        </p>
+        </strong>
 
-      }
-
-      @else {
-
-        <p>
-          No se encontraron butacas asociadas.
-        </p>
-
-      }
+      </div>
 
     </section>
 
 
-    <!--
-      ==================================================
-      ADVERTENCIA DE EDAD
-      ==================================================
-
-      La advertencia solamente aparece cuando
-      la película tiene una clasificación restrictiva.
-    -->
+    <!-- =========================
+         RESTRICCIÓN DE EDAD
+         ========================= -->
     @if (pelicula(); as peliculaActual) {
 
       @if (peliculaActual.clasificacionEdad === '+13') {
 
-        <section>
+        <aside class="ticket__advertencia">
 
           <strong>
             ⚠ Clasificación +13
@@ -209,14 +195,14 @@
             acompañados por una persona adulta.
           </p>
 
-        </section>
+        </aside>
 
       }
 
 
       @if (peliculaActual.clasificacionEdad === '+18') {
 
-        <section>
+        <aside class="ticket__advertencia">
 
           <strong>
             ⚠ Clasificación +18
@@ -227,86 +213,66 @@
             acompañados por una persona adulta.
           </p>
 
-        </section>
+        </aside>
 
       }
 
     }
 
 
-    <!--
-      ==================================================
-      QR
-      ==================================================
-
-      El QR NO contiene todos los datos de la entrada.
-
-      Contiene únicamente un identificador que permite
-      al empleado consultar la entrada real en Supabase.
-    -->
-    <section>
-
-      <h2>Código QR</h2>
-
+    <!-- =========================
+         QR
+         ========================= -->
+    <section class="ticket__qr">
 
       <qrcode
         [qrdata]="'CINEBERA:' + entradaActual.codigo"
-        [width]="256"
+        [width]="220"
         [errorCorrectionLevel]="'M'">
       </qrcode>
 
-
       <p>
-        Presentá este código al ingresar.
+        Presentá este QR al ingresar
       </p>
 
     </section>
 
 
-    <!--
-      ==================================================
-      CÓDIGOS DE LA ENTRADA
-      ==================================================
-    -->
-    <section>
+    <!-- =========================
+         CÓDIGO MANUAL
+         ========================= -->
+    <footer class="ticket__footer">
 
-      <p>
-        <strong>Código:</strong>
-        {{ entradaActual.codigo }}
-      </p>
+      <span>
+        Código manual
+      </span>
 
-
-      <!--
-        El código manual funciona como alternativa
-        cuando el empleado no puede escanear el QR.
-      -->
-      <p>
-        <strong>Código manual:</strong>
+      <strong>
         {{ entradaActual.codigo_manual }}
-      </p>
+      </strong>
+
+    </footer>
+
+  </article>
 
 
-      <p>
+  <!--
+    Este botón queda FUERA del ticket.
 
-        <strong>Estado:</strong>
+    No forma parte de la entrada; es una acción
+    que realiza el usuario sobre ella.
+  -->
+  <section class="acciones-entrada">
 
-        @if (entradaActual.utilizada) {
+    <button
+      type="button"
+      (click)="descargarPDF()">
+      Descargar entrada en PDF
+    </button>
 
-          Utilizada
+  </section>
 
-        }
-
-        @else {
-
-          Válida
-
-        }
-
-      </p>
-
-    </section>
-
-  </main>
+</main>
 
 }
 

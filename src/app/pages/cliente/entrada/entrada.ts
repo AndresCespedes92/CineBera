@@ -5,6 +5,15 @@
 import { QRCodeComponent } from 'angularx-qrcode';
 
 
+/*
+ * jsPDF permite generar archivos PDF
+ * directamente desde TypeScript.
+ */
+import { jsPDF } from 'jspdf';
+
+import { DatePipe } from '@angular/common';
+
+
 import {
   Component,
   OnInit,
@@ -77,7 +86,8 @@ import {
    * dentro del HTML.
    */
   imports: [
-    QRCodeComponent
+    QRCodeComponent,
+    DatePipe
   ],
 
   templateUrl: './entrada.html',
@@ -500,5 +510,392 @@ export class Entrada implements OnInit {
     this.cargando.set(false);
 
   }
+
+  /*
+ * =====================================================
+ * DESCARGAR ENTRADA EN PDF
+ * =====================================================
+ *
+ * Genera una representación descargable de la entrada
+ * utilizando los mismos datos que ya cargamos
+ * para mostrar la pantalla.
+ *
+ * No volvemos a consultar Supabase.
+ */
+descargarPDF(): void {
+
+  /*
+   * Leemos el valor actual de nuestros Signals.
+   */
+  const entradaActual =
+    this.entrada();
+
+  const compraActual =
+    this.compra();
+
+  const funcionActual =
+    this.funcion();
+
+  const peliculaActual =
+    this.pelicula();
+
+  const salaActual =
+    this.sala();
+
+  const butacasActuales =
+    this.butacas();
+
+
+  /*
+   * Si falta información fundamental,
+   * no intentamos generar un PDF incompleto.
+   */
+  if (
+    !entradaActual ||
+    !compraActual ||
+    !funcionActual ||
+    !peliculaActual ||
+    !salaActual
+  ) {
+
+    console.error(
+      'No hay información suficiente para generar el PDF.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * Creamos un nuevo documento PDF.
+   *
+   * Por defecto jsPDF utiliza una hoja A4.
+   */
+  const pdf =
+    new jsPDF();
+
+
+  /*
+   * ===================================================
+   * ENCABEZADO
+   * ===================================================
+   */
+
+  pdf.setFontSize(22);
+
+  pdf.text(
+    'CineBera',
+    20,
+    20
+  );
+
+
+  pdf.setFontSize(12);
+
+  pdf.text(
+    'Entrada digital',
+    20,
+    28
+  );
+
+
+  /*
+   * Línea separadora.
+   *
+   * line(x1, y1, x2, y2)
+   */
+  pdf.line(
+    20,
+    33,
+    190,
+    33
+  );
+
+
+  /*
+   * ===================================================
+   * PELÍCULA
+   * ===================================================
+   */
+
+  pdf.setFontSize(18);
+
+  pdf.text(
+    peliculaActual.titulo,
+    20,
+    45
+  );
+
+
+  pdf.setFontSize(11);
+
+  pdf.text(
+    `Clasificacion: ${peliculaActual.clasificacionEdad}`,
+    20,
+    53
+  );
+
+
+  /*
+   * ===================================================
+   * DATOS DE LA FUNCIÓN
+   * ===================================================
+   */
+
+  pdf.setFontSize(12);
+
+
+  /*
+   * La fecha almacenada viene como:
+   *
+   * 2026-09-27
+   *
+   * Para el PDF la convertimos manualmente
+   * a:
+   *
+   * 27/09/2026
+   */
+  const partesFecha =
+    funcionActual.fecha.split('-');
+
+  const fechaFormateada =
+    `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+
+
+  /*
+   * La hora viene como:
+   *
+   * 17:30:00
+   *
+   * slice(0, 5) produce:
+   *
+   * 17:30
+   */
+  const horaFormateada =
+    funcionActual.hora.slice(0, 5);
+
+
+  pdf.text(
+    `Fecha: ${fechaFormateada}`,
+    20,
+    67
+  );
+
+
+  pdf.text(
+    `Hora: ${horaFormateada}`,
+    20,
+    75
+  );
+
+
+  pdf.text(
+    `Formato: ${funcionActual.formato}`,
+    20,
+    83
+  );
+
+
+  pdf.text(
+    `Idioma: ${funcionActual.idioma}`,
+    20,
+    91
+  );
+
+
+  pdf.text(
+    `Sala: ${salaActual.nombre}`,
+    20,
+    99
+  );
+
+
+  /*
+   * ===================================================
+   * BUTACAS
+   * ===================================================
+   *
+   * map() transforma cada objeto ButacaFuncion
+   * en un texto como:
+   *
+   * H6
+   *
+   * join() une esos textos:
+   *
+   * H6 - H7
+   */
+  const textoButacas =
+    butacasActuales
+      .map(
+        butaca =>
+          `${butaca.fila}${butaca.numero}`
+      )
+      .join(' - ');
+
+
+  pdf.text(
+    `Butacas: ${textoButacas}`,
+    20,
+    107
+  );
+
+
+  /*
+   * ===================================================
+   * RESTRICCIÓN DE EDAD
+   * ===================================================
+   */
+
+  let posicionQR = 128;
+
+
+  if (
+    peliculaActual.clasificacionEdad === '+13'
+  ) {
+
+    pdf.setFontSize(11);
+
+    pdf.text(
+      'IMPORTANTE - Clasificacion +13',
+      20,
+      119
+    );
+
+    pdf.text(
+      'Menores de 13 anos deben asistir acompanados por una persona adulta.',
+      20,
+      126
+    );
+
+    posicionQR = 143;
+
+  }
+
+
+  if (
+    peliculaActual.clasificacionEdad === '+18'
+  ) {
+
+    pdf.setFontSize(11);
+
+    pdf.text(
+      'IMPORTANTE - Clasificacion +18',
+      20,
+      119
+    );
+
+    pdf.text(
+      'Menores de 18 anos deben asistir acompanados por una persona adulta.',
+      20,
+      126
+    );
+
+    posicionQR = 143;
+
+  }
+
+
+  /*
+   * ===================================================
+   * QR
+   * ===================================================
+   *
+   * El QR que vemos en pantalla está renderizado
+   * por angularx-qrcode.
+   *
+   * Para esta primera versión del PDF reutilizamos
+   * ese QR ya generado en el DOM.
+   */
+  const qrCanvas =
+    document.querySelector(
+      'qrcode canvas'
+    ) as HTMLCanvasElement | null;
+
+
+  if (qrCanvas) {
+
+    /*
+     * Convertimos el canvas en una imagen PNG
+     * representada como Data URL.
+     */
+    const imagenQR =
+      qrCanvas.toDataURL(
+        'image/png'
+      );
+
+
+    /*
+     * Agregamos la imagen al PDF.
+     *
+     * addImage(
+     *   imagen,
+     *   formato,
+     *   x,
+     *   y,
+     *   ancho,
+     *   alto
+     * )
+     */
+    pdf.addImage(
+      imagenQR,
+      'PNG',
+      75,
+      posicionQR,
+      60,
+      60
+    );
+
+  }
+
+
+  /*
+   * ===================================================
+   * CÓDIGO MANUAL
+   * ===================================================
+   */
+
+  pdf.setFontSize(11);
+
+
+  pdf.text(
+    `Codigo manual: ${entradaActual.codigo_manual}`,
+    20,
+    posicionQR + 72
+  );
+
+
+  pdf.text(
+    entradaActual.utilizada
+      ? 'Estado: UTILIZADA'
+      : 'Estado: VALIDA',
+    20,
+    posicionQR + 80
+  );
+
+
+  /*
+   * ===================================================
+   * DESCARGA
+   * ===================================================
+   *
+   * Creamos un nombre reconocible.
+   *
+   * Ejemplo:
+   *
+   * CineBera-Interstellar-E9A2AA32.pdf
+   */
+  const nombreArchivo =
+    `CineBera-${peliculaActual.titulo}-${entradaActual.codigo_manual}.pdf`;
+
+
+  /*
+   * save() hace que el navegador descargue
+   * el documento generado.
+   */
+  pdf.save(
+    nombreArchivo
+  );
+
+}
 
 }

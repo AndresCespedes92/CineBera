@@ -1,0 +1,124 @@
+/*
+ * Contenedor general de la pantalla.
+ */
+.pagina-entrada {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+
+/*
+ * Tarjeta que representa la entrada.
+ */
+.ticket {
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 24px;
+  background: white;
+}
+
+
+/*
+ * Distribuye marca y estado.
+ */
+.ticket__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 16px;
+}
+
+
+.ticket__estado {
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-weight: bold;
+}
+
+
+.ticket__pelicula {
+  padding: 20px 0;
+}
+
+
+.ticket__etiqueta {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+
+.ticket__pelicula h2 {
+  margin: 0 0 8px;
+}
+
+
+/*
+ * Grid permite acomodar varios datos
+ * sin tener que posicionarlos manualmente.
+ */
+.ticket__datos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+
+
+.ticket__datos div,
+.ticket__ubicacion div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+
+.ticket__ubicacion {
+  display: flex;
+  gap: 48px;
+  padding: 20px 0;
+}
+
+
+.ticket__advertencia {
+  border: 1px solid #222;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+
+.ticket__advertencia p {
+  margin-bottom: 0;
+}
+
+
+.ticket__qr {
+  text-align: center;
+  padding: 20px 0;
+}
+
+
+.ticket__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px dashed #777;
+  padding-top: 20px;
+}
+
+
+.acciones-entrada {
+  margin-top: 20px;
+  text-align: center;
+}
+
+
+.acciones-entrada button {
+  padding: 12px 18px;
+  cursor: pointer;
+}
