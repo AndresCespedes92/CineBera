@@ -8,6 +8,31 @@
     </p>
   </header>
 
+  <!--
+  Tiempo disponible para completar
+  la operación de compra.
+-->
+<section>
+
+  <strong>
+    Tiempo para completar la compra:
+  </strong>
+
+  <span>
+    {{ tiempoRestante() }}
+  </span>
+
+
+  @if (segundosRestantes() === 0) {
+
+    <p>
+      El tiempo para completar la compra finalizó.
+    </p>
+
+  }
+
+</section>
+
 
   <!--
     Representación de la pantalla del cine.
@@ -236,6 +261,18 @@
   >
     Continuar
   </button>
+
+  <!--
+  Solamente mostramos esta sección cuando
+  existe un mensaje relacionado con la edad.
+-->
+@if (mensajeEdad()) {
+
+  <p>
+    {{ mensajeEdad() }}
+  </p>
+
+}
 
 }
 

@@ -2,8 +2,12 @@ import {
   Component,
   OnInit,
   OnDestroy,
-  signal
+  signal,
+  computed
 } from '@angular/core';
+
+import { Usuario } from '../../../services/usuario';
+import { Auth } from '../../../services/auth';
 
 import {
   ActivatedRoute,
@@ -56,6 +60,61 @@ import {
   styleUrl: './butacas.css'
 })
 export class Butacas implements OnInit, OnDestroy {
+
+  /*
+ * Mensaje relacionado específicamente
+ * con restricciones de edad.
+ */
+mensajeEdad = signal<string>('');
+
+/*
+ * Cantidad de segundos que le quedan al usuario
+ * para completar la operación.
+ *
+ * Es un Signal porque la pantalla debe reaccionar
+ * cada vez que cambia el tiempo.
+ */
+segundosRestantes = signal<number>(0);
+
+
+/*
+ * Valor derivado de segundosRestantes.
+ *
+ * Ejemplo:
+ *
+ * 598 segundos
+ *      ↓
+ * "09:58"
+ *
+ * computed() se vuelve a calcular automáticamente
+ * cuando cambia segundosRestantes().
+ */
+tiempoRestante = computed(() => {
+
+  const segundos =
+    this.segundosRestantes();
+
+  const minutos =
+    Math.floor(segundos / 60);
+
+  const segundosSobrantes =
+    segundos % 60;
+
+  return (
+    String(minutos).padStart(2, '0') +
+    ':' +
+    String(segundosSobrantes).padStart(2, '0')
+  );
+
+});
+
+
+/*
+ * Guardamos la referencia del setInterval
+ * para poder detenerlo cuando corresponda.
+ */
+private intervaloTemporizador:
+  ReturnType<typeof setInterval> | null = null;
 
       /*
     * Guarda la conexión Realtime actualmente
@@ -178,6 +237,9 @@ export class Butacas implements OnInit, OnDestroy {
 
     private router: Router,
 
+    private authService: Auth,
+    private usuarioService: Usuario
+
     
   ) {}
 
@@ -204,20 +266,38 @@ export class Butacas implements OnInit, OnDestroy {
         .get('id');
 
 
-    /*
-     * paramMap devuelve texto.
-     *
-     * Lo convertimos a number porque nuestros
-     * IDs de funciones son numéricos.
-     */
     this.idFuncion =
-      Number(idRecibido);
+  Number(idRecibido);
 
-    /*
-    * Una vez que conocemos qué función estamos
-    * visualizando, podemos escuchar sus cambios.
-    */
-    this.iniciarRealtime();
+
+/*
+ * =====================================================
+ * TEMPORIZADOR DE COMPRA
+ * =====================================================
+ *
+ * En este punto ya conocemos el ID de la función.
+ *
+ * Esto es importante porque iniciarTemporizador()
+ * utiliza ese ID para guardar el vencimiento en:
+ *
+ * sessionStorage
+ *
+ * Ejemplo:
+ *
+ * cinebera-expira-funcion-25
+ *
+ * De esta manera cada función puede tener
+ * su propia operación de compra.
+ */
+this.iniciarTemporizador();
+
+
+/*
+ * Una vez que conocemos qué función estamos
+ * visualizando, podemos escuchar sus cambios
+ * mediante Supabase Realtime.
+ */
+this.iniciarRealtime();
 
 
     /*
@@ -255,11 +335,23 @@ export class Butacas implements OnInit, OnDestroy {
  */
     ngOnDestroy(): void {
 
+      /*
+        * Detenemos el reloj del componente.
+        *
+        * IMPORTANTE:
+        * no eliminamos sessionStorage porque queremos
+        * que el tiempo continúe si vamos a Checkout
+        * y después volvemos a Butacas.
+        */
+        this.detenerTemporizador();
+
       if (this.canalRealtime) {
 
         supabase.removeChannel(
           this.canalRealtime
         );
+
+                
 
         this.canalRealtime = null;
 
@@ -638,9 +730,28 @@ export class Butacas implements OnInit, OnDestroy {
 async continuarCompra(): Promise<void> {
 
   /*
-   * Obtenemos solamente las butacas que
-   * el usuario seleccionó en la pantalla.
+   * Antes de crear una reserva en Supabase,
+   * comprobamos la restricción de edad.
    */
+  const edadValida =
+    await this.validarRestriccionEdad();
+
+
+  if (!edadValida) {
+
+    /*
+     * No llegamos a reservarButacas().
+     *
+     * Por lo tanto no bloqueamos asientos
+     * innecesariamente en Supabase.
+     */
+    return;
+
+  }
+
+
+  // DESDE ACÁ continúa el código que ya teníamos.
+
   const seleccionadas =
     this.obtenerButacasSeleccionadas();
 
@@ -658,6 +769,40 @@ async continuarCompra(): Promise<void> {
     return;
   }
 
+  /*
+ * Recuperamos el vencimiento que nació cuando
+ * entramos a la pantalla de Butacas.
+ *
+ * Ese mismo vencimiento viajará a Supabase.
+ */
+const claveVencimiento =
+  `cinebera-expira-funcion-${this.idFuncion}`;
+
+const vencimientoGuardado =
+  sessionStorage.getItem(
+    claveVencimiento
+  );
+
+
+/*
+ * Si por alguna razón no existe el vencimiento,
+ * no permitimos crear una reserva inconsistente.
+ */
+if (!vencimientoGuardado) {
+
+  console.error(
+    'No se encontró el vencimiento de la operación.'
+  );
+
+  return;
+}
+
+
+const vencimientoOperacion =
+  Number(
+    vencimientoGuardado
+  );
+
 
   /*
    * Intentamos crear la reserva temporal.
@@ -669,10 +814,11 @@ async continuarCompra(): Promise<void> {
    * devuelve null.
    */
   const reservaToken =
-    await this.butacaService.reservarButacas(
-      this.idFuncion,
-      seleccionadas
-    );
+  await this.butacaService.reservarButacas(
+    this.idFuncion,
+    seleccionadas,
+    vencimientoOperacion
+  );
 
 
   /*
@@ -1144,5 +1290,289 @@ iniciarRealtime(): void {
       );
 
 }
+
+/*
+ * Comprueba si el usuario actual cumple
+ * la restricción de edad de la película.
+ *
+ * ATP no requiere ningún control adicional.
+ */
+async validarRestriccionEdad(): Promise<boolean> {
+
+  /*
+   * Si todavía no cargamos la película,
+   * no podemos validar la clasificación.
+   */
+  if (!this.pelicula) {
+    return false;
+  }
+
+
+  /*
+   * ATP significa que no existe una
+   * edad mínima para comprar.
+   */
+  if (this.pelicula.clasificacionEdad === 'ATP') {
+    return true;
+  }
+
+
+  /*
+   * Obtenemos la sesión actual para saber
+   * qué usuario está intentando comprar.
+   */
+  const sesion =
+    await this.authService.obtenerSesion();
+
+
+  /*
+   * Si no hay usuario autenticado, no podemos
+   * aplicar la edad desde un perfil.
+   *
+   * IMPORTANTE:
+   * esto lo resolveremos aparte cuando hagamos
+   * completamente la compra anónima.
+   */
+  if (!sesion?.user?.id) {
+    return true;
+  }
+
+
+  /*
+   * Buscamos el perfil, porque la fecha de
+   * nacimiento está guardada en perfiles.
+   *
+   * Ajustá solamente esta llamada si tu
+   * obtenerPerfil() tiene otro nombre/firma.
+   */
+  /*
+ * obtenerPerfil() devuelve la respuesta de Supabase.
+ *
+ * Esa respuesta contiene:
+ *
+ * {
+ *   data: { ...perfil... },
+ *   error: ...
+ * }
+ *
+ * Por eso extraemos solamente "data".
+ */
+const respuestaPerfil =
+  await this.usuarioService.obtenerPerfil(
+    sesion.user.id
+  );
+
+
+/*
+ * Nos quedamos con el registro real
+ * que está dentro de data.
+ */
+const perfil =
+  respuestaPerfil.data;
+
+
+  /*
+   * Si el usuario está registrado pero por algún
+   * motivo no podemos obtener su fecha de nacimiento,
+   * no permitimos continuar con una película restringida.
+   */
+  if (!perfil?.fecha_nacimiento) {
+
+    this.mensajeEdad.set(
+      'No pudimos verificar tu edad.'
+    );
+
+    return false;
+
+  }
+
+
+  /*
+   * Reutilizamos el método que acabamos
+   * de crear en UsuarioService.
+   */
+  const edad =
+    this.usuarioService.calcularEdad(
+      perfil.fecha_nacimiento
+    );
+
+
+  /*
+   * Segunda responsabilidad:
+   * comprobar la edad calculada contra
+   * la clasificación de la película.
+   */
+  const puedeComprar =
+    this.usuarioService.cumpleRestriccionEdad(
+      edad,
+      this.pelicula.clasificacionEdad
+    );
+
+
+  if (!puedeComprar) {
+
+    this.mensajeEdad.set(
+      `Esta película es ${this.pelicula.clasificacionEdad}. ` +
+      `No cumplís con la edad mínima requerida para comprar la entrada.`
+    );
+
+    return false;
+
+  }
+
+
+  return true;
+
+}
+
+/*
+ * Inicia el tiempo disponible para comprar.
+ *
+ * Si el usuario ya había comenzado esta misma
+ * operación, recuperamos el vencimiento existente
+ * en lugar de darle otros 10 minutos.
+ */
+iniciarTemporizador(): void {
+
+  /*
+   * Usamos la función como parte de la clave.
+   *
+   * Así una operación para la función 25
+   * no se mezcla con una operación para la 40.
+   */
+  const clave =
+    `cinebera-expira-funcion-${this.idFuncion}`;
+
+
+  const vencimientoGuardado =
+    sessionStorage.getItem(clave);
+
+
+  let vencimiento: number;
+
+
+  if (vencimientoGuardado) {
+
+    /*
+     * Ya existía una operación.
+     *
+     * Recuperamos la fecha de vencimiento.
+     */
+    vencimiento =
+      Number(vencimientoGuardado);
+
+  } else {
+
+    /*
+     * Primera vez que entra.
+     *
+     * Date.now() trabaja en milisegundos.
+     *
+     * 10 minutos:
+     * 10 × 60 × 1000
+     */
+    vencimiento =
+      Date.now() +
+      (10 * 60 * 1000);
+
+
+    sessionStorage.setItem(
+      clave,
+      String(vencimiento)
+    );
+
+  }
+
+
+  /*
+   * Actualizamos inmediatamente para que
+   * el usuario no tenga que esperar un segundo
+   * para ver 10:00.
+   */
+  this.actualizarTemporizador(
+    vencimiento
+  );
+
+
+  /*
+   * Cada segundo volvemos a calcular
+   * cuánto tiempo queda.
+   */
+  this.intervaloTemporizador =
+    setInterval(() => {
+
+      this.actualizarTemporizador(
+        vencimiento
+      );
+
+    }, 1000);
+
+}
+
+/*
+ * Compara la hora actual contra
+ * el vencimiento de la operación.
+ */
+private actualizarTemporizador(
+  vencimiento: number
+): void {
+
+  const diferencia =
+    vencimiento - Date.now();
+
+
+  /*
+   * Si llegamos a cero,
+   * la operación venció.
+   */
+  if (diferencia <= 0) {
+
+    this.segundosRestantes.set(0);
+
+    this.detenerTemporizador();
+
+    return;
+
+  }
+
+
+  /*
+   * Convertimos milisegundos a segundos.
+   *
+   * Math.ceil evita mostrar 09:59
+   * inmediatamente después de comenzar.
+   */
+  const segundos =
+    Math.ceil(
+      diferencia / 1000
+    );
+
+
+  this.segundosRestantes.set(
+    segundos
+  );
+
+}
+
+/*
+ * Detiene solamente el setInterval.
+ *
+ * No modifica el vencimiento guardado.
+ */
+private detenerTemporizador(): void {
+
+  if (this.intervaloTemporizador) {
+
+    clearInterval(
+      this.intervaloTemporizador
+    );
+
+    this.intervaloTemporizador = null;
+
+  }
+
+}
+
+
 
 }

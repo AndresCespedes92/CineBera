@@ -1,7 +1,9 @@
 import {
   Component,
   OnInit,
-  signal
+  signal,
+  computed,
+  OnDestroy
 } from '@angular/core';
 
 import {
@@ -52,7 +54,7 @@ import {
   templateUrl: './checkout.html',
   styleUrl: './checkout.css'
 })
-export class Checkout implements OnInit {
+export class Checkout implements OnInit, OnDestroy {
 
 
   /*
@@ -105,6 +107,74 @@ export class Checkout implements OnInit {
    */
   cargando =
     signal<boolean>(true);
+
+  /*
+ * =====================================================
+ * TEMPORIZADOR DE COMPRA
+ * =====================================================
+ *
+ * Guarda cuántos segundos quedan para completar
+ * la operación.
+ *
+ * No creamos otros 10 minutos en Checkout.
+ * Vamos a recuperar el vencimiento que nació
+ * en la pantalla de Butacas.
+ */
+segundosRestantes =
+  signal<number>(0);
+
+
+/*
+ * Indica si la reserva ya venció.
+ *
+ * Nos servirá para impedir que el usuario
+ * continúe hacia el pago cuando llegue a 00:00.
+ */
+reservaVencida =
+  signal<boolean>(false);
+
+
+/*
+ * computed() genera un valor derivado.
+ *
+ * segundosRestantes:
+ * 543
+ *
+ * se transforma en:
+ * "09:03"
+ *
+ * No necesitamos guardar ambas cosas.
+ * Guardamos los segundos y Angular calcula
+ * automáticamente su representación visual.
+ */
+tiempoRestante = computed(() => {
+
+  const segundos =
+    this.segundosRestantes();
+
+  const minutos =
+    Math.floor(segundos / 60);
+
+  const segundosSobrantes =
+    segundos % 60;
+
+  return (
+    String(minutos).padStart(2, '0') +
+    ':' +
+    String(segundosSobrantes).padStart(2, '0')
+  );
+
+});
+
+
+/*
+ * Referencia al setInterval.
+ *
+ * La conservamos para poder detenerlo cuando
+ * Angular destruya este componente.
+ */
+private intervaloTemporizador:
+  ReturnType<typeof setInterval> | null = null;
 
 
   constructor(
@@ -217,6 +287,25 @@ export class Checkout implements OnInit {
      */
     const funcionId =
       reserva[0].funcion_id;
+
+
+    /*
+ * =====================================================
+ * RECUPERAMOS EL TEMPORIZADOR
+ * =====================================================
+ *
+ * Ahora conocemos funcionId.
+ *
+ * Es el mismo ID que utilizó Butacas para guardar:
+ *
+ * cinebera-expira-funcion-25
+ *
+ * Por lo tanto Checkout puede recuperar exactamente
+ * el mismo vencimiento.
+ */
+this.iniciarTemporizador(
+  funcionId
+);
 
 
     /*
@@ -460,6 +549,20 @@ export class Checkout implements OnInit {
 async irAlPago(): Promise<void> {
 
   /*
+ * No permitimos avanzar hacia el pago
+ * si terminó el tiempo de la operación.
+ */
+if (this.reservaVencida()) {
+
+  console.log(
+    'La reserva venció. Debe seleccionar nuevamente las butacas.'
+  );
+
+  return;
+
+}
+
+  /*
    * Necesitamos una función válida porque
    * la compra debe quedar asociada a ella.
    */
@@ -595,6 +698,199 @@ async irAlPago(): Promise<void> {
     '/pago',
     nuevaCompra.id
   ]);
+
+}
+
+/*
+ * =====================================================
+ * TEMPORIZADOR
+ * =====================================================
+ *
+ * Checkout NO crea un nuevo vencimiento.
+ *
+ * Recupera el que fue creado cuando el usuario
+ * ingresó a la pantalla de Butacas.
+ */
+private iniciarTemporizador(
+  funcionId: number
+): void {
+
+  /*
+   * Construimos exactamente la misma clave
+   * utilizada por Butacas.
+   *
+   * Ejemplo:
+   *
+   * cinebera-expira-funcion-25
+   */
+  const clave =
+    `cinebera-expira-funcion-${funcionId}`;
+
+
+  /*
+   * Recuperamos el vencimiento almacenado
+   * en esta pestaña del navegador.
+   */
+  const vencimientoGuardado =
+    sessionStorage.getItem(clave);
+
+
+  /*
+   * Si no existe vencimiento significa que
+   * esta operación no tiene un temporizador válido.
+   *
+   * Por seguridad la consideramos vencida.
+   */
+  if (!vencimientoGuardado) {
+
+    this.segundosRestantes.set(0);
+
+    this.reservaVencida.set(true);
+
+    return;
+
+  }
+
+
+  /*
+   * sessionStorage guarda texto.
+   *
+   * Lo convertimos nuevamente a number porque
+   * Date.now() también devuelve un número.
+   */
+  const vencimiento =
+    Number(vencimientoGuardado);
+
+
+  /*
+   * Actualizamos inmediatamente el contador.
+   *
+   * Así no esperamos un segundo para mostrarlo.
+   */
+  this.actualizarTemporizador(
+    vencimiento
+  );
+
+
+  /*
+   * Si actualizarTemporizador detectó que
+   * ya estaba vencido, no tiene sentido
+   * crear el setInterval.
+   */
+  if (this.reservaVencida()) {
+
+    return;
+
+  }
+
+
+  /*
+   * Cada segundo volvemos a comparar
+   * el vencimiento contra la hora actual.
+   */
+  this.intervaloTemporizador =
+    setInterval(() => {
+
+      this.actualizarTemporizador(
+        vencimiento
+      );
+
+    }, 1000);
+
+}
+
+
+/*
+ * Calcula cuántos segundos faltan realmente.
+ *
+ * IMPORTANTE:
+ *
+ * No hacemos:
+ *
+ * segundosRestantes - 1
+ *
+ * porque eso podría desincronizarse.
+ *
+ * Siempre comparamos:
+ *
+ * vencimiento - Date.now()
+ */
+private actualizarTemporizador(
+  vencimiento: number
+): void {
+
+  const diferencia =
+    vencimiento - Date.now();
+
+
+  /*
+   * La operación llegó a su vencimiento.
+   */
+  if (diferencia <= 0) {
+
+    this.segundosRestantes.set(0);
+
+    this.reservaVencida.set(true);
+
+    this.detenerTemporizador();
+
+    return;
+
+  }
+
+
+  /*
+   * Todavía tenemos tiempo.
+   */
+  this.reservaVencida.set(false);
+
+
+  const segundos =
+    Math.ceil(
+      diferencia / 1000
+    );
+
+
+  this.segundosRestantes.set(
+    segundos
+  );
+
+}
+
+
+/*
+ * Detiene el setInterval.
+ *
+ * Esto NO borra el vencimiento de sessionStorage.
+ *
+ * Queremos que el tiempo siga existiendo si
+ * navegamos entre las pantallas de la compra.
+ */
+private detenerTemporizador(): void {
+
+  if (this.intervaloTemporizador) {
+
+    clearInterval(
+      this.intervaloTemporizador
+    );
+
+    this.intervaloTemporizador = null;
+
+  }
+
+}
+
+
+/*
+ * Angular ejecuta ngOnDestroy cuando abandonamos
+ * la pantalla de Checkout.
+ *
+ * Limpiamos el setInterval para no dejar un proceso
+ * ejecutándose sobre un componente destruido.
+ */
+ngOnDestroy(): void {
+
+  this.detenerTemporizador();
 
 }
 

@@ -1,5 +1,35 @@
 <main>
 
+  <!--
+  =====================================================
+  TEMPORIZADOR DE LA OPERACIÓN
+  =====================================================
+
+  Es el MISMO vencimiento iniciado en Butacas.
+  Checkout no genera otros diez minutos.
+-->
+<section class="temporizador-compra">
+
+  <strong>
+    Tiempo para completar la compra:
+  </strong>
+
+  <span>
+    {{ tiempoRestante() }}
+  </span>
+
+
+  @if (reservaVencida()) {
+
+    <p>
+      La reserva venció.
+      Debés volver a seleccionar tus butacas.
+    </p>
+
+  }
+
+</section>
+
   <h1>
     Resumen de compra
   </h1>

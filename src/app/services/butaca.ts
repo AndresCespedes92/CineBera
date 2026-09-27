@@ -165,100 +165,83 @@ async limpiarReservasVencidas(
 /*
  * Reserva temporalmente un conjunto de butacas.
  *
- * Todas las butacas seleccionadas reciben:
- * - el mismo reserva_token
- * - el mismo vencimiento
+ * Recibimos también el vencimiento de la operación.
  *
- * De esta manera sabemos que pertenecen
- * a una misma operación de compra.
+ * IMPORTANTE:
+ * Butacas NO crea ahora un segundo reloj.
  *
- * Devuelve el token si la reserva fue exitosa.
- * Devuelve null si ocurrió un error.
+ * El vencimiento nació cuando el usuario entró
+ * a seleccionar butacas y ese mismo momento
+ * se guarda posteriormente en Supabase.
  */
 async reservarButacas(
   funcionId: number,
-  butacas: Butaca[]
+  butacas: Butaca[],
+  vencimientoOperacion: number
 ): Promise<string | null> {
 
 
   /*
- * Antes de intentar una nueva reserva,
- * liberamos lugares cuya reserva temporal
- * ya haya vencido.
- *
- * Esto es necesario porque el registro viejo
- * seguiría chocando contra nuestra restricción
- * UNIQUE(funcion_id, fila, numero).
- */
-const limpiezaExitosa =
-  await this.limpiarReservasVencidas(
-    funcionId
-  );
-
-
-if (!limpiezaExitosa) {
-
-  /*
-   * Si no pudimos comprobar/liberar correctamente
-   * las reservas vencidas, preferimos no continuar.
-   *
-   * Es más seguro rechazar temporalmente una compra
-   * que correr el riesgo de inconsistencias.
+   * Antes de reservar liberamos reservas anteriores
+   * que hayan vencido.
    */
-  return null;
-}
+  const limpiezaExitosa =
+    await this.limpiarReservasVencidas(
+      funcionId
+    );
+
+
+  if (!limpiezaExitosa) {
+    return null;
+  }
 
 
   /*
-   * Generamos un UUID único para esta operación.
+   * Identificador único de esta operación.
    *
-   * Ejemplo:
-   * A5 y A6 tendrán exactamente el mismo token.
+   * Todas las butacas compartirán este token.
    */
   const reservaToken =
     crypto.randomUUID();
 
 
   /*
-   * Calculamos el vencimiento.
+   * El vencimiento YA NO nace acá.
    *
-   * Date.now() devuelve el momento actual
-   * expresado en milisegundos.
-   *
-   * 10 * 60 * 1000 = 10 minutos.
+   * Lo recibimos desde la operación iniciada
+   * en la pantalla de Butacas.
    */
   const vencimiento =
     new Date(
-      Date.now() + 10 * 60 * 1000
+      vencimientoOperacion
     );
 
 
   /*
-   * Transformamos las Butaca de Angular
-   * en registros para Supabase.
+   * Preparamos los registros para Supabase.
    */
   const registros =
     butacas.map(
       butaca => ({
 
-        funcion_id: funcionId,
+        funcion_id:
+          funcionId,
 
-        fila: butaca.fila,
+        fila:
+          butaca.fila,
 
-        numero: butaca.numero,
+        numero:
+          butaca.numero,
 
-        estado: 'reservada',
+        estado:
+          'reservada',
+
+        reserva_token:
+          reservaToken,
 
         /*
-         * Mismo token para todas las butacas
-         * pertenecientes a esta operación.
-         */
-        reserva_token: reservaToken,
-
-        /*
-         * Supabase utiliza timestamptz.
-         * toISOString() genera un formato
-         * apropiado para almacenarlo.
+         * Todas las butacas reciben exactamente
+         * el mismo vencimiento de la operación.
          */
         expires_at:
           vencimiento.toISOString()
@@ -267,14 +250,6 @@ if (!limpiezaExitosa) {
     );
 
 
-  /*
-   * Intentamos reservar todas las butacas.
-   *
-   * La restricción UNIQUE de nuestra tabla
-   * evita que exista dos veces la misma:
-   *
-   * funcion_id + fila + numero
-   */
   const { error } =
     await supabase
       .from('butacas_funcion')
@@ -292,11 +267,6 @@ if (!limpiezaExitosa) {
   }
 
 
-  /*
-   * Devolvemos el token porque lo necesitaremos
-   * en la siguiente pantalla para saber qué
-   * reserva estamos pagando.
-   */
   return reservaToken;
 }
 
@@ -331,6 +301,245 @@ async obtenerReservaPorToken(
 
 
   return data ?? [];
+}
+
+/*
+ * =====================================================
+ * ACTUALIZAR UNA RESERVA EXISTENTE
+ * =====================================================
+ *
+ * Permite modificar las butacas de una operación
+ * SIN generar un nuevo reserva_token.
+ *
+ * Ejemplo:
+ *
+ * Reserva original:
+ * H5 - H6
+ *
+ * Nueva selección:
+ * H6 - H7
+ *
+ * Resultado:
+ *
+ * H5 → se elimina
+ * H6 → se conserva
+ * H7 → se agrega
+ *
+ * Todas siguen perteneciendo al mismo token.
+ */
+async actualizarReserva(
+  reservaToken: string,
+  funcionId: number,
+  nuevasButacas: Butaca[],
+  vencimientoOperacion: number
+): Promise<boolean> {
+
+
+  /*
+   * PASO 1
+   *
+   * Recuperamos las butacas que actualmente
+   * pertenecen a esta reserva.
+   */
+  const actuales =
+    await this.obtenerReservaPorToken(
+      reservaToken
+    );
+
+
+  /*
+   * Si no encontramos la reserva,
+   * no tenemos nada seguro que modificar.
+   */
+  if (actuales.length === 0) {
+
+    console.error(
+      'No se encontró la reserva a modificar.'
+    );
+
+    return false;
+  }
+
+
+  /*
+   * PASO 2
+   *
+   * Detectamos qué butacas fueron quitadas.
+   *
+   * filter():
+   * "quedate con las actuales..."
+   *
+   * some():
+   * "...para las cuales NO exista una equivalente
+   * dentro de la nueva selección".
+   */
+  const butacasQuitadas =
+    actuales.filter(
+
+      actual =>
+
+        !nuevasButacas.some(
+
+          nueva =>
+            nueva.fila === actual.fila &&
+            nueva.numero === actual.numero
+
+        )
+
+    );
+
+
+  /*
+   * PASO 3
+   *
+   * Detectamos cuáles son nuevas.
+   */
+  const butacasAgregadas =
+    nuevasButacas.filter(
+
+      nueva =>
+
+        !actuales.some(
+
+          actual =>
+            actual.fila === nueva.fila &&
+            actual.numero === nueva.numero
+
+        )
+
+    );
+
+
+  /*
+   * PASO 4
+   *
+   * Eliminamos únicamente las butacas que
+   * pertenecen a ESTA reserva.
+   *
+   * Nunca eliminamos una reserva de otro usuario.
+   */
+  for (
+    const butaca of butacasQuitadas
+  ) {
+
+    const { error } =
+      await supabase
+        .from('butacas_funcion')
+        .delete()
+
+        .eq(
+          'reserva_token',
+          reservaToken
+        )
+
+        .eq(
+          'funcion_id',
+          funcionId
+        )
+
+        .eq(
+          'fila',
+          butaca.fila
+        )
+
+        .eq(
+          'numero',
+          butaca.numero
+        )
+
+        .eq(
+          'estado',
+          'reservada'
+        );
+
+
+    if (error) {
+
+      console.error(
+        'Error liberando una butaca:',
+        error
+      );
+
+      return false;
+    }
+
+  }
+
+
+  /*
+   * PASO 5
+   *
+   * Insertamos solamente las nuevas.
+   */
+  if (
+    butacasAgregadas.length > 0
+  ) {
+
+    const vencimiento =
+      new Date(
+        vencimientoOperacion
+      ).toISOString();
+
+
+    const registrosNuevos =
+      butacasAgregadas.map(
+
+        butaca => ({
+
+          funcion_id:
+            funcionId,
+
+          fila:
+            butaca.fila,
+
+          numero:
+            butaca.numero,
+
+          estado:
+            'reservada',
+
+          /*
+           * MUY IMPORTANTE:
+           *
+           * conservamos el token original.
+           */
+          reserva_token:
+            reservaToken,
+
+          /*
+           * Y también conservamos el vencimiento
+           * de la operación original.
+           */
+          expires_at:
+            vencimiento
+
+        })
+
+      );
+
+
+    const { error } =
+      await supabase
+        .from('butacas_funcion')
+        .insert(
+          registrosNuevos
+        );
+
+
+    if (error) {
+
+      console.error(
+        'Error agregando nuevas butacas:',
+        error
+      );
+
+      return false;
+    }
+
+  }
+
+
+  return true;
 }
 
 /*
