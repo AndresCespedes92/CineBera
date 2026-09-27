@@ -710,4 +710,44 @@ suscribirseACambiosButacas(
 
 }
 
+/*
+ * Recupera las butacas relacionadas con una compra
+ * mediante el mismo reserva_token utilizado durante
+ * la operación de compra.
+ *
+ * No filtramos por "reservada" porque después
+ * del pago las butacas pasan a estado "ocupada".
+ */
+async obtenerButacasPorToken(
+  reservaToken: string
+): Promise<ButacaFuncion[]> {
+
+  const { data, error } =
+    await supabase
+      .from('butacas_funcion')
+      .select('*')
+      .eq('reserva_token', reservaToken);
+
+
+  /*
+   * Si Supabase informa un error,
+   * devolvemos un array vacío para que el componente
+   * pueda continuar trabajando de forma controlada.
+   */
+  if (error) {
+
+    console.error(
+      'Error obteniendo las butacas de la compra:',
+      error
+    );
+
+    return [];
+
+  }
+
+
+  return data ?? [];
+
+}
+
 }

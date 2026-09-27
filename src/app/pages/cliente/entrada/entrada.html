@@ -1,6 +1,11 @@
 <!--
-  Mientras esperamos la respuesta de Supabase,
-  mostramos un estado de carga.
+  ======================================================
+  ESTADO DE CARGA
+  ======================================================
+
+  Mientras el componente consulta los distintos datos
+  necesarios para reconstruir la entrada, mostramos
+  un mensaje de carga.
 -->
 @if (cargando()) {
 
@@ -8,102 +13,313 @@
 
 }
 
+
 <!--
-  Cuando termina la carga y existe una entrada,
-  mostramos sus datos básicos.
+  ======================================================
+  ENTRADA ENCONTRADA
+  ======================================================
+
+  "as entradaActual" crea una variable local del
+  template.
+
+  Así evitamos escribir entrada() constantemente.
 -->
 @else if (entrada(); as entradaActual) {
 
   <main>
 
-    <h1>Tu entrada</h1>
+    <header>
+
+      <h1>CineBera</h1>
+
+      <p>Entrada digital</p>
+
+    </header>
+
 
     <!--
-  El QR no guarda todos los datos de la entrada.
+      ==================================================
+      PELÍCULA
+      ==================================================
+    -->
+    @if (pelicula(); as peliculaActual) {
 
-  Solamente contiene un identificador que luego
-  el empleado utilizará para buscar la entrada
-  real en Supabase.
--->
-<section>
+      <section>
 
-      <h2>Código QR</h2>
-
-      <qrcode
-
-        /*
-        * Property Binding:
-        *
-        * Le pasamos dinámicamente al componente (INPUT)
-        * el texto que queremos codificar.
-        */
-        [qrdata]="'CINEBERA:' + entradaActual.codigo"
-
-        /*
-        * Tamaño visual del QR.
-        */
-        [width]="256"
-
-        /*
-        * Nivel de corrección de errores.
-        * M es un nivel intermedio adecuado para
-        * nuestro caso.
-        */
-        [errorCorrectionLevel]="'M'">
-
-      </qrcode>
-
-</section>
+        <h2>
+          {{ peliculaActual.titulo }}
+        </h2>
 
 
-    <p>
-      <strong>Código:</strong>
-      {{ entradaActual.codigo }}
-    </p>
+        <p>
+          <strong>Clasificación:</strong>
+          {{ peliculaActual.clasificacionEdad }}
+        </p>
+
+      </section>
+
+    }
 
 
-    <p>
-      <strong>Código manual:</strong>
-      {{ entradaActual.codigo_manual }}
-    </p>
+    <!--
+      ==================================================
+      DATOS DE LA FUNCIÓN
+      ==================================================
+
+      La fecha, hora, formato e idioma pertenecen
+      a la función concreta elegida por el cliente,
+      no a la película en general.
+    -->
+    @if (funcion(); as funcionActual) {
+
+      <section>
+
+        <h2>Función</h2>
 
 
-    <p>
-      <strong>Estado:</strong>
+        <p>
+          <strong>Fecha:</strong>
+          {{ funcionActual.fecha }}
+        </p>
 
-      @if (entradaActual.utilizada) {
 
-        Utilizada
+        <p>
+          <strong>Hora:</strong>
+          {{ funcionActual.hora }}
+        </p>
 
-      } @else {
 
-        Válida
+        <p>
+          <strong>Formato:</strong>
+          {{ funcionActual.formato }}
+        </p>
+
+
+        <p>
+          <strong>Idioma:</strong>
+          {{ funcionActual.idioma }}
+        </p>
+
+      </section>
+
+    }
+
+
+    <!--
+      ==================================================
+      SALA
+      ==================================================
+    -->
+    @if (sala(); as salaActual) {
+
+      <section>
+
+        <h2>Sala</h2>
+
+        <!--
+          Por ahora mostramos el nombre de la sala.
+          Si el objeto usa otra propiedad, lo veremos
+          inmediatamente en pantalla/compilación.
+        -->
+        <p>
+          <strong>Sala:</strong>
+          {{ salaActual.nombre }}
+        </p>
+
+      </section>
+
+    }
+
+
+    <!--
+      ==================================================
+      BUTACAS
+      ==================================================
+
+      Recorremos las butacas asociadas al mismo
+      reserva_token de la compra.
+    -->
+    <section>
+
+      <h2>Butacas</h2>
+
+
+      @if (butacas().length > 0) {
+
+        <p>
+
+          @for (
+            butaca of butacas();
+            track butaca.id;
+            let ultima = $last
+          ) {
+
+            <!--
+              Ejemplo:
+              H6 - H7
+
+              $last nos permite saber cuándo estamos
+              mostrando la última butaca del array.
+            -->
+            <strong>
+              {{ butaca.fila }}{{ butaca.numero }}
+            </strong>
+
+            @if (!ultima) {
+              <span> - </span>
+            }
+
+          }
+
+        </p>
 
       }
 
-    </p>
+      @else {
+
+        <p>
+          No se encontraron butacas asociadas.
+        </p>
+
+      }
+
+    </section>
 
 
     <!--
-      Más adelante vamos a colocar acá:
-      - QR
-      - película
-      - función
-      - sala
-      - butacas
-      - PDF
+      ==================================================
+      ADVERTENCIA DE EDAD
+      ==================================================
+
+      La advertencia solamente aparece cuando
+      la película tiene una clasificación restrictiva.
     -->
+    @if (pelicula(); as peliculaActual) {
+
+      @if (peliculaActual.clasificacionEdad === '+13') {
+
+        <section>
+
+          <strong>
+            ⚠ Clasificación +13
+          </strong>
+
+          <p>
+            Menores de 13 años deben asistir
+            acompañados por una persona adulta.
+          </p>
+
+        </section>
+
+      }
+
+
+      @if (peliculaActual.clasificacionEdad === '+18') {
+
+        <section>
+
+          <strong>
+            ⚠ Clasificación +18
+          </strong>
+
+          <p>
+            Menores de 18 años deben asistir
+            acompañados por una persona adulta.
+          </p>
+
+        </section>
+
+      }
+
+    }
+
+
+    <!--
+      ==================================================
+      QR
+      ==================================================
+
+      El QR NO contiene todos los datos de la entrada.
+
+      Contiene únicamente un identificador que permite
+      al empleado consultar la entrada real en Supabase.
+    -->
+    <section>
+
+      <h2>Código QR</h2>
+
+
+      <qrcode
+        [qrdata]="'CINEBERA:' + entradaActual.codigo"
+        [width]="256"
+        [errorCorrectionLevel]="'M'">
+      </qrcode>
+
+
+      <p>
+        Presentá este código al ingresar.
+      </p>
+
+    </section>
+
+
+    <!--
+      ==================================================
+      CÓDIGOS DE LA ENTRADA
+      ==================================================
+    -->
+    <section>
+
+      <p>
+        <strong>Código:</strong>
+        {{ entradaActual.codigo }}
+      </p>
+
+
+      <!--
+        El código manual funciona como alternativa
+        cuando el empleado no puede escanear el QR.
+      -->
+      <p>
+        <strong>Código manual:</strong>
+        {{ entradaActual.codigo_manual }}
+      </p>
+
+
+      <p>
+
+        <strong>Estado:</strong>
+
+        @if (entradaActual.utilizada) {
+
+          Utilizada
+
+        }
+
+        @else {
+
+          Válida
+
+        }
+
+      </p>
+
+    </section>
 
   </main>
 
 }
 
+
 <!--
-  Si Supabase terminó de responder pero no
-  encontró una entrada con ese código.
+  ======================================================
+  ENTRADA INEXISTENTE
+  ======================================================
 -->
 @else {
 
-  <p>La entrada solicitada no existe.</p>
+  <p>
+    La entrada solicitada no existe.
+  </p>
 
 }
