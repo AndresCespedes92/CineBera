@@ -1,0 +1,181 @@
+<main>
+
+  <!-- =====================================================
+       TÍTULO PRINCIPAL
+       ===================================================== -->
+
+  <h1>Validar entrada</h1>
+
+  <p>
+    Escaneá el código QR de la entrada o ingresá
+    el código manual.
+  </p>
+
+
+  <!-- =====================================================
+       OPCIÓN 1: ESCANEAR CÓDIGO QR
+       ===================================================== -->
+
+  <section>
+
+    <h2>Escanear QR</h2>
+
+    <p>
+      Colocá el código QR de la entrada frente a la cámara.
+    </p>
+
+
+    <!--
+      ZXing utiliza la cámara para detectar códigos QR.
+
+      [enable]:
+      Property Binding que controla si el scanner
+      está activo o pausado.
+
+      (scanSuccess):
+      Event Binding que se ejecuta cuando ZXing
+      consigue leer correctamente un QR.
+
+      $event contiene el texto leído del QR.
+    -->
+    <zxing-scanner
+      [enable]="scannerActivo()"
+      (scanSuccess)="qrLeido($event)">
+    </zxing-scanner>
+
+  </section>
+
+
+  <!-- =====================================================
+       OPCIÓN 2: CÓDIGO MANUAL
+       ===================================================== -->
+
+  <section>
+
+    <h2>Ingresar código manual</h2>
+
+    <p>
+      Si el QR no puede escanearse, ingresá
+      el código manual de la entrada.
+    </p>
+
+
+    <!--
+      Two-way binding:
+
+      El valor del input y la variable codigoManual
+      se mantienen sincronizados.
+    -->
+    <input
+      type="text"
+      [(ngModel)]="codigoManual"
+      placeholder="Ej: A7K3P9XZ"
+      maxlength="8"
+    >
+
+
+    <!--
+      Al hacer click buscamos la entrada
+      utilizando el código manual.
+    -->
+    <button
+      type="button"
+      (click)="buscarEntrada()"
+      [disabled]="procesando()">
+      Buscar entrada
+    </button>
+
+  </section>
+
+
+  <!-- =====================================================
+       ESTADO DE PROCESAMIENTO
+       ===================================================== -->
+
+  @if (procesando()) {
+
+    <p>
+      Procesando...
+    </p>
+
+  }
+
+
+  <!-- =====================================================
+       MENSAJES AL EMPLEADO
+       ===================================================== -->
+
+  @if (mensaje()) {
+
+    <p>
+      {{ mensaje() }}
+    </p>
+
+  }
+
+
+  <!-- =====================================================
+       ENTRADA ENCONTRADA
+       ===================================================== -->
+
+  @if (entrada(); as entradaActual) {
+
+    <section>
+
+      <h2>Entrada encontrada</h2>
+
+
+      <p>
+        <strong>Código manual:</strong>
+        {{ entradaActual.codigo_manual }}
+      </p>
+
+
+      <p>
+        <strong>Estado:</strong>
+
+        @if (entradaActual.utilizada) {
+
+          Utilizada
+
+        } @else {
+
+          Disponible
+
+        }
+
+      </p>
+
+
+      <!--
+        Solamente permitimos autorizar el ingreso
+        cuando la entrada todavía no fue utilizada.
+      -->
+      @if (!entradaActual.utilizada) {
+
+        <button
+          type="button"
+          (click)="validarEntrada()"
+          [disabled]="procesando()">
+          Autorizar ingreso
+        </button>
+
+      }
+
+
+      <!--
+        Después de procesar una entrada,
+        el empleado puede limpiar la pantalla
+        y volver a habilitar el scanner.
+      -->
+      <button
+        type="button"
+        (click)="escanearOtraEntrada()">
+        Escanear otra entrada
+      </button>
+
+    </section>
+
+  }
+
+</main>

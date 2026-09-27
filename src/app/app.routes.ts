@@ -84,6 +84,18 @@ export const routes: Routes = [
 
 {
   /*
+   * Pantalla utilizada por el personal del cine
+   * para validar las entradas de los clientes.
+   */
+  path: 'empleado/validar-entrada',
+
+  loadComponent: () =>
+    import('./pages/empleado/validar-entrada/validar-entrada')
+      .then(m => m.ValidarEntrada)
+},
+
+{
+  /*
    * El token identifica la reserva que
    * el cliente está intentando comprar.
    *

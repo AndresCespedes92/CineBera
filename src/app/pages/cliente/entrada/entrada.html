@@ -18,6 +18,43 @@
 
     <h1>Tu entrada</h1>
 
+    <!--
+  El QR no guarda todos los datos de la entrada.
+
+  Solamente contiene un identificador que luego
+  el empleado utilizará para buscar la entrada
+  real en Supabase.
+-->
+<section>
+
+      <h2>Código QR</h2>
+
+      <qrcode
+
+        /*
+        * Property Binding:
+        *
+        * Le pasamos dinámicamente al componente (INPUT)
+        * el texto que queremos codificar.
+        */
+        [qrdata]="'CINEBERA:' + entradaActual.codigo"
+
+        /*
+        * Tamaño visual del QR.
+        */
+        [width]="256"
+
+        /*
+        * Nivel de corrección de errores.
+        * M es un nivel intermedio adecuado para
+        * nuestro caso.
+        */
+        [errorCorrectionLevel]="'M'">
+
+      </qrcode>
+
+</section>
+
 
     <p>
       <strong>Código:</strong>

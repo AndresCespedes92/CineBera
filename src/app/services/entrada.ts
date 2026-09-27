@@ -151,4 +151,91 @@ async obtenerEntradaPorCodigo(
 
 }
 
+/*
+ * Busca una entrada mediante el código manual.
+ *
+ * Esto funciona como alternativa al QR:
+ * si la cámara no puede leerlo, el empleado
+ * puede escribir este código.
+ */
+async obtenerEntradaPorCodigoManual(
+  codigoManual: string
+): Promise<Entrada | null> {
+
+  const { data, error } = await supabase
+    .from('entradas')
+    .select('*')
+    .eq('codigo_manual', codigoManual.toUpperCase())
+    .maybeSingle();
+
+
+  if (error) {
+
+    console.error(
+      'Error al buscar la entrada por código manual:',
+      error
+    );
+
+    return null;
+
+  }
+
+
+  return data;
+
+}
+
+
+/*
+ * Marca una entrada como utilizada.
+ *
+ * IMPORTANTE:
+ * solamente actualizamos registros que todavía
+ * tengan utilizada = false.
+ *
+ * Esto ayuda a impedir que la misma entrada
+ * pueda validarse dos veces.
+ */
+async utilizarEntrada(
+  entradaId: number
+): Promise<Entrada | null> {
+
+  const { data, error } = await supabase
+    .from('entradas')
+    .update({
+      utilizada: true,
+      utilizada_at: new Date().toISOString()
+    })
+
+    /*
+     * Buscamos la entrada concreta.
+     */
+    .eq('id', entradaId)
+
+    /*
+     * Solamente puede utilizarse si todavía
+     * no había sido utilizada.
+     */
+    .eq('utilizada', false)
+
+    .select()
+    .maybeSingle();
+
+
+  if (error) {
+
+    console.error(
+      'Error al utilizar la entrada:',
+      error
+    );
+
+    return null;
+
+  }
+
+
+  return data;
+
+}
+
 }

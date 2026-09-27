@@ -1,3 +1,10 @@
+/*
+ * Componente externo encargado de transformar
+ * un texto en un código QR visual.
+ */
+import { QRCodeComponent } from 'angularx-qrcode';
+
+
 import {
   Component,
   OnInit,
@@ -13,7 +20,7 @@ import { Entrada as EntradaModel } from '../../../models/entrada';
 @Component({
   selector: 'app-entrada',
   standalone: true,
-  imports: [],
+  imports: [QRCodeComponent],
   templateUrl: './entrada.html',
   styleUrl: './entrada.css'
 })
