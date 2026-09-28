@@ -1,0 +1,176 @@
+<section class="admin-recompensas">
+
+  <header>
+    <h1>
+      Recompensas
+    </h1>
+
+    <p>
+      Configurá los puntos necesarios para
+      las recompensas del programa de fidelización.
+    </p>
+  </header>
+
+
+  @if (cargando()) {
+
+    <p>
+      Cargando recompensas...
+    </p>
+
+  }
+
+  @else {
+
+    <div class="lista-recompensas">
+
+      @for (
+        recompensa of recompensas();
+        track recompensa.id
+      ) {
+
+        <article class="recompensa">
+
+          <div class="recompensa__informacion">
+
+            <h2>
+              {{ recompensa.nombre }}
+            </h2>
+
+
+            @if (recompensa.descripcion) {
+
+              <p>
+                {{ recompensa.descripcion }}
+              </p>
+
+            }
+
+
+            <p>
+              Tipo:
+              <strong>
+                {{ recompensa.tipo }}
+              </strong>
+            </p>
+
+
+            <p>
+              Estado:
+
+              @if (recompensa.activo) {
+
+                <strong>
+                  Activa
+                </strong>
+
+              }
+
+              @else {
+
+                <strong>
+                  Inactiva
+                </strong>
+
+              }
+
+            </p>
+
+          </div>
+
+
+          <div class="recompensa__acciones">
+
+            @if (
+              recompensaEditandoId() === recompensa.id
+            ) {
+
+              <label>
+                Puntos necesarios
+
+                <input
+                  type="number"
+                  min="1"
+                  [value]="puntosEditando()"
+                  (input)="cambiarPuntos($event)"
+                >
+              </label>
+
+
+              <button
+                type="button"
+                [disabled]="guardando()"
+                (click)="guardar(recompensa)"
+              >
+                Guardar
+              </button>
+
+
+              <button
+                type="button"
+                [disabled]="guardando()"
+                (click)="cancelarEdicion()"
+              >
+                Cancelar
+              </button>
+
+            }
+
+            @else {
+
+              <p>
+                <strong>
+                  {{ recompensa.puntos_necesarios }}
+                  puntos
+                </strong>
+              </p>
+
+
+              <button
+                type="button"
+                (click)="editar(recompensa)"
+              >
+                Editar puntos
+              </button>
+
+
+              <button
+                type="button"
+                (click)="cambiarEstado(recompensa)"
+              >
+
+                @if (recompensa.activo) {
+
+                  Desactivar
+
+                }
+
+                @else {
+
+                  Activar
+
+                }
+
+              </button>
+
+            }
+
+          </div>
+
+        </article>
+
+      }
+
+      @empty {
+
+        <p>
+          No hay recompensas configuradas.
+        </p>
+
+      }
+
+    </div>
+
+  }
+
+</section>

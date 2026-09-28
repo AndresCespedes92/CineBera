@@ -82,6 +82,22 @@ export const routes: Routes = [
       .then(m => m.Candy)
 },
 
+/*
+ * =====================================================
+ * PROGRAMA DE FIDELIZACIÓN
+ * =====================================================
+ *
+ * El usuario registrado puede consultar sus puntos
+ * y canjear las recompensas disponibles.
+ */
+{
+  path: 'fidelizacion',
+
+  loadComponent: () =>
+    import('./pages/cliente/fidelizacion/fidelizacion')
+      .then(m => m.Fidelizacion)
+},
+
 {
   /*
    * El código de la entrada viaja como parámetro dinámico.
@@ -196,6 +212,18 @@ export const routes: Routes = [
         import('./pages/admin/home/home')
           .then(m => m.Home)
     },
+
+    {
+  path: 'recompensas',
+
+  loadComponent: () =>
+    import(
+      './pages/admin/recompensas/recompensas'
+    )
+      .then(
+        m => m.Recompensas
+      )
+},
 
     /*
     * =====================================================

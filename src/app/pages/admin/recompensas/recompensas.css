@@ -1,0 +1,49 @@
+.admin-recompensas {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.lista-recompensas {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.recompensa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 24px;
+
+  padding: 20px;
+
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+
+  background: #ffffff;
+}
+
+.recompensa__informacion {
+  flex: 1;
+}
+
+.recompensa__acciones {
+  min-width: 220px;
+}
+
+.recompensa__acciones button {
+  margin-right: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+}
+
+.recompensa__acciones input {
+  display: block;
+
+  width: 100%;
+
+  margin-top: 6px;
+  padding: 8px;
+}

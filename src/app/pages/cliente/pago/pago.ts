@@ -5,6 +5,10 @@ import {
 } from '@angular/core';
 
 import {
+  FidelizacionService
+} from '../../../services/fidelizacion';
+
+import {
   ActivatedRoute,
   Router
 } from '@angular/router';
@@ -61,7 +65,8 @@ export class Pago implements OnInit {
    * las reservas en ocupaciones definitivas.
    */
   private butacaService: ButacaService,
-  private entradaService: EntradaService
+  private entradaService: EntradaService,
+  private fidelizacionService: FidelizacionService,
 ) {}
 
 
@@ -282,6 +287,77 @@ async confirmarPago(): Promise<void> {
     return;
 
   }
+
+  /*
+ * =====================================================
+ * PASO 4: ACREDITAR PUNTOS DE FIDELIZACIÓN
+ * =====================================================
+ *
+ * La compra ya está:
+ *
+ * - pagada
+ * - con sus butacas confirmadas
+ * - con su entrada generada
+ *
+ * Por lo tanto, este es un buen momento para
+ * acreditar los puntos correspondientes.
+ *
+ * Regla del negocio:
+ *
+ * $1 gastado = 1 punto.
+ *
+ * IMPORTANTE:
+ * solamente los usuarios registrados acumulan puntos.
+ *
+ * Las compras anónimas tienen usuario_id = null,
+ * por lo tanto no participan del programa.
+ */
+if (compraConfirmada.usuario_id) {
+
+  const puntosAcreditados =
+    await this.fidelizacionService
+      .acreditarPuntosPorCompra(
+        compraConfirmada.id,
+        compraConfirmada.usuario_id,
+        compraConfirmada.total
+      );
+
+
+  if (puntosAcreditados) {
+
+    console.log(
+      'Puntos acreditados:',
+      Math.floor(compraConfirmada.total)
+    );
+
+  }
+  else {
+
+    /*
+     * Un problema con los puntos NO invalida
+     * una compra que ya fue pagada correctamente.
+     *
+     * Por eso registramos el problema,
+     * pero no detenemos la navegación.
+     */
+    console.warn(
+      'La compra fue completada, pero no se pudieron acreditar los puntos.'
+    );
+
+  }
+
+}
+else {
+
+  /*
+   * Las compras anónimas no tienen un perfil
+   * al cual asociar puntos.
+   */
+  console.log(
+    'Compra anónima: no se acreditan puntos.'
+  );
+
+}
 
   /*
  * =====================================================
