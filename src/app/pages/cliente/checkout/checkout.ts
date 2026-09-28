@@ -108,102 +108,120 @@ export class Checkout implements OnInit, OnDestroy {
   cargando =
     signal<boolean>(true);
 
+
   /*
- * =====================================================
- * TEMPORIZADOR DE COMPRA
- * =====================================================
- *
- * Guarda cuántos segundos quedan para completar
- * la operación.
- *
- * No creamos otros 10 minutos en Checkout.
- * Vamos a recuperar el vencimiento que nació
- * en la pantalla de Butacas.
- */
-segundosRestantes =
-  signal<number>(0);
+   * =====================================================
+   * BENEFICIO DE PRIMERA COMPRA
+   * =====================================================
+   *
+   * Indica si el usuario actual puede recibir
+   * el 20% de descuento por primera compra.
+   *
+   * Es un Signal porque el resultado llega de
+   * una consulta asincrónica a Supabase.
+   */
+  esPrimeraCompra =
+    signal<boolean>(false);
 
 
-/*
- * Indica si la reserva ya venció.
- *
- * Nos servirá para impedir que el usuario
- * continúe hacia el pago cuando llegue a 00:00.
- */
-reservaVencida =
-  signal<boolean>(false);
+  /*
+   * Porcentaje correspondiente al beneficio
+   * de primera compra.
+   *
+   * Lo dejamos como constante para evitar
+   * tener un "20" perdido dentro de una fórmula.
+   */
+  readonly DESCUENTO_PRIMERA_COMPRA = 20;
 
 
-/*
- * computed() genera un valor derivado.
- *
- * segundosRestantes:
- * 543
- *
- * se transforma en:
- * "09:03"
- *
- * No necesitamos guardar ambas cosas.
- * Guardamos los segundos y Angular calcula
- * automáticamente su representación visual.
- */
-tiempoRestante = computed(() => {
-
-  const segundos =
-    this.segundosRestantes();
-
-  const minutos =
-    Math.floor(segundos / 60);
-
-  const segundosSobrantes =
-    segundos % 60;
-
-  return (
-    String(minutos).padStart(2, '0') +
-    ':' +
-    String(segundosSobrantes).padStart(2, '0')
-  );
-
-});
+  /*
+   * =====================================================
+   * TEMPORIZADOR DE COMPRA
+   * =====================================================
+   *
+   * Guarda cuántos segundos quedan para completar
+   * la operación.
+   *
+   * Checkout NO crea otros 10 minutos.
+   * Recupera el vencimiento que nació en Butacas.
+   */
+  segundosRestantes =
+    signal<number>(0);
 
 
-/*
- * Referencia al setInterval.
- *
- * La conservamos para poder detenerlo cuando
- * Angular destruya este componente.
- */
-private intervaloTemporizador:
-  ReturnType<typeof setInterval> | null = null;
+  /*
+   * Indica si la reserva ya venció.
+   */
+  reservaVencida =
+    signal<boolean>(false);
+
+
+  /*
+   * computed() genera un valor derivado.
+   *
+   * Por ejemplo:
+   *
+   * 543 segundos
+   *
+   * se transforma en:
+   *
+   * 09:03
+   */
+  tiempoRestante = computed(() => {
+
+    const segundos =
+      this.segundosRestantes();
+
+    const minutos =
+      Math.floor(segundos / 60);
+
+    const segundosSobrantes =
+      segundos % 60;
+
+    return (
+      String(minutos).padStart(2, '0') +
+      ':' +
+      String(segundosSobrantes).padStart(2, '0')
+    );
+
+  });
+
+
+  /*
+   * Referencia al setInterval.
+   *
+   * La conservamos para poder detenerlo
+   * cuando Angular destruya el componente.
+   */
+  private intervaloTemporizador:
+    ReturnType<typeof setInterval> | null = null;
 
 
   constructor(
-  private route: ActivatedRoute,
+    private route: ActivatedRoute,
+    private butacaService: ButacaService,
+    private funcionService: FuncionService,
+    private peliculaService: PeliculaService,
+    private salaService: SalaService,
 
-  private butacaService: ButacaService,
-  private funcionService: FuncionService,
-  private peliculaService: PeliculaService,
-  private salaService: SalaService,
+    /*
+     * CompraService administra las operaciones
+     * relacionadas con compras en Supabase.
+     */
+    private compraService: CompraService,
 
-  /*
-   * CompraService se encargará de crear
-   * o buscar la operación comercial.
-   */
-  private compraService: CompraService,
+    /*
+     * Auth nos permite saber si existe
+     * un usuario autenticado.
+     */
+    private authService: Auth,
 
-  /*
-   * AuthService nos permite saber si la
-   * compra pertenece a un usuario registrado
-   * o si es una compra anónima.
-   */
-  private authService: Auth,
-
-  /*
-   * Router nos permitirá avanzar hacia
-   * la futura pantalla de pago.
-   */
-  private router: Router
-) {}
+    /*
+     * Router nos permite navegar hacia
+     * la pantalla de pago o volver a Butacas.
+     */
+    private router: Router
+  ) {}
 
 
   ngOnInit(): void {
@@ -234,8 +252,7 @@ private intervaloTemporizador:
 
 
     /*
-     * Iniciamos la reconstrucción
-     * del resumen de compra.
+     * Reconstruimos el checkout.
      */
     this.cargarCheckout();
 
@@ -243,10 +260,15 @@ private intervaloTemporizador:
 
 
   /*
+   * =====================================================
+   * CARGAR CHECKOUT
+   * =====================================================
+   *
    * Reconstruye toda la información necesaria
-   * para mostrar el resumen.
+   * para mostrar el resumen de compra.
    */
   async cargarCheckout(): Promise<void> {
+
 
     /*
      * PASO 1:
@@ -273,6 +295,10 @@ private intervaloTemporizador:
     }
 
 
+    /*
+     * Guardamos las butacas encontradas
+     * dentro del Signal.
+     */
     this.butacasReservadas.set(
       reserva
     );
@@ -281,31 +307,22 @@ private intervaloTemporizador:
     /*
      * Todas las butacas del mismo token
      * pertenecen a la misma función.
-     *
-     * Por eso podemos obtener funcion_id
-     * utilizando la primera butaca.
      */
     const funcionId =
       reserva[0].funcion_id;
 
 
     /*
- * =====================================================
- * RECUPERAMOS EL TEMPORIZADOR
- * =====================================================
- *
- * Ahora conocemos funcionId.
- *
- * Es el mismo ID que utilizó Butacas para guardar:
- *
- * cinebera-expira-funcion-25
- *
- * Por lo tanto Checkout puede recuperar exactamente
- * el mismo vencimiento.
- */
-this.iniciarTemporizador(
-  funcionId
-);
+     * =====================================================
+     * RECUPERAMOS EL TEMPORIZADOR
+     * =====================================================
+     *
+     * Es el mismo vencimiento que nació
+     * en la pantalla de Butacas.
+     */
+    this.iniciarTemporizador(
+      funcionId
+    );
 
 
     /*
@@ -336,12 +353,9 @@ this.iniciarTemporizador(
     /*
      * PASO 3:
      *
-     * La función conoce:
-     *
-     * - pelicula_id
-     * - sala_id
-     *
-     * Entonces podemos buscar ambos datos.
+     * La función conoce pelicula_id y sala_id.
+     * Utilizamos esos datos para reconstruir
+     * el resto del resumen.
      */
     const peliculaEncontrada =
       await this.peliculaService
@@ -361,14 +375,106 @@ this.iniciarTemporizador(
       peliculaEncontrada
     );
 
+
     this.sala.set(
       salaEncontrada
     );
 
 
     /*
-     * Ya tenemos todos los datos necesarios
-     * para mostrar el resumen.
+     * =====================================================
+     * PASO 4: BENEFICIO DE PRIMERA COMPRA
+     * =====================================================
+     *
+     * IMPORTANTE:
+     *
+     * Esta comprobación debe realizarse DESPUÉS
+     * de comprobar que la reserva existe.
+     *
+     * En la versión anterior había quedado
+     * accidentalmente dentro de:
+     *
+     * if (reserva.length === 0)
+     *
+     * y por eso los console.log no aparecían
+     * durante una reserva válida.
+     */
+    const sesion =
+      await this.authService
+        .obtenerSesion();
+
+
+    /*
+     * Solamente podemos identificar compras
+     * anteriores de usuarios registrados.
+     *
+     * Una compra anónima utiliza:
+     *
+     * usuario_id = null
+     */
+    if (sesion?.user?.id) {
+
+      const tieneComprasAnteriores =
+        await this.compraService
+          .tieneComprasPagadas(
+            sesion.user.id
+          );
+
+
+      /*
+       * Si NO tiene compras pagadas,
+       * significa que estamos frente
+       * a su primera compra.
+       */
+      this.esPrimeraCompra.set(
+        !tieneComprasAnteriores
+      );
+
+    } else {
+
+      /*
+       * Los usuarios anónimos no reciben
+       * este beneficio porque no podemos
+       * identificar su historial.
+       */
+      this.esPrimeraCompra.set(false);
+
+    }
+
+
+    /*
+     * =====================================================
+     * LOGS TEMPORALES DE PRUEBA
+     * =====================================================
+     *
+     * Los dejamos por ahora para comprobar
+     * que la promoción funciona.
+     *
+     * Después de probarla los podemos eliminar.
+     */
+    console.log(
+      '¿Es primera compra?',
+      this.esPrimeraCompra()
+    );
+
+    console.log(
+      'Subtotal:',
+      this.calcularTotal()
+    );
+
+    console.log(
+      'Descuento:',
+      this.calcularDescuento()
+    );
+
+    console.log(
+      'Total final:',
+      this.calcularTotalFinal()
+    );
+
+
+    /*
+     * Terminamos de cargar todos los datos.
      */
     this.cargando.set(false);
 
@@ -376,11 +482,12 @@ this.iniciarTemporizador(
 
 
   /*
+   * =====================================================
+   * PREVENTA
+   * =====================================================
+   *
    * Determina si la compra se está realizando
    * dentro del período de preventa.
-   *
-   * La preventa comienza 7 días antes
-   * de la fecha de estreno en CineBera.
    */
   estaEnPreventa(): boolean {
 
@@ -426,8 +533,7 @@ this.iniciarTemporizador(
   /*
    * Obtiene el precio base de la entrada.
    *
-   * Antes del estreno y dentro de los
-   * siete días de preventa:
+   * Durante preventa:
    * precioPreventa.
    *
    * Desde el estreno:
@@ -457,13 +563,13 @@ this.iniciarTemporizador(
 
 
   /*
-   * Devuelve el tipo físico de una butaca.
+   * =====================================================
+   * TIPO DE BUTACA
+   * =====================================================
    *
-   * Nuestro mapa utiliza:
-   *
-   * K → accesible
-   * R/S/T → VIP
-   * resto → normal
+   * K       → accesible
+   * R/S/T   → VIP
+   * resto   → normal
    */
   obtenerTipoButaca(
     butaca: ButacaFuncion
@@ -491,10 +597,10 @@ this.iniciarTemporizador(
 
 
   /*
-   * Calcula el precio individual.
+   * Calcula el precio individual
+   * de una butaca.
    *
-   * Las butacas VIP tienen un
-   * recargo del 30%.
+   * Las VIP tienen un recargo del 30%.
    */
   obtenerPrecioButaca(
     butaca: ButacaFuncion
@@ -519,8 +625,12 @@ this.iniciarTemporizador(
 
 
   /*
-   * Suma el precio de todas las
-   * butacas de la reserva.
+   * =====================================================
+   * SUBTOTAL
+   * =====================================================
+   *
+   * Suma el precio de todas las butacas
+   * ANTES de aplicar promociones.
    */
   calcularTotal(): number {
 
@@ -539,502 +649,540 @@ this.iniciarTemporizador(
 
   }
 
-  /*
- * Prepara la compra antes de ingresar
- * a la pantalla de pago.
- *
- * IMPORTANTE:
- * en este punto todavía NO estamos cobrando.
- */
-async irAlPago(): Promise<void> {
 
   /*
- * No permitimos avanzar hacia el pago
- * si terminó el tiempo de la operación.
- */
-if (this.reservaVencida()) {
-
-  console.log(
-    'La reserva venció. Debe seleccionar nuevamente las butacas.'
-  );
-
-  return;
-
-}
-
-  /*
-   * Necesitamos una función válida porque
-   * la compra debe quedar asociada a ella.
+   * =====================================================
+   * DESCUENTO
+   * =====================================================
+   *
+   * Calcula cuánto dinero corresponde
+   * descontar por primera compra.
+   *
+   * Ejemplo:
+   *
+   * subtotal = $10.000
+   * descuento = 20%
+   *
+   * resultado = $2.000
    */
-  const funcionActual =
-    this.funcion();
+  calcularDescuento(): number {
+
+    /*
+     * Si no corresponde el beneficio,
+     * el descuento es cero.
+     */
+    if (!this.esPrimeraCompra()) {
+
+      return 0;
+    }
 
 
-  if (!funcionActual) {
+    const subtotal =
+      this.calcularTotal();
 
-    console.error(
-      'No se encontró la función de la compra.'
+
+    return (
+      subtotal *
+      this.DESCUENTO_PRIMERA_COMPRA /
+      100
     );
 
-    return;
   }
 
 
   /*
-   * Primero verificamos si ya habíamos creado
-   * una compra para esta reserva.
+   * =====================================================
+   * TOTAL FINAL
+   * =====================================================
    *
-   * Esto evita crear una compra nueva cada vez
-   * que el usuario presiona el botón.
+   * Este es el importe que efectivamente
+   * deberá pagar el cliente.
+   *
+   * subtotal - descuento = total final
    */
-  const compraExistente =
-    await this.compraService
-      .obtenerCompraPorReserva(
-        this.reservaToken
-      );
+  calcularTotalFinal(): number {
+
+    return (
+      this.calcularTotal() -
+      this.calcularDescuento()
+    );
+
+  }
 
 
   /*
-   * Si ya existe, simplemente continuamos
-   * utilizando esa misma compra.
+   * =====================================================
+   * IR AL PAGO
+   * =====================================================
+   *
+   * Prepara la compra antes de ingresar
+   * a la pantalla de pago.
+   *
+   * En este punto todavía NO estamos cobrando.
    */
-  if (compraExistente) {
+  async irAlPago(): Promise<void> {
+
+
+    /*
+     * No permitimos avanzar si terminó
+     * el tiempo de la reserva.
+     */
+    if (this.reservaVencida()) {
+
+      console.log(
+        'La reserva venció. Debe seleccionar nuevamente las butacas.'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Necesitamos una función válida porque
+     * la compra debe quedar asociada a ella.
+     */
+    const funcionActual =
+      this.funcion();
+
+
+    if (!funcionActual) {
+
+      console.error(
+        'No se encontró la función de la compra.'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Verificamos si ya habíamos creado
+     * una compra para esta reserva.
+     *
+     * Esto evita duplicados si el usuario
+     * presiona varias veces el botón.
+     */
+    const compraExistente =
+      await this.compraService
+        .obtenerCompraPorReserva(
+          this.reservaToken
+        );
+
+
+    if (compraExistente) {
+
+      console.log(
+        'Compra pendiente existente:',
+        compraExistente
+      );
+
+
+      await this.router.navigate([
+        '/pago',
+        compraExistente.id
+      ]);
+
+
+      return;
+    }
+
+
+    /*
+     * No existe todavía una compra.
+     *
+     * Recuperamos la sesión actual.
+     */
+    const sesion =
+      await this.authService
+        .obtenerSesion();
+
+
+    /*
+     * Usuario registrado:
+     *
+     * usuario_id = UUID
+     *
+     * Compra anónima:
+     *
+     * usuario_id = null
+     */
+    const usuarioId =
+      sesion?.user?.id ?? null;
+
+
+    /*
+     * Creamos la compra en estado pendiente.
+     *
+     * IMPORTANTE:
+     *
+     * Antes guardábamos:
+     *
+     * this.calcularTotal()
+     *
+     * Eso ignoraba promociones.
+     *
+     * Ahora guardamos calcularTotalFinal(),
+     * que representa lo que realmente deberá pagar.
+     */
+    const nuevaCompra =
+      await this.compraService
+        .crearCompra({
+
+          reserva_token:
+            this.reservaToken,
+
+          usuario_id:
+            usuarioId,
+
+          funcion_id:
+            funcionActual.id,
+
+          total:
+            this.calcularTotalFinal()
+
+        });
+
+
+    /*
+     * Si Supabase no pudo crear la compra,
+     * detenemos el flujo.
+     */
+    if (!nuevaCompra) {
+
+      console.error(
+        'No fue posible crear la compra.'
+      );
+
+      return;
+    }
+
 
     console.log(
-      'Compra pendiente existente:',
-      compraExistente
+      'Compra pendiente creada:',
+      nuevaCompra
     );
 
 
     /*
-     * Más adelante esta será nuestra
-     * pantalla de pago.
+     * La compra existe correctamente.
+     * Avanzamos hacia Pago.
      */
     await this.router.navigate([
       '/pago',
-      compraExistente.id
+      nuevaCompra.id
     ]);
 
-    return;
   }
 
 
   /*
-   * No existe todavía una compra.
+   * =====================================================
+   * TEMPORIZADOR
+   * =====================================================
    *
-   * Consultamos la sesión actual.
+   * Checkout NO crea un nuevo vencimiento.
+   * Recupera el creado en Butacas.
    */
-  const sesion =
-    await this.authService
-      .obtenerSesion();
+  private iniciarTemporizador(
+    funcionId: number
+  ): void {
 
 
-  /*
-   * Si existe usuario:
-   *
-   * usuario_id = UUID
-   *
-   * Si no existe:
-   *
-   * usuario_id = null
-   *
-   * Esto permite también la compra anónima.
-   */
-  const usuarioId =
-    sesion?.user?.id ?? null;
+    /*
+     * Construimos exactamente la misma clave
+     * utilizada por Butacas.
+     *
+     * Ejemplo:
+     *
+     * cinebera-expira-funcion-25
+     */
+    const clave =
+      `cinebera-expira-funcion-${funcionId}`;
 
 
-  /*
-   * Creamos la compra en estado pendiente.
-   *
-   * El total proviene del resumen que
-   * acabamos de calcular.
-   */
-  const nuevaCompra =
-    await this.compraService
-      .crearCompra({
-
-        reserva_token:
-          this.reservaToken,
-
-        usuario_id:
-          usuarioId,
-
-        funcion_id:
-          funcionActual.id,
-
-        total:
-          this.calcularTotal()
-
-      });
+    /*
+     * Recuperamos el vencimiento almacenado
+     * en esta pestaña.
+     */
+    const vencimientoGuardado =
+      sessionStorage.getItem(clave);
 
 
-  /*
-   * Si Supabase no pudo crear la compra,
-   * detenemos el flujo.
-   */
-  if (!nuevaCompra) {
+    /*
+     * Si no existe vencimiento,
+     * consideramos la operación vencida.
+     */
+    if (!vencimientoGuardado) {
 
-    console.error(
-      'No fue posible crear la compra.'
+      this.segundosRestantes.set(0);
+
+      this.reservaVencida.set(true);
+
+      return;
+    }
+
+
+    /*
+     * sessionStorage guarda strings.
+     * Lo convertimos nuevamente a number.
+     */
+    const vencimiento =
+      Number(vencimientoGuardado);
+
+
+    /*
+     * Actualizamos inmediatamente.
+     */
+    this.actualizarTemporizador(
+      vencimiento
     );
 
-    return;
-  }
+
+    /*
+     * Si ya estaba vencido,
+     * no creamos el intervalo.
+     */
+    if (this.reservaVencida()) {
+
+      return;
+    }
 
 
-  console.log(
-    'Compra pendiente creada:',
-    nuevaCompra
-  );
+    /*
+     * Cada segundo recalculamos
+     * cuánto tiempo queda realmente.
+     */
+    this.intervaloTemporizador =
+      setInterval(() => {
 
+        this.actualizarTemporizador(
+          vencimiento
+        );
 
-  /*
-   * La compra existe correctamente.
-   *
-   * Ahora podemos avanzar hacia pago.
-   */
-  await this.router.navigate([
-    '/pago',
-    nuevaCompra.id
-  ]);
-
-}
-
-/*
- * =====================================================
- * TEMPORIZADOR
- * =====================================================
- *
- * Checkout NO crea un nuevo vencimiento.
- *
- * Recupera el que fue creado cuando el usuario
- * ingresó a la pantalla de Butacas.
- */
-private iniciarTemporizador(
-  funcionId: number
-): void {
-
-  /*
-   * Construimos exactamente la misma clave
-   * utilizada por Butacas.
-   *
-   * Ejemplo:
-   *
-   * cinebera-expira-funcion-25
-   */
-  const clave =
-    `cinebera-expira-funcion-${funcionId}`;
-
-
-  /*
-   * Recuperamos el vencimiento almacenado
-   * en esta pestaña del navegador.
-   */
-  const vencimientoGuardado =
-    sessionStorage.getItem(clave);
-
-
-  /*
-   * Si no existe vencimiento significa que
-   * esta operación no tiene un temporizador válido.
-   *
-   * Por seguridad la consideramos vencida.
-   */
-  if (!vencimientoGuardado) {
-
-    this.segundosRestantes.set(0);
-
-    this.reservaVencida.set(true);
-
-    return;
+      }, 1000);
 
   }
 
 
   /*
-   * sessionStorage guarda texto.
+   * Calcula cuántos segundos faltan realmente.
    *
-   * Lo convertimos nuevamente a number porque
-   * Date.now() también devuelve un número.
-   */
-  const vencimiento =
-    Number(vencimientoGuardado);
-
-
-  /*
-   * Actualizamos inmediatamente el contador.
+   * Siempre hacemos:
    *
-   * Así no esperamos un segundo para mostrarlo.
+   * vencimiento - Date.now()
+   *
+   * en lugar de simplemente restar uno.
    */
-  this.actualizarTemporizador(
-    vencimiento
-  );
+  private actualizarTemporizador(
+    vencimiento: number
+  ): void {
+
+    const diferencia =
+      vencimiento - Date.now();
 
 
-  /*
-   * Si actualizarTemporizador detectó que
-   * ya estaba vencido, no tiene sentido
-   * crear el setInterval.
-   */
-  if (this.reservaVencida()) {
+    if (diferencia <= 0) {
 
-    return;
+      /*
+       * La reserva llegó a cero.
+       */
+      this.segundosRestantes.set(0);
 
-  }
+      this.reservaVencida.set(true);
 
 
-  /*
-   * Cada segundo volvemos a comparar
-   * el vencimiento contra la hora actual.
-   */
-  this.intervaloTemporizador =
-    setInterval(() => {
+      /*
+       * Ya no necesitamos ejecutar
+       * el intervalo.
+       */
+      this.detenerTemporizador();
 
-      this.actualizarTemporizador(
-        vencimiento
+
+      /*
+       * Liberamos las butacas
+       * correspondientes a esta reserva.
+       */
+      void this.liberarReservaVencida();
+
+
+      return;
+    }
+
+
+    /*
+     * Todavía tenemos tiempo disponible.
+     */
+    this.reservaVencida.set(false);
+
+
+    const segundos =
+      Math.ceil(
+        diferencia / 1000
       );
 
-    }, 1000);
 
-}
-
-
-/*
- * Calcula cuántos segundos faltan realmente.
- *
- * IMPORTANTE:
- *
- * No hacemos:
- *
- * segundosRestantes - 1
- *
- * porque eso podría desincronizarse.
- *
- * Siempre comparamos:
- *
- * vencimiento - Date.now()
- */
-private actualizarTemporizador(
-  vencimiento: number
-): void {
-
-  const diferencia =
-    vencimiento - Date.now();
-
-
-  if (diferencia <= 0) {
-
-  /*
-   * El contador llegó a cero.
-   *
-   * Primero actualizamos la interfaz para impedir
-   * que el usuario continúe con una reserva vencida.
-   */
-  this.segundosRestantes.set(0);
-  this.reservaVencida.set(true);
-
-  /*
-   * Ya no necesitamos ejecutar el intervalo
-   * cada segundo.
-   */
-  this.detenerTemporizador();
-
-
-  /*
-   * Liberamos en Supabase las butacas pertenecientes
-   * a esta operación.
-   *
-   * No necesitamos bloquear la interfaz esperando
-   * el resultado, por eso el método que contiene
-   * este código puede seguir siendo void.
-   */
-  void this.liberarReservaVencida();
-
-  return;
-}
-
-
-  /*
-   * Todavía tenemos tiempo.
-   */
-  this.reservaVencida.set(false);
-
-
-  const segundos =
-    Math.ceil(
-      diferencia / 1000
+    this.segundosRestantes.set(
+      segundos
     );
 
-
-  this.segundosRestantes.set(
-    segundos
-  );
-
-}
-
-
-/*
- * Detiene el setInterval.
- *
- * Esto NO borra el vencimiento de sessionStorage.
- *
- * Queremos que el tiempo siga existiendo si
- * navegamos entre las pantallas de la compra.
- */
-private detenerTemporizador(): void {
-
-  if (this.intervaloTemporizador) {
-
-    clearInterval(
-      this.intervaloTemporizador
-    );
-
-    this.intervaloTemporizador = null;
-
-  }
-
-}
-
-
-/*
- * Angular ejecuta ngOnDestroy cuando abandonamos
- * la pantalla de Checkout.
- *
- * Limpiamos el setInterval para no dejar un proceso
- * ejecutándose sobre un componente destruido.
- */
-ngOnDestroy(): void {
-
-  this.detenerTemporizador();
-
-}
-
-/*
- * Permite volver al mapa de butacas para modificar
- * una reserva que ya fue creada.
- *
- * IMPORTANTE:
- * no creamos una reserva nueva.
- *
- * Enviamos el reservaToken actual mediante un
- * query parameter para que Butacas pueda reconocer
- * cuáles lugares pertenecen a esta operación.
- *
- * Ejemplo:
- *
- * /funcion/25/butacas?reserva=abc-123
- */
-async modificarButacas(): Promise<void> {
-
-  /*
-   * Recuperamos la función que ya fue cargada
-   * para este checkout.
-   */
-  const funcionActual =
-    this.funcion();
-
-
-  /*
-   * Si todavía no tenemos la función,
-   * no sabemos a qué mapa de butacas regresar.
-   */
-  if (!funcionActual) {
-
-    console.error(
-      'No se encontró la función de la reserva.'
-    );
-
-    return;
   }
 
 
   /*
-   * Volvemos al mismo mapa de butacas.
+   * Detiene el setInterval.
    *
-   * El ID de la función viaja como route parameter:
-   *
-   * /funcion/25/butacas
-   *
-   * El token viaja como query parameter:
-   *
-   * ?reserva=abc-123
+   * NO elimina el vencimiento de sessionStorage
+   * porque queremos conservarlo mientras
+   * navegamos entre pantallas.
    */
-  await this.router.navigate(
-    [
-      '/funcion',
-      funcionActual.id,
-      'butacas'
-    ],
-    {
-      queryParams: {
-        reserva:
-          this.reservaToken
-      }
+  private detenerTemporizador(): void {
+
+    if (this.intervaloTemporizador) {
+
+      clearInterval(
+        this.intervaloTemporizador
+      );
+
+      this.intervaloTemporizador = null;
+
     }
-  );
 
-}
+  }
 
-/*
- * Se ejecuta cuando finalizan los diez minutos.
- *
- * Su responsabilidad es sincronizar el vencimiento
- * visual con el estado persistente de Supabase.
- */
-private async liberarReservaVencida(): Promise<void> {
 
   /*
-   * Sin token no podemos identificar qué reserva
-   * debemos liberar.
+   * Angular ejecuta ngOnDestroy cuando
+   * abandonamos Checkout.
+   *
+   * Evitamos dejar un setInterval ejecutándose
+   * sobre un componente que ya no existe.
    */
-  if (!this.reservaToken) {
-    return;
+  ngOnDestroy(): void {
+
+    this.detenerTemporizador();
+
   }
 
-
-  const liberada =
-    await this.butacaService.liberarReserva(
-      this.reservaToken
-    );
-
-
-  if (!liberada) {
-
-    console.error(
-      'No fue posible liberar la reserva vencida.'
-    );
-
-    return;
-  }
-
-
-  console.log(
-    'Reserva vencida liberada correctamente.'
-  );
 
   /*
- * La operación terminó.
- *
- * Eliminamos también el vencimiento guardado
- * en esta pestaña para que una futura compra
- * pueda comenzar con un temporizador nuevo.
- */
-const funcionActual =
-  this.funcion();
+   * =====================================================
+   * MODIFICAR BUTACAS
+   * =====================================================
+   *
+   * Permite volver al mapa sin crear
+   * una reserva nueva.
+   */
+  async modificarButacas(): Promise<void> {
 
-if (funcionActual) {
-
-  const clave =
-    `cinebera-expira-funcion-${funcionActual.id}`;
-
-  sessionStorage.removeItem(clave);
-
-}
-
-}
+    const funcionActual =
+      this.funcion();
 
 
+    /*
+     * Sin función no sabemos a qué
+     * mapa debemos regresar.
+     */
+    if (!funcionActual) {
 
+      console.error(
+        'No se encontró la función de la reserva.'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Volvemos al mapa correspondiente.
+     *
+     * Route parameter:
+     *
+     * /funcion/25/butacas
+     *
+     * Query parameter:
+     *
+     * ?reserva=abc-123
+     */
+    await this.router.navigate(
+      [
+        '/funcion',
+        funcionActual.id,
+        'butacas'
+      ],
+      {
+        queryParams: {
+          reserva:
+            this.reservaToken
+        }
+      }
+    );
+
+  }
+
+
+  /*
+   * =====================================================
+   * LIBERAR RESERVA VENCIDA
+   * =====================================================
+   *
+   * Sincroniza el vencimiento visual
+   * con Supabase.
+   */
+  private async liberarReservaVencida(): Promise<void> {
+
+    /*
+     * Sin token no podemos identificar
+     * qué reserva debemos liberar.
+     */
+    if (!this.reservaToken) {
+
+      return;
+    }
+
+
+    const liberada =
+      await this.butacaService
+        .liberarReserva(
+          this.reservaToken
+        );
+
+
+    if (!liberada) {
+
+      console.error(
+        'No fue posible liberar la reserva vencida.'
+      );
+
+      return;
+    }
+
+
+    console.log(
+      'Reserva vencida liberada correctamente.'
+    );
+
+
+    /*
+     * La operación terminó.
+     *
+     * Eliminamos también el vencimiento
+     * almacenado en sessionStorage.
+     */
+    const funcionActual =
+      this.funcion();
+
+
+    if (funcionActual) {
+
+      const clave =
+        `cinebera-expira-funcion-${funcionActual.id}`;
+
+      sessionStorage.removeItem(
+        clave
+      );
+
+    }
+
+  }
 
 }

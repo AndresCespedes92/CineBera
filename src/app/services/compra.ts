@@ -239,4 +239,86 @@ async confirmarCompra(
 
 }
 
+
+/*
+ * Indica si un usuario ya tiene al menos
+ * una compra PAGADA anteriormente.
+ *
+ * Lo usamos para determinar si corresponde
+ * aplicar el beneficio de primera compra.
+ *
+ * IMPORTANTE:
+ * una compra pendiente no cuenta como compra
+ * realizada porque todavía no fue pagada.
+ */
+async tieneComprasPagadas(
+  usuarioId: string
+): Promise<boolean> {
+
+  const {
+    data,
+    error
+  } =
+    await supabase
+      .from('compras')
+
+      /*
+       * Solamente necesitamos conocer el ID.
+       *
+       * No hace falta traer todos los datos
+       * de todas las compras del usuario.
+       */
+      .select('id')
+
+      /*
+       * Buscamos compras pertenecientes
+       * al usuario autenticado.
+       */
+      .eq(
+        'usuario_id',
+        usuarioId
+      )
+
+      /*
+       * Para el beneficio solamente cuentan
+       * compras que efectivamente fueron pagadas.
+       */
+      .eq(
+        'estado',
+        'pagada'
+      )
+
+      /*
+       * Nos alcanza con encontrar una.
+       *
+       * Si existe una compra pagada,
+       * ya sabemos que NO es la primera compra.
+       */
+      .limit(1);
+
+
+  if (error) {
+
+    console.error(
+      'Error verificando compras anteriores:',
+      error
+    );
+
+    /*
+     * Ante un error no asumimos que es
+     * primera compra, porque podríamos aplicar
+     * un descuento incorrectamente.
+     */
+    return true;
+  }
+
+
+  /*
+   * Si Supabase devuelve al menos una fila,
+   * significa que ya compró anteriormente.
+   */
+  return (data?.length ?? 0) > 0;
+}
+
+
 }

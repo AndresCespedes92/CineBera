@@ -1,34 +1,35 @@
 <main>
 
   <!--
-  =====================================================
-  TEMPORIZADOR DE LA OPERACIÓN
-  =====================================================
+    =====================================================
+    TEMPORIZADOR DE LA OPERACIÓN
+    =====================================================
 
-  Es el MISMO vencimiento iniciado en Butacas.
-  Checkout no genera otros diez minutos.
--->
-<section class="temporizador-compra">
+    Es el MISMO vencimiento iniciado en Butacas.
+    Checkout no genera otros diez minutos.
+  -->
+  <section class="temporizador-compra">
 
-  <strong>
-    Tiempo para completar la compra:
-  </strong>
+    <strong>
+      Tiempo para completar la compra:
+    </strong>
 
-  <span>
-    {{ tiempoRestante() }}
-  </span>
+    <span>
+      {{ tiempoRestante() }}
+    </span>
 
 
-  @if (reservaVencida()) {
+    @if (reservaVencida()) {
 
-    <p>
-      La reserva venció.
-      Debés volver a seleccionar tus butacas.
-    </p>
+      <p>
+        La reserva venció.
+        Debés volver a seleccionar tus butacas.
+      </p>
 
-  }
+    }
 
-</section>
+  </section>
+
 
   <h1>
     Resumen de compra
@@ -55,7 +56,11 @@
     } @else {
 
 
-      <!-- DATOS DE LA PELÍCULA -->
+      <!--
+        =====================================================
+        DATOS DE LA PELÍCULA
+        =====================================================
+      -->
 
       @if (pelicula(); as peliculaActual) {
 
@@ -68,11 +73,17 @@
 
           <p>
             Tarifa:
+
             @if (estaEnPreventa()) {
+
               Preventa
+
             } @else {
+
               Venta general
+
             }
+
           </p>
 
         </section>
@@ -80,7 +91,11 @@
       }
 
 
-      <!-- DATOS DE LA FUNCIÓN -->
+      <!--
+        =====================================================
+        DATOS DE LA FUNCIÓN
+        =====================================================
+      -->
 
       @if (funcion(); as funcionActual) {
 
@@ -129,7 +144,11 @@
       }
 
 
-      <!-- BUTACAS -->
+      <!--
+        =====================================================
+        BUTACAS
+        =====================================================
+      -->
 
       <section>
 
@@ -166,9 +185,29 @@
       </section>
 
 
-      <!-- TOTAL -->
+      <!--
+        =====================================================
+        RESUMEN ECONÓMICO
+        =====================================================
+
+        Ahora distinguimos tres conceptos:
+
+        1. Subtotal:
+           precio de las entradas antes de promociones.
+
+        2. Descuento:
+           beneficio comercial aplicado.
+
+        3. Total final:
+           dinero que realmente deberá pagar el cliente.
+      -->
 
       <section>
+
+        <h3>
+          Resumen
+        </h3>
+
 
         <p>
           Cantidad de entradas:
@@ -176,37 +215,90 @@
         </p>
 
 
-        <h2>
-          Total:
+        <!--
+          calcularTotal() conserva su responsabilidad
+          original: sumar el precio de las butacas.
+        -->
+        <p>
+          Subtotal:
           ${{ calcularTotal() }}
+        </p>
+
+
+        <!--
+          El beneficio solamente aparece si realmente
+          estamos frente a la primera compra del usuario.
+        -->
+        @if (esPrimeraCompra()) {
+
+          <div>
+
+            <p>
+              Beneficio primera compra
+            </p>
+
+            <p>
+              Descuento:
+              {{ DESCUENTO_PRIMERA_COMPRA }}%
+            </p>
+
+            <p>
+              Ahorro:
+              -${{ calcularDescuento() }}
+            </p>
+
+          </div>
+
+        }
+
+
+        <!--
+          calcularTotalFinal() es el importe que
+          posteriormente guardaremos en compras.total.
+        -->
+        <h2>
+          Total a pagar:
+          ${{ calcularTotalFinal() }}
         </h2>
 
       </section>
 
-      <!--
-  Permite regresar al mapa sin abandonar
-  la operación de compra actual.
-
-  El temporizador tampoco se reinicia porque
-  su vencimiento continúa guardado en sessionStorage.
--->
-<button
-  type="button"
-  (click)="modificarButacas()"
-  [disabled]="reservaVencida()">
-  Modificar butacas
-</button>
-
 
       <!--
+        =====================================================
+        MODIFICAR BUTACAS
+        =====================================================
+
+        Permite regresar al mapa sin abandonar
+        la operación actual.
+
+        El temporizador no se reinicia.
+      -->
+
+      <button
+        type="button"
+        (click)="modificarButacas()"
+        [disabled]="reservaVencida()"
+      >
+        Modificar butacas
+      </button>
+
+
+      <!--
+        =====================================================
+        IR AL PAGO
+        =====================================================
+
         Este botón todavía no cobra.
 
-        Primero crea o recupera una compra
-        pendiente y luego avanza hacia Pago.
+        Crea o recupera una compra pendiente
+        y luego navega hacia Pago.
       -->
+
       <button
         type="button"
         (click)="irAlPago()"
+        [disabled]="reservaVencida()"
       >
         Ir al pago
       </button>
