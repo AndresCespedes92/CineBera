@@ -197,6 +197,25 @@ export const routes: Routes = [
           .then(m => m.Home)
     },
 
+    /*
+    * =====================================================
+    * ADMINISTRACIÓN DE CUPONES
+    * =====================================================
+    *
+    * Esta pantalla solamente queda disponible dentro
+    * del layout administrativo.
+    *
+    * Además utilizamos loadComponent para mantener
+    * el lazy loading que usamos en el proyecto.
+    */
+    {
+      path: 'cupones',
+
+      loadComponent: () =>
+        import('./pages/admin/cupones/cupones')
+          .then(m => m.Cupones)
+    },
+
 
     /*
      * /admin/peliculas

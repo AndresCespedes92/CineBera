@@ -1,0 +1,58 @@
+.cupones {
+  padding: 24px;
+}
+
+.cupones__header {
+  margin-bottom: 24px;
+}
+
+.cupones__lista {
+  display: grid;
+  gap: 16px;
+}
+
+.cupon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 20px;
+
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+
+  background: #ffffff;
+}
+
+.cupon h2 {
+  margin-top: 0;
+}
+
+.cupon p {
+  margin-bottom: 0;
+}
+
+.cupon__acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cupon__porcentaje {
+  font-size: 24px;
+}
+
+.cupon__acciones input {
+  width: 80px;
+  padding: 8px;
+}
+
+.cupon__acciones button {
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.cupon__acciones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

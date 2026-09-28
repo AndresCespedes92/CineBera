@@ -1,0 +1,183 @@
+<section class="cupones">
+
+  <header class="cupones__header">
+
+    <div>
+      <h1>
+        Cupones y promociones
+      </h1>
+
+      <p>
+        Configuración de beneficios disponibles
+        para los clientes de CineBera.
+      </p>
+    </div>
+
+  </header>
+
+
+  <!--
+    Mientras esperamos la consulta a Supabase
+    mostramos un estado de carga.
+  -->
+  @if (cargando()) {
+
+    <p>
+      Cargando cupones...
+    </p>
+
+  }
+
+
+  <!--
+    Cuando termina la carga recorremos
+    los cupones obtenidos.
+  -->
+  @else {
+
+    <div class="cupones__lista">
+
+      @for (
+        cupon of cupones();
+        track cupon.id
+      ) {
+
+        <article class="cupon">
+
+  <div>
+
+    <h2>
+      {{ cupon.nombre }}
+    </h2>
+
+
+    @if (cupon.descripcion) {
+
+      <p>
+        {{ cupon.descripcion }}
+      </p>
+
+    }
+
+
+    <p>
+      Estado:
+
+      @if (cupon.activo) {
+        <strong>Activo</strong>
+      }
+      @else {
+        <strong>Inactivo</strong>
+      }
+    </p>
+
+  </div>
+
+
+  <div class="cupon__acciones">
+
+    <!--
+      Si este cupón NO está siendo editado,
+      mostramos sus datos normalmente.
+    -->
+    @if (
+      cuponEditandoId() !== cupon.id
+    ) {
+
+      <strong class="cupon__porcentaje">
+        {{ cupon.porcentaje }}%
+      </strong>
+
+      <button
+        type="button"
+        (click)="editarCupon(cupon)"
+      >
+        Editar
+      </button>
+
+      <!--
+  No eliminamos la promoción.
+  Simplemente modificamos si está disponible
+  para los clientes.
+-->
+<button
+  type="button"
+  [disabled]="guardando()"
+  (click)="cambiarEstado(cupon)"
+>
+
+  @if (cupon.activo) {
+    Desactivar
+  }
+  @else {
+    Activar
+  }
+
+</button>
+
+    }
+
+
+    <!--
+      Si este es el cupón seleccionado,
+      mostramos el formulario de edición.
+    -->
+    @else {
+
+      <label>
+        Porcentaje
+
+        <input
+          type="number"
+          min="1"
+          max="100"
+          [value]="porcentajeEditando()"
+          (input)="cambiarPorcentaje($event)"
+        >
+      </label>
+
+
+      <button
+        type="button"
+        [disabled]="guardando()"
+        (click)="guardarCupon(cupon)"
+      >
+        @if (guardando()) {
+          Guardando...
+        }
+        @else {
+          Guardar
+        }
+      </button>
+
+
+      <button
+        type="button"
+        [disabled]="guardando()"
+        (click)="cancelarEdicion()"
+      >
+        Cancelar
+      </button>
+
+    }
+
+  </div>
+
+</article>
+
+      }
+
+
+      @empty {
+
+        <p>
+          No hay cupones configurados.
+        </p>
+
+      }
+
+    </div>
+
+  }
+
+</section>

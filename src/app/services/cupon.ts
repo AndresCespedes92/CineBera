@@ -172,4 +172,61 @@ export class CuponService {
 
   }
 
+  /*
+ * =====================================================
+ * ACTUALIZAR CUPÓN
+ * =====================================================
+ *
+ * Permite modificar la configuración de un cupón
+ * existente.
+ *
+ * Por ahora permitimos cambiar:
+ *
+ * - porcentaje
+ * - estado activo/inactivo
+ *
+ * La pantalla administrativa utiliza este método
+ * en lugar de comunicarse directamente con Supabase.
+ */
+async actualizarCupon(
+  id: number,
+  porcentaje: number,
+  activo: boolean
+): Promise<boolean> {
+
+  const {
+    error
+  } =
+    await supabase
+      .from('cupones')
+      .update({
+        porcentaje: porcentaje,
+        activo: activo
+      })
+      .eq('id', id);
+
+
+  /*
+   * Si Supabase devuelve un error,
+   * informamos que la operación falló.
+   */
+  if (error) {
+
+    console.error(
+      'Error actualizando cupón:',
+      error
+    );
+
+    return false;
+  }
+
+
+  /*
+   * true significa que Supabase pudo
+   * ejecutar correctamente el UPDATE.
+   */
+  return true;
+
+}
+
 }
