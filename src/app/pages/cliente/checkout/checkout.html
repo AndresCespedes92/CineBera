@@ -225,31 +225,61 @@
         </p>
 
 
-        <!--
-          El beneficio solamente aparece si realmente
-          estamos frente a la primera compra del usuario.
-        -->
-        @if (esPrimeraCompra()) {
+       @if (porcentajeDescuentoAplicado() > 0) {
 
-          <div>
+  <div class="checkout-descuento">
 
-            <p>
-              Beneficio primera compra
-            </p>
+    <h3>
+      Beneficio aplicado
+    </h3>
 
-            <p>
-              Descuento:
-              {{ DESCUENTO_PRIMERA_COMPRA }}%
-            </p>
 
-            <p>
-              Ahorro:
-              -${{ calcularDescuento() }}
-            </p>
+    <!--
+      Si el beneficio ganador es el de primera compra,
+      informamos su origen.
+    -->
+    @if (
+      esPrimeraCompra() &&
+      porcentajeDescuentoAplicado() === porcentajePrimeraCompra()
+    ) {
 
-          </div>
+      <p>
+        Primera compra
+      </p>
 
-        }
+    }
+
+
+    <!--
+      Si el beneficio ganador es el de mayores de 50,
+      mostramos ese beneficio.
+    -->
+    @if (
+      esMayor50() &&
+      porcentajeDescuentoAplicado() === porcentajeMayor50()
+    ) {
+
+      <p>
+        Beneficio para mayores de 50 años
+      </p>
+
+    }
+
+
+    <p>
+      Descuento:
+      {{ porcentajeDescuentoAplicado() }}%
+    </p>
+
+
+    <p>
+      Ahorro:
+      -${{ calcularDescuento() }}
+    </p>
+
+  </div>
+
+}
 
 
         <!--

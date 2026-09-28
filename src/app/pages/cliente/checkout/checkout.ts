@@ -7,8 +7,16 @@ import {
 } from '@angular/core';
 
 import {
+  Usuario
+} from '../../../services/usuario';
+
+import {
   CompraService
 } from '../../../services/compra';
+
+import {
+  CuponService
+} from '../../../services/cupon';
 
 import {
   Auth
@@ -124,14 +132,46 @@ export class Checkout implements OnInit, OnDestroy {
     signal<boolean>(false);
 
 
+/*
+ * =====================================================
+ * PORCENTAJE DE PRIMERA COMPRA
+ * =====================================================
+ *
+ * Antes teníamos:
+ *
+ * readonly DESCUENTO_PRIMERA_COMPRA = 20;
+ *
+ * Eso significaba que el porcentaje estaba
+ * escrito directamente en Angular.
+ *
+ * Ahora comienza en 0 y luego será cargado
+ * desde la tabla "cupones" de Supabase.
+ */
+porcentajePrimeraCompra =
+  signal<number>(0);
+
+
   /*
-   * Porcentaje correspondiente al beneficio
-   * de primera compra.
-   *
-   * Lo dejamos como constante para evitar
-   * tener un "20" perdido dentro de una fórmula.
-   */
-  readonly DESCUENTO_PRIMERA_COMPRA = 20;
+ * =====================================================
+ * BENEFICIO PARA MAYORES DE 50 AÑOS
+ * =====================================================
+ *
+ * Indica si el usuario cumple la condición
+ * de edad para utilizar el cupón +50.
+ */
+esMayor50 =
+  signal<boolean>(false);
+
+
+/*
+ * Porcentaje configurado en Supabase
+ * para el cupón destinado a mayores de 50.
+ *
+ * Comienza en cero hasta que CuponService
+ * recupere la configuración.
+ */
+porcentajeMayor50 =
+  signal<number>(0);
 
 
   /*
@@ -203,6 +243,14 @@ export class Checkout implements OnInit, OnDestroy {
     private funcionService: FuncionService,
     private peliculaService: PeliculaService,
     private salaService: SalaService,
+    private usuarioService: Usuario,
+
+
+    /*
+    * CuponService obtiene desde Supabase
+    * la configuración de las promociones.
+    */
+    private cuponService: CuponService,
 
     /*
      * CompraService administra las operaciones
@@ -405,41 +453,155 @@ export class Checkout implements OnInit, OnDestroy {
 
 
     /*
-     * Solamente podemos identificar compras
-     * anteriores de usuarios registrados.
-     *
-     * Una compra anónima utiliza:
-     *
-     * usuario_id = null
-     */
-    if (sesion?.user?.id) {
+ * =====================================================
+ * BENEFICIO DE PRIMERA COMPRA
+ * =====================================================
+ *
+ * Para aplicar el beneficio necesitamos comprobar
+ * dos cosas:
+ *
+ * 1. Que exista un usuario registrado.
+ * 2. Que exista un cupón activo de primera compra.
+ */
+if (sesion?.user?.id) {
 
-      const tieneComprasAnteriores =
-        await this.compraService
-          .tieneComprasPagadas(
-            sesion.user.id
-          );
+  /*
+ * =====================================================
+ * CUPÓN PARA MAYORES DE 50
+ * =====================================================
+ *
+ * Recuperamos el perfil porque allí tenemos
+ * fecha_nacimiento.
+ */
+const respuestaPerfil =
+  await this.usuarioService
+    .obtenerPerfil(
+      sesion.user.id
+    );
+
+const perfil =
+  respuestaPerfil.data;
 
 
-      /*
-       * Si NO tiene compras pagadas,
-       * significa que estamos frente
-       * a su primera compra.
-       */
-      this.esPrimeraCompra.set(
-        !tieneComprasAnteriores
+/*
+ * Recuperamos también la configuración
+ * actual del cupón +50.
+ */
+const cuponMayor50 =
+  await this.cuponService
+    .obtenerCuponPorTipo(
+      'mayor_50'
+    );
+
+
+if (
+  perfil?.fecha_nacimiento &&
+  cuponMayor50
+) {
+
+  const edad =
+    this.calcularEdad(
+      perfil.fecha_nacimiento
+    );
+
+
+  /*
+   * El requisito habla de usuarios
+   * mayores de 50 años.
+   *
+   * Por eso utilizamos > 50.
+   *
+   * Una persona de exactamente 50 todavía
+   * no cumple "mayor de 50".
+   */
+  this.esMayor50.set(
+    edad > 50
+  );
+
+
+  this.porcentajeMayor50.set(
+    cuponMayor50.porcentaje
+  );
+
+
+  console.log(
+    'Edad del usuario:',
+    edad
+  );
+
+} else {
+
+  this.esMayor50.set(false);
+
+  this.porcentajeMayor50.set(0);
+
+  this.esMayor50.set(false);
+this.porcentajeMayor50.set(0);
+
+}
+
+  /*
+   * Primero verificamos si el usuario
+   * ya tiene alguna compra pagada.
+   */
+  const tieneComprasAnteriores =
+    await this.compraService
+      .tieneComprasPagadas(
+        sesion.user.id
       );
 
-    } else {
 
-      /*
-       * Los usuarios anónimos no reciben
-       * este beneficio porque no podemos
-       * identificar su historial.
-       */
-      this.esPrimeraCompra.set(false);
+  /*
+   * Ahora pedimos a Supabase la configuración
+   * actual del cupón de primera compra.
+   *
+   * Ya no asumimos que vale 20%.
+   */
+  const cuponPrimeraCompra =
+    await this.cuponService
+      .obtenerCuponPorTipo(
+        'primera_compra'
+      );
 
-    }
+
+  /*
+   * El beneficio corresponde solamente si:
+   *
+   * - no tiene compras pagadas
+   * - existe un cupón activo
+   */
+  const correspondeBeneficio =
+    !tieneComprasAnteriores &&
+    cuponPrimeraCompra !== null;
+
+
+  this.esPrimeraCompra.set(
+    correspondeBeneficio
+  );
+
+
+  /*
+   * Si encontramos el cupón guardamos
+   * su porcentaje.
+   *
+   * Si no existe o está desactivado,
+   * dejamos el porcentaje en cero.
+   */
+  this.porcentajePrimeraCompra.set(
+    cuponPrimeraCompra?.porcentaje ?? 0
+  );
+
+} else {
+
+  /*
+   * Una compra anónima no puede utilizar
+   * el beneficio de primera compra.
+   */
+  this.esPrimeraCompra.set(false);
+
+  this.porcentajePrimeraCompra.set(0);
+
+}
 
 
     /*
@@ -458,6 +620,11 @@ export class Checkout implements OnInit, OnDestroy {
     );
 
     console.log(
+  'Porcentaje primera compra:',
+  this.porcentajePrimeraCompra()
+);
+
+    console.log(
       'Subtotal:',
       this.calcularTotal()
     );
@@ -469,8 +636,18 @@ export class Checkout implements OnInit, OnDestroy {
 
     console.log(
       'Total final:',
-      this.calcularTotalFinal()
-    );
+      this.calcularTotalFinal())
+
+console.log(
+  '¿Es mayor de 50?',
+  this.esMayor50()
+);
+
+console.log(
+  'Porcentaje cupón +50:',
+  this.porcentajeMayor50()
+);
+
 
 
     /*
@@ -649,65 +826,207 @@ export class Checkout implements OnInit, OnDestroy {
 
   }
 
+/*
+ * =====================================================
+ * DESCUENTO
+ * =====================================================
+ *
+ * Calcula cuánto dinero corresponde descontar
+ * por el beneficio de primera compra.
+ *
+ * IMPORTANTE:
+ *
+ * El porcentaje ya NO está escrito directamente
+ * en Angular.
+ *
+ * Ahora proviene de la tabla "cupones"
+ * de Supabase.
+ *
+ * Ejemplo:
+ *
+ * subtotal = $10.000
+ * porcentajePrimeraCompra() = 20
+ *
+ * descuento = $2.000
+ */
+
+/*
+ * =====================================================
+ * CALCULAR EDAD
+ * =====================================================
+ *
+ * Recibe una fecha de nacimiento y devuelve
+ * la edad real de la persona.
+ *
+ * No alcanza con hacer:
+ *
+ * año actual - año nacimiento
+ *
+ * porque puede ocurrir que este año todavía
+ * no haya cumplido años.
+ */
+calcularEdad(
+  fechaNacimiento: string
+): number {
+
+  const nacimiento =
+    new Date(
+      `${fechaNacimiento}T00:00:00`
+    );
+
+  const hoy =
+    new Date();
+
 
   /*
-   * =====================================================
-   * DESCUENTO
-   * =====================================================
+   * Primera aproximación.
+   */
+  let edad =
+    hoy.getFullYear() -
+    nacimiento.getFullYear();
+
+
+  /*
+   * Comprobamos si este año ya pasó
+   * su cumpleaños.
+   */
+  const diferenciaMes =
+    hoy.getMonth() -
+    nacimiento.getMonth();
+
+
+  if (
+    diferenciaMes < 0 ||
+    (
+      diferenciaMes === 0 &&
+      hoy.getDate() < nacimiento.getDate()
+    )
+  ) {
+
+    edad--;
+
+  }
+
+
+  return edad;
+}
+
+
+/*
+ * =====================================================
+ * PORCENTAJE DE DESCUENTO APLICADO
+ * =====================================================
+ *
+ * Un usuario puede cumplir más de una promoción.
+ *
+ * Por ejemplo:
+ *
+ * - Primera compra → 30%
+ * - Mayor de 50    → 15%
+ *
+ * Los descuentos NO se acumulan.
+ *
+ * Entre los beneficios que correspondan al usuario,
+ * utilizamos el porcentaje más alto.
+ */
+porcentajeDescuentoAplicado(): number {
+
+  /*
+   * Empezamos sin ningún beneficio.
+   */
+  let porcentaje = 0;
+
+
+  /*
+   * Si corresponde primera compra,
+   * consideramos ese porcentaje.
+   */
+  if (this.esPrimeraCompra()) {
+
+    porcentaje =
+      this.porcentajePrimeraCompra();
+
+  }
+
+
+  /*
+   * Si también corresponde el beneficio +50,
+   * comparamos ambos porcentajes.
    *
-   * Calcula cuánto dinero corresponde
-   * descontar por primera compra.
+   * Math.max() devuelve el número mayor.
    *
    * Ejemplo:
    *
-   * subtotal = $10.000
-   * descuento = 20%
+   * Math.max(30, 15)
    *
-   * resultado = $2.000
+   * resultado → 30
    */
-  calcularDescuento(): number {
+  if (this.esMayor50()) {
 
-    /*
-     * Si no corresponde el beneficio,
-     * el descuento es cero.
-     */
-    if (!this.esPrimeraCompra()) {
-
-      return 0;
-    }
-
-
-    const subtotal =
-      this.calcularTotal();
-
-
-    return (
-      subtotal *
-      this.DESCUENTO_PRIMERA_COMPRA /
-      100
-    );
+    porcentaje =
+      Math.max(
+        porcentaje,
+        this.porcentajeMayor50()
+      );
 
   }
 
 
-  /*
-   * =====================================================
-   * TOTAL FINAL
-   * =====================================================
-   *
-   * Este es el importe que efectivamente
-   * deberá pagar el cliente.
-   *
-   * subtotal - descuento = total final
-   */
-  calcularTotalFinal(): number {
+  return porcentaje;
+}
 
-    return (
-      this.calcularTotal() -
-      this.calcularDescuento()
-    );
 
-  }
+/*
+ * =====================================================
+ * DESCUENTO EN DINERO
+ * =====================================================
+ *
+ * Convierte el porcentaje elegido anteriormente
+ * en el importe que debemos descontar.
+ *
+ * Ejemplo:
+ *
+ * subtotal = $10.000
+ * porcentaje = 30
+ *
+ * descuento = $3.000
+ */
+calcularDescuento(): number {
+
+  const subtotal =
+    this.calcularTotal();
+
+  const porcentaje =
+    this.porcentajeDescuentoAplicado();
+
+
+  return (
+    subtotal *
+    porcentaje /
+    100
+  );
+
+}
+
+
+/*
+ * =====================================================
+ * TOTAL FINAL
+ * =====================================================
+ *
+ * Este es el importe que efectivamente
+ * deberá pagar el cliente.
+ *
+ * subtotal - descuento = total final
+ */
+calcularTotalFinal(): number {
+
+  return (
+    this.calcularTotal() -
+    this.calcularDescuento()
+  );
+
+}
 
 
   /*
