@@ -27,3 +27,21 @@
   padding: 32px 0;
   color: #666666;
 }
+
+/*
+ * Cada película y su información de preventa
+ * forman una única unidad dentro del grid.
+ */
+.proximamente-item {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/*
+ * Información que aparece debajo de la card
+ * cuando la película está en preventa.
+ */
+.preventa-info {
+  margin-top: 10px;
+}

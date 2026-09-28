@@ -1,9 +1,24 @@
+<!--
+  =====================================================
+  NAVBAR PRINCIPAL DEL CLIENTE
+  =====================================================
+
+  Componente reutilizable con la navegación
+  principal de CineBera.
+-->
 <app-navbar></app-navbar>
+
 
 <main class="proximamente-page">
 
   <section class="proximamente">
 
+
+    <!--
+      =====================================================
+      ENCABEZADO
+      =====================================================
+    -->
     <header class="proximamente-header">
 
       <h1>
@@ -17,49 +32,156 @@
     </header>
 
 
-    @if (peliculas.length > 0) {
+    <!--
+      =====================================================
+      ESTADO 1: CARGANDO
+      =====================================================
+
+      Mientras esperamos la respuesta de Supabase
+      todavía no sabemos si existen próximos estrenos.
+
+      Por eso NO debemos mostrar todavía el mensaje
+      "No hay próximos estrenos".
+    -->
+    @if (cargando) {
+
+      <div class="cargando">
+
+        <p>
+          Cargando próximos estrenos...
+        </p>
+
+      </div>
+
+    }
+
+
+    <!--
+      =====================================================
+      ESTADO 2: HAY PELÍCULAS
+      =====================================================
+
+      Llegamos acá solamente cuando:
+
+      1. La carga terminó.
+      2. El array contiene películas.
+    -->
+    @else if (peliculas.length > 0) {
 
       <div class="proximamente-listado">
 
+
+        <!--
+          @for recorre las películas recibidas.
+
+          track pelicula.id permite que Angular
+          identifique cada película de manera única.
+        -->
         @for (
           pelicula of peliculas;
           track pelicula.id
         ) {
 
-          <app-pelicula-card
-            [pelicula]="pelicula"
-
-            [mostrarBotonFunciones]="
-              estaEnPreventa(pelicula)
-            "
-
-            (peliculaSeleccionada)="
-              seleccionarPelicula($event)
-            ">
-          </app-pelicula-card>
-
           <!--
-            Esta sección solamente existe en el DOM
-            cuando faltan entre 1 y 7 días para
-            el estreno de la película.
+            Cada película ocupa UNA sola celda
+            dentro del CSS Grid.
+
+            Dentro agrupamos:
+
+            - PeliculaCard
+            - información de preventa
+
+            Esto evita que "Preventa disponible"
+            sea interpretado como otra celda
+            independiente del grid.
           -->
-          <div
-            *appEnPreventa="pelicula"
-            class="preventa-info"
-          >
-
-            <strong>
-              Preventa disponible
-            </strong>
+          <div class="proximamente-item">
 
 
-</div>
+            <!--
+              COMPONENTE REUTILIZABLE
+
+              [pelicula]
+              utiliza Property Binding para enviar
+              la película desde el componente padre
+              hacia el @Input de PeliculaCard.
+
+              [mostrarBotonFunciones]
+              indica si debe mostrarse el botón
+              para acceder a las funciones.
+
+              (peliculaSeleccionada)
+              recibe mediante @Output/EventEmitter
+              el evento generado por PeliculaCard.
+            -->
+            <app-pelicula-card
+
+              [pelicula]="pelicula"
+
+              [mostrarBotonFunciones]="
+                estaEnPreventa(pelicula)
+              "
+
+              (peliculaSeleccionada)="
+                seleccionarPelicula($event)
+              "
+
+            >
+            </app-pelicula-card>
+
+
+            <!--
+              DIRECTIVA ESTRUCTURAL PERSONALIZADA
+
+              *appEnPreventa decide si este bloque
+              debe existir o no en el DOM.
+
+              Solamente aparece cuando la película
+              se encuentra dentro del período
+              permitido de preventa.
+            -->
+            <div
+
+              *appEnPreventa="pelicula"
+
+              class="preventa-info"
+
+            >
+
+              <strong>
+                Preventa disponible
+              </strong>
+
+            </div>
+
+
+          </div>
 
         }
 
+
       </div>
 
-    } @else {
+    }
+
+
+    <!--
+      =====================================================
+      ESTADO 3: NO HAY PRÓXIMOS ESTRENOS
+      =====================================================
+
+      Este bloque solamente se ejecuta cuando:
+
+      cargando = false
+
+      Y además:
+
+      peliculas.length === 0
+
+      Por lo tanto ya sabemos que Supabase respondió
+      y realmente no existen próximos estrenos.
+    -->
+    @else {
 
       <div class="sin-proximos-estrenos">
 
@@ -70,6 +192,7 @@
       </div>
 
     }
+
 
   </section>
 

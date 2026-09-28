@@ -65,6 +65,20 @@ estaEnPreventa(
 
 }
 
+/*
+ * Indica si todavía estamos esperando
+ * la respuesta de Supabase.
+ *
+ * Nos permite diferenciar:
+ *
+ * [] mientras carga
+ *
+ * de
+ *
+ * [] después de cargar y no encontrar películas.
+ */
+cargando: boolean = true;
+
 
   /*
    * Contendrá solamente películas cuya
@@ -90,7 +104,7 @@ estaEnPreventa(
       await this.peliculaService
         .obtenerProximamente();
 
-
+this.cargando = false;
     /*
      * Actualizamos la vista después
      * de recibir los datos asíncronos.
@@ -98,7 +112,11 @@ estaEnPreventa(
     this.changeDetectorRef
       .detectChanges();
 
+    
+
   }
+
+  
 
 
   /*
