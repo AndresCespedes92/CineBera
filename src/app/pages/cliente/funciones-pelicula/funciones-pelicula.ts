@@ -43,6 +43,23 @@ export class FuncionesPelicula implements OnInit {
    */
   pelicula: Pelicula | null = null;
 
+  /*
+ * =====================================================
+ * ESTADO DE CARGA
+ * =====================================================
+ *
+ * Nos permite diferenciar dos situaciones:
+ *
+ * pelicula === null porque todavía estamos
+ * consultando Supabase
+ *
+ * de
+ *
+ * pelicula === null porque realmente
+ * no existe la película.
+ */
+cargando: boolean = true;
+
 
   /*
    * Funciones disponibles de esa película.
@@ -305,13 +322,21 @@ const {
      */
     if (error) {
 
-      console.error(
-        'Error obteniendo funciones de la película:',
-        error
-      );
+  console.error(
+    'Error obteniendo funciones de la película:',
+    error
+  );
 
-      return;
-    }
+  /*
+   * Aunque ocurrió un error, la consulta terminó.
+   */
+  this.cargando = false;
+
+  this.changeDetectorRef
+    .detectChanges();
+
+  return;
+}
 
 
     /*
@@ -363,7 +388,14 @@ const {
 
     });
 
-
+/*
+ * Todas las consultas necesarias terminaron.
+ *
+ * A partir de este momento Angular ya puede
+ * decidir si mostrar la película o indicar
+ * que no fue encontrada.
+ */
+this.cargando = false;
     /*
      * Actualizamos la vista después
      * de las consultas asíncronas.
