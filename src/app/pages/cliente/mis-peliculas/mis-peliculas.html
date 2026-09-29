@@ -1,0 +1,25 @@
+<app-navbar></app-navbar>
+<main class="cliente-home">
+  <header class="cartelera-header"><h1>Mis películas</h1><p>Tus compras pagadas, de la más reciente a la más antigua. Incluye funciones futuras.</p></header>
+  <button type="button" (click)="cargar()" [disabled]="cargando()">Actualizar historial</button>
+  @if (error()) { <p role="alert">{{ error() }}</p> }
+  @if (cargando()) { <p role="status">Cargando tus películas...</p> }
+  <section class="cartelera-listado" aria-label="Historial de películas">
+    @for (pelicula of peliculas(); track pelicula.compraId) {
+      <article>
+        @if (pelicula.poster) { <img [src]="pelicula.poster" [alt]="'Póster de ' + pelicula.titulo" width="200" loading="lazy"> }
+        @else { <p>Póster no disponible</p> }
+        <h2>{{ pelicula.titulo }}</h2>
+        <p>Compra #{{ pelicula.compraId }}</p>
+        <p>Función: {{ pelicula.fechaFuncion ? (pelicula.fechaFuncion | date:'dd/MM/yyyy HH:mm') : 'Fecha no disponible' }}</p>
+        <p>Mi calificación: {{ pelicula.calificacion === null ? 'Sin calificar' : pelicula.calificacion + ' / 5' }}</p>
+        @if (pelicula.codigoEntrada) { <p><a [routerLink]="['/entrada',pelicula.codigoEntrada]">Ver entrada y QR</a></p> }
+        @else { <p>Entrada aún no disponible.</p> }
+        @if (pelicula.peliculaId) { <p><a [routerLink]="['/pelicula',pelicula.peliculaId,'funciones']">{{ pelicula.calificacion === null ? 'Calificar película' : 'Ver o editar mi reseña' }}</a></p> }
+      </article>
+    } @empty {
+      @if (!cargando() && !error()) { <p>Todavía no tenés películas compradas. <a routerLink="/cartelera">Ver cartelera</a></p> }
+    }
+  </section>
+  @if (siguiente() !== null) { <button type="button" (click)="cargar(true)" [disabled]="cargando()">Cargar más</button> }
+</main>
