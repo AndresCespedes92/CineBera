@@ -4,9 +4,86 @@ import { ItemCarritoCandy } from '../models/item-carrito-candy';
 import { ProductoCandy } from '../models/producto-candy';
 import { PedidoCandy } from '../models/pedido-candy';
 import { SeleccionCombo } from '../models/combo';
+import { CategoriaCandy } from '../models/categoria-candy';
 
 @Injectable({ providedIn: 'root' })
 export class CandyService {
+  async obtenerCategorias(): Promise<CategoriaCandy[]> {
+    const { data, error } = await supabase.from('categorias_candy').select('id,nombre,activo').order('nombre');
+    if (error) throw new Error('No se pudieron cargar las categorías.');
+    return data ?? [];
+  }
+
+  async obtenerProductosAdmin(): Promise<ProductoCandy[]> {
+    const { data, error } = await supabase.from('productos_candy').select('*').order('nombre');
+    if (error) throw new Error('No se pudieron cargar los productos.');
+    return (data ?? []).map(p => ({ id: p.id, categoriaId: p.categoria_id, nombre: p.nombre,
+      descripcion: p.descripcion, precio: Number(p.precio), imagenUrl: p.imagen_url, activo: p.activo }));
+  }
+
+  private async validarAdministrador(): Promise<void> {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user || data.user.is_anonymous) throw new Error('Iniciá sesión como administrador.');
+    const perfil = await supabase.from('perfiles').select('rol').eq('id', data.user.id).single();
+    if (perfil.error || perfil.data?.rol !== 'admin') throw new Error('Se requiere rol administrador.');
+  }
+
+  async guardarProducto(producto: Omit<ProductoCandy, 'id'>, id?: number): Promise<void> {
+    const nombre = producto.nombre.trim();
+    const descripcion = producto.descripcion?.trim() || null;
+    const imagen = producto.imagenUrl?.trim() || null;
+    if (!nombre || nombre.length > 80 || (descripcion?.length ?? 0) > 500 ||
+        !Number.isFinite(producto.precio) || producto.precio <= 0 || producto.precio > 99999999.99 ||
+        Math.abs(producto.precio * 100 - Math.round(producto.precio * 100)) > 0.00001) {
+      throw new Error('Ingresá nombre (hasta 80 caracteres), descripción (hasta 500) y precio positivo con hasta dos decimales.');
+    }
+    if (imagen) {
+      try { if (!['http:', 'https:'].includes(new URL(imagen).protocol)) throw new Error(); }
+      catch { throw new Error('La imagen debe ser una URL http o https válida.'); }
+    }
+    await this.validarAdministrador();
+    const categorias = await this.obtenerCategorias();
+    if (!categorias.some(c => c.id === producto.categoriaId)) throw new Error('Elegí una categoría existente.');
+    const datos = { nombre, descripcion, precio: producto.precio, imagen_url: imagen,
+      categoria_id: producto.categoriaId, activo: producto.activo };
+    const resultado = id
+      ? await supabase.from('productos_candy').update(datos).eq('id', id).select('id').maybeSingle()
+      : await supabase.from('productos_candy').insert(datos).select('id').single();
+    if (resultado.error || !resultado.data) throw new Error('No se pudo guardar el producto.');
+  }
+
+  async guardarCategoria(categoria: Omit<CategoriaCandy, 'id'>, id?: number): Promise<void> {
+    const nombre = categoria.nombre.trim();
+    if (!nombre || nombre.length > 80) throw new Error('Ingresá un nombre de categoría de hasta 80 caracteres.');
+    await this.validarAdministrador();
+    const categorias = await this.obtenerCategorias();
+    const anterior = categorias.find(c => c.id === id);
+    if (id && !anterior) throw new Error('La categoría ya no existe.');
+    if (anterior && ['Pochoclos', 'Bebidas'].includes(anterior.nombre) && nombre !== anterior.nombre) {
+      throw new Error('Pochoclos y Bebidas conservan su nombre porque los utilizan los combos.');
+    }
+    if (categorias.some(c => c.id !== id && c.nombre.toLocaleLowerCase('es') === nombre.toLocaleLowerCase('es'))) {
+      throw new Error('Ya existe una categoría con ese nombre.');
+    }
+    const datos = { nombre, activo: categoria.activo };
+    const resultado = id
+      ? await supabase.from('categorias_candy').update(datos).eq('id', id).select('id').maybeSingle()
+      : await supabase.from('categorias_candy').insert(datos).select('id').single();
+    if (resultado.error || !resultado.data) throw new Error('No se pudo guardar la categoría.');
+  }
+
+  async cambiarEstadoProducto(id: number, activo: boolean): Promise<void> {
+    await this.validarAdministrador();
+    const { data, error } = await supabase.from('productos_candy').update({ activo }).eq('id', id).select('id').maybeSingle();
+    if (error || !data) throw new Error('No se pudo cambiar el estado del producto.');
+  }
+
+  async cambiarEstadoCategoria(id: number, activo: boolean): Promise<void> {
+    await this.validarAdministrador();
+    const { data, error } = await supabase.from('categorias_candy').update({ activo }).eq('id', id).select('id').maybeSingle();
+    if (error || !data) throw new Error('No se pudo cambiar el estado de la categoría.');
+  }
+
   // El borrador pertenece a una reserva y sobrevive a la navegación y recarga.
   obtenerSeleccion(token: string): ItemCarritoCandy[] {
     try {
@@ -67,7 +144,8 @@ export class CandyService {
     }
   }
   async obtenerProductosActivos(): Promise<ProductoCandy[]> {
-    const { data, error } = await supabase.from('productos_candy').select('*').eq('activo', true).order('nombre');
+    const { data, error } = await supabase.from('productos_candy').select('*,categorias_candy!inner(activo)')
+      .eq('activo', true).eq('categorias_candy.activo', true).order('nombre');
     if (error) throw new Error('No se pudo cargar el catálogo Candy.');
     return (data ?? []).map(fila => ({
       id: fila.id, categoriaId: fila.categoria_id, nombre: fila.nombre,
