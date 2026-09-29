@@ -1,3 +1,4 @@
+import { PaginaMisPeliculas } from '../models/pelicula-comprada';
 import {
   Injectable
 } from '@angular/core';
@@ -17,6 +18,45 @@ import { SeleccionCombo } from '../models/combo';
   providedIn: 'root'
 })
 export class CompraService {
+
+  /** El usuario sale de Auth, nunca de un parámetro de URL.
+   * La paginación por ID evita repetir compras si llega una nueva entre páginas. */
+  async obtenerMisPeliculas(antesDe: number | null = null): Promise<PaginaMisPeliculas> {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user || user.is_anonymous) throw new Error('Iniciá sesión con tu cuenta para consultar tus películas.');
+    if (antesDe !== null && (!Number.isSafeInteger(antesDe) || antesDe <= 0)) throw new Error('Página de historial inválida.');
+    let consulta = supabase.from('compras').select(
+      'id,funciones(fecha,hora,peliculas(id,titulo,poster_url)),entradas(codigo)'
+    ).eq('usuario_id', user.id).eq('estado', 'pagada').order('id', {ascending: false}).limit(21);
+    if (antesDe !== null) consulta = consulta.lt('id', antesDe);
+    const { data, error } = await consulta;
+    if (error) throw new Error('No se pudo cargar tu historial de películas.');
+    type Relacion<T> = T | T[] | null;
+    type PeliculaFila = {id: number; titulo: string; poster_url: string | null};
+    type FuncionFila = {fecha: string; hora: string; peliculas: Relacion<PeliculaFila>};
+    type CompraFila = {id: number; funciones: Relacion<FuncionFila>; entradas: Relacion<{codigo: string}>};
+    const uno = <T>(relacion: Relacion<T>): T | null => Array.isArray(relacion) ? relacion[0] ?? null : relacion;
+    const filas = (data ?? []) as unknown as CompraFila[];
+    const pagina = filas.slice(0,20);
+    const peliculas = pagina.map(c => {
+      const funcion = uno(c.funciones);
+      const pelicula = funcion ? uno(funcion.peliculas) : null;
+      return {compraId: c.id, peliculaId: pelicula?.id ?? null, titulo: pelicula?.titulo ?? 'Película no disponible',
+        poster: pelicula?.poster_url ?? null, fechaFuncion: funcion ? funcion.fecha + 'T' + funcion.hora : null,
+        codigoEntrada: uno(c.entradas)?.codigo ?? null, calificacion: null as number | null};
+    });
+    const ids = [...new Set(peliculas.flatMap(p => p.peliculaId === null ? [] : [p.peliculaId]))];
+    if (ids.length) {
+      // Una consulta para todas las calificaciones de esta página; no una por tarjeta.
+      const resenas = await supabase.from('resenas').select('pelicula_id,estrellas')
+        .eq('usuario_id', user.id).in('pelicula_id', ids);
+      if (resenas.error) throw new Error('No se pudieron cargar tus calificaciones. Reintentá el historial.');
+      const calificaciones = new Map((resenas.data ?? []).map(r => [r.pelicula_id, r.estrellas]));
+      for (const pelicula of peliculas) pelicula.calificacion = calificaciones.get(pelicula.peliculaId) ?? null;
+    }
+    return {peliculas, siguiente: filas.length > 20 ? pagina[pagina.length-1].id : null};
+  }
+
 
   async actualizarTotalPendiente(id: number, total: number, seleccion?: SeleccionCombo | null): Promise<void> {
     const combo = seleccion?.combo;

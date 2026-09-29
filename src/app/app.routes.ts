@@ -3,6 +3,11 @@ import { authGuard } from './guards/auth-guard';
 import { roleGuard } from './guards/role-guard';
 
 export const routes: Routes = [
+  {
+    path: 'mis-peliculas',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/cliente/mis-peliculas/mis-peliculas').then(m => m.MisPeliculas)
+  },
 
   /*
    * LOGIN
