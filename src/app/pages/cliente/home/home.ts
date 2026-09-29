@@ -1,295 +1,72 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit
-} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Navbar } from '../../../components/navbar/navbar';
+import { PeliculaCard } from '../../../components/pelicula-card/pelicula-card';
+import { Pelicula } from '../../../models/pelicula';
+import { ResumenResenas, VentaPelicula } from '../../../models/resena';
+import { PeliculaService } from '../../../services/pelicula';
+import { FuncionService } from '../../../services/funcion';
+import { ResenaService } from '../../../services/resena';
 
-import {
-  Router
-} from '@angular/router';
-
-import {
-  Navbar
-} from '../../../components/navbar/navbar';
-
-import {
-  PeliculaCard
-} from '../../../components/pelicula-card/pelicula-card';
-
-import {
-  Pelicula
-} from '../../../models/pelicula';
-
-import {
-  PeliculaService
-} from '../../../services/pelicula';
-
-import {
-  FuncionService
-} from '../../../services/funcion';
-
-
-@Component({
-  selector: 'app-home',
-
-  imports: [
-    Navbar,
-    PeliculaCard
-  ],
-
-  templateUrl: './home.html',
-  styleUrl: './home.css',
-})
+@Component({selector: 'app-home', imports: [Navbar, PeliculaCard, FormsModule], templateUrl: './home.html', styleUrl: './home.css'})
 export class Home implements OnInit {
-
-
-  /*
-   * Películas que finalmente se mostrarán
-   * en la cartelera del cliente.
-   *
-   * No alcanza con que una película exista:
-   * también debe tener una función activa.
-   */
   peliculas: Pelicula[] = [];
+  cargando = true;
+  error = '';
+  errorRanking = '';
+  errorResenas = '';
+  busqueda = '';
+  genero = '';
+  ventas: VentaPelicula[] = [];
+  resumen: ResumenResenas[] = [];
+  constructor(private router: Router, private peliculaService: PeliculaService,
+    private funcionService: FuncionService, private changeDetectorRef: ChangeDetectorRef,
+    private resenaService: ResenaService) {}
 
+  get generos(): string[] { return [...new Set(this.peliculas.flatMap(p => p.generos))].sort(); }
+  get peliculasFiltradas(): Pelicula[] { return this.resenaService.filtrar(this.peliculas, this.busqueda, this.genero); }
+  puesto(id: number): number { return this.ventas.findIndex(v => v.pelicula_id === id) + 1; }
+  valoracion(id: number): ResumenResenas | undefined { return this.resumen.find(r => r.pelicula_id === id); }
 
-  /*
-   * Angular nos entrega los servicios
-   * mediante inyección de dependencias.
-   *
-   * Router:
-   * permite navegar a otra pantalla.
-   *
-   * PeliculaService:
-   * obtiene las películas.
-   *
-   * FuncionService:
-   * obtiene las funciones programadas.
-   *
-   * ChangeDetectorRef:
-   * fuerza la actualización visual después
-   * de recibir información asíncrona.
-   */
-  constructor(
-    private router: Router,
-    private peliculaService: PeliculaService,
-    private funcionService: FuncionService,
-    private changeDetectorRef: ChangeDetectorRef
-  ) {}
-
-
-  /*
-   * ngOnInit se ejecuta cuando Angular
-   * inicializa esta pantalla.
-   *
-   * Acá construimos la cartelera real.
-   */
   async ngOnInit(): Promise<void> {
-
-  /*
-   * 1. Obtenemos las películas visibles.
-   */
-  const peliculasDisponibles =
-    await this.peliculaService
-      .obtenerCartelera();
-
-
-  /*
-   * 2. Obtenemos la fecha actual. Para probar la semana que viene const hoy = new Date(2026, 8, 24);
-   */
-  const hoy =
-    new Date();
-
-
-  /*
-   * getDay():
-   *
-   * domingo   = 0
-   * lunes     = 1
-   * martes    = 2
-   * miércoles = 3
-   * jueves    = 4
-   * viernes   = 5
-   * sábado    = 6
-   *
-   * Queremos encontrar el jueves
-   * que inició la semana actual.
-   */
-  const diasDesdeJueves =
-    (hoy.getDay() - 4 + 7) % 7;
-
-
-  /*
-   * Calculamos el jueves inicial.
-   */
-  const inicioSemana =
-    new Date(hoy);
-
-  inicioSemana.setDate(
-    hoy.getDate() - diasDesdeJueves
-  );
-
-
-  /*
-   * El miércoles final es
-   * seis días después.
-   */
-  const finSemana =
-    new Date(inicioSemana);
-
-  finSemana.setDate(
-    inicioSemana.getDate() + 6
-  );
-
-
-  /*
-   * Convertimos las fechas al formato
-   * YYYY-MM-DD utilizado por Supabase.
-   *
-   * Lo hacemos con fecha local para evitar
-   * problemas de UTC.
-   */
-  const convertirFechaLocal = (
-    fecha: Date
-  ): string => {
-
-    const anio =
-      fecha.getFullYear();
-
-    const mes =
-      String(
-        fecha.getMonth() + 1
-      ).padStart(2, '0');
-
-    const dia =
-      String(
-        fecha.getDate()
-      ).padStart(2, '0');
-
-    return `${anio}-${mes}-${dia}`;
-
-  };
-
-
-  const fechaInicio =
-    convertirFechaLocal(
-      inicioSemana
-    );
-
-  const fechaFin =
-    convertirFechaLocal(
-      finSemana
-    );
-
-
-  /*
-   * 3. Buscamos únicamente las funciones
-   * de la semana cinematográfica vigente.
-   */
-  const {
-    data: funciones,
-    error
-  } =
-    await this.funcionService
-      .obtenerFuncionesSemana(
-        fechaInicio,
-        fechaFin
-      );
-
-
-  if (error) {
-
-    console.error(
-      'Error obteniendo funciones:',
-      error
-    );
-
-    return;
+    this.cargando = true; this.error = '';
+    try {
+      const disponibles = await this.peliculaService.obtenerCartelera();
+      // Conservamos la semana cinematográfica jueves → miércoles y las fechas locales.
+      const hoy = new Date();
+      const inicio = new Date(hoy);
+      inicio.setDate(hoy.getDate() - (hoy.getDay() - 4 + 7) % 7);
+      const fin = new Date(inicio);
+      fin.setDate(inicio.getDate() + 6);
+      const fechaLocal = (f: Date) => [f.getFullYear(), String(f.getMonth()+1).padStart(2,'0'), String(f.getDate()).padStart(2,'0')].join('-');
+      const {data, error} = await this.funcionService.obtenerFuncionesSemana(fechaLocal(inicio), fechaLocal(fin));
+      if (error) throw new Error('No se pudieron cargar las funciones.');
+      const ids = new Set((data ?? []).map(f => f.pelicula_id));
+      this.peliculas = disponibles.filter(p => ids.has(p.id));
+      await this.cargarIndicadores();
+    } catch (e) { this.error = e instanceof Error ? e.message : 'No se pudo cargar la cartelera.'; }
+    finally { this.cargando = false; this.changeDetectorRef.detectChanges(); }
   }
 
-
-  /*
-   * 4. Obtenemos los IDs únicos
-   * de películas programadas esta semana.
-   */
-  const peliculasConFuncion =
-    new Set(
-      (funciones ?? [])
-        .map(
-          funcion =>
-            funcion.pelicula_id
-        )
-    );
-
-
-  /*
-   * 5. Mostramos solamente las películas
-   * programadas durante la semana vigente.
-   */
-  this.peliculas =
-    peliculasDisponibles.filter(
-      pelicula =>
-        peliculasConFuncion.has(
-          pelicula.id
-        )
-    );
-
-
-  this.changeDetectorRef
-    .detectChanges();
-
-
-  /*
-   * Logs temporales para comprobar
-   * la regla de negocio.
-   */
-  console.log(
-    'SEMANA ACTUAL:',
-    fechaInicio,
-    '→',
-    fechaFin
-  );
-
-  console.log(
-    'FUNCIONES SEMANA ACTUAL:',
-    funciones
-  );
-
-  console.log(
-    'IDS CARTELERA:',
-    peliculasConFuncion
-  );
-
-  console.log(
-    'PELÍCULAS MOSTRADAS EN CARTELERA:',
-    this.peliculas
-  );
-
-}
-
-
-  /*
-   * PeliculaCard emite mediante @Output
-   * la película seleccionada.
-   *
-   * Home recibe ese evento y utiliza Router
-   * para navegar hacia las funciones
-   * de esa película.
-   *
-   * Ejemplo:
-   *
-   * /pelicula/5/funciones
-   */
-  seleccionarPelicula(
-    pelicula: Pelicula
-  ): void {
-
-    this.router.navigate([
-      '/pelicula',
-      pelicula.id,
-      'funciones'
+  async cargarIndicadores(): Promise<void> {
+    const ids = this.peliculas.map(p => p.id);
+    this.errorRanking = ''; this.errorResenas = '';
+    // Un error en los indicadores no bloquea el acceso a funciones.
+    const [ventas, resenas] = await Promise.allSettled([
+      this.resenaService.obtenerVentas(ids), this.resenaService.obtenerResumen(ids)
     ]);
-
+    if (ventas.status === 'fulfilled') {
+      this.ventas = ventas.value;
+      this.peliculas = this.resenaService.ordenar(this.peliculas, this.ventas);
+    } else { this.ventas = []; this.errorRanking = 'No se pudo cargar el Top 3.'; }
+    if (resenas.status === 'fulfilled') this.resumen = resenas.value;
+    else { this.resumen = []; this.errorResenas = 'No se pudieron cargar las valoraciones CineBera.'; }
+    this.changeDetectorRef.detectChanges();
   }
 
+  // Conservamos el @Output de PeliculaCard y la navegación existente.
+  seleccionarPelicula(pelicula: Pelicula): void {
+    this.router.navigate(['/pelicula', pelicula.id, 'funciones']);
+  }
 }

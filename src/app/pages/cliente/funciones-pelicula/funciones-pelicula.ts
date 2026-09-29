@@ -1,3 +1,4 @@
+import { Resenas } from '../../../components/resenas/resenas';
 import {
   ChangeDetectorRef,
   Component,
@@ -28,7 +29,7 @@ import {
 @Component({
   selector: 'app-funciones-pelicula',
 
-  imports: [],
+  imports: [Resenas],
 
   templateUrl: './funciones-pelicula.html',
   styleUrl: './funciones-pelicula.css'
