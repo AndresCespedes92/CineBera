@@ -12,6 +12,7 @@ import { QRCodeComponent } from 'angularx-qrcode';
 import { jsPDF } from 'jspdf';
 
 import { DatePipe } from '@angular/common';
+import { HoraCortaPipe } from '../../../pipes/hora-corta';
 
 
 import {
@@ -91,7 +92,8 @@ import {
    */
   imports: [
     QRCodeComponent,
-    DatePipe
+    DatePipe,
+    HoraCortaPipe
   ],
 
   templateUrl: './entrada.html',
@@ -674,12 +676,12 @@ descargarPDF(): void {
    *
    * 17:30:00
    *
-   * slice(0, 5) produce:
+   * El pipe horaCorta produce:
    *
    * 17:30
    */
   const horaFormateada =
-    funcionActual.hora.slice(0, 5);
+    new HoraCortaPipe().transform(funcionActual.hora);
 
 
   pdf.text(

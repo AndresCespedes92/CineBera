@@ -226,17 +226,7 @@ async utilizarEntrada(
     .maybeSingle();
 
 
-  if (error) {
-
-    console.error(
-      'Error al utilizar la entrada:',
-      error
-    );
-
-    return null;
-
-  }
-
+  if (error) throw new Error('No se pudo validar la entrada ni registrar la operación. Verificá tu sesión de personal y reintentá.');
 
   return data;
 
