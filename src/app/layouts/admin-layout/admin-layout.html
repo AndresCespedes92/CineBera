@@ -1,22 +1,9 @@
+<app-navbar />
 <div class="admin-layout">
-  <!--
-    Parte fija del área administrativa.
-    No cambia cuando navegamos entre rutas hijas.
-  -->
-  <header class="admin-header">
-    <strong>
-      CineBera Administración
-    </strong>
-  </header>
-  <nav><a routerLink="/admin/home">Panel</a> · <a routerLink="/admin/combos">Combos</a> · <a routerLink="/admin/candy">Candy</a> · <a routerLink="/admin/reportes">Reportes</a> · <a routerLink="/admin/graficos">Gráficos</a> · <a routerLink="/admin/auditoria">Auditoría</a></nav>
-  <!--
-    Angular renderiza acá la ruta hija activa.
-    Ejemplos:
-    /admin/home
-    /admin/peliculas
-    /admin/peliculas/nueva
-  -->
-  <main class="admin-content">
-    <router-outlet></router-outlet>
-  </main>
+  <header class="admin-header"><strong>CineBera Administración</strong></header>
+  <nav aria-label="Administración">
+    <a routerLink="/admin/home">Panel</a>
+    @for (enlace of enlaces; track enlace.ruta) { <a [routerLink]="enlace.ruta">{{ enlace.titulo }}</a> }
+  </nav>
+  <main class="admin-content"><router-outlet /></main>
 </div>

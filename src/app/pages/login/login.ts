@@ -140,7 +140,7 @@ export class Login {
 
   } else if (perfil.rol === 'empleado') {
 
-    this.router.navigate(['/empleado']);
+    this.router.navigate(['/empleado/validar-entrada']);
 
   } else {
 

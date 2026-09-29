@@ -1,4 +1,6 @@
 .navbar {
+  flex-wrap: wrap;
+  gap: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -24,6 +26,8 @@
 
 /* Links principales */
 .navbar-links {
+  flex-wrap: wrap;
+  flex: 1 1 480px;
   display: flex;
   align-items: center;
 
@@ -45,6 +49,7 @@
 
 /* Sector derecho del navbar */
 .navbar-auth {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
 
