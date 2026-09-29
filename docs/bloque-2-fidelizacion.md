@@ -32,9 +32,13 @@ El UPDATE exige `entregado_at IS NULL` y devuelve la fila modificada. Si otro em
 
 ### Candy comprado y puntos
 
-Se conserva el pedido asociado a una compra de entrada. El servicio consulta precios actuales, guarda cabecera y detalles, y la pantalla ofrece confirmar el pago simulado del TP. Una cabecera sin detalles no puede pagarse ni entregarse. Al recargar se recupera el pedido existente; un pedido por compra evita duplicados de cabecera.
+Candy se elige desde Checkout antes del pago. El cliente entra con el token de reserva, agrega o elimina productos y vuelve al mismo checkout. El carrito se conserva en sessionStorage, separado por reserva, incluso al recargar. El vencimiento original no se reinicia; se valida otra vez al regresar y al continuar al pago.
 
-Solo un pedido pagado puede entregarse. Después del pago se acredita `floor(total)` al comprador registrado. Las compras anónimas siguen funcionando sin puntos. La acreditación de entradas y la de Candy tienen índices únicos separados; reintentar no vuelve a sumar. Si falla la acreditación, se informa y se permite reintentar sin otro pago.
+Checkout muestra entradas, productos Candy y total conjunto. Al pulsar Ir al pago se prepara la compra pendiente y el pedido Candy con los precios actuales. Si cambió el catálogo se exige revisar la selección. Se puede continuar sin productos o quitar un pedido pendiente anterior. Durante el reemplazo de detalles, el pedido se mantiene cancelado y no puede pagarse ni entregarse; si falla se recupera desde checkout.
+
+Pago muestra el desglose y confirma ambas partes con un solo clic. Para conservar el esquema existente, compras.total sigue representando entradas y pedidos_candy.total representa productos; la interfaz suma ambos. La entrada gratis solo descuenta el importe de entradas. La confirmación sigue siendo simulada y usa escrituras separadas: los reintentos completan el estado pendiente sin volver a aplicar el beneficio.
+
+Solo un pedido pagado puede entregarse. Entradas y Candy acreditan puntos por separado mediante los índices únicos existentes, evitando duplicación. No hay un pago independiente desde la pantalla Candy ni acceso Agregar Candy desde la entrada. El mismo QR sirve para ingreso y retiro, con acciones independientes. El catálogo general sigue visible, pero para seleccionar productos hay que ingresar desde checkout.
 
 ## Base de datos
 
@@ -100,7 +104,7 @@ La prueba del scanner verifica el evento y su resultado; no certifica acceso fí
 
 ## Resultados del cierre
 
-- Bloque 2: 60/60 pruebas aprobadas.
+- Bloque 2: 71/71 pruebas aprobadas (incluye 11 casos del ajuste checkout/Candy).
 - Regresión del Bloque 1: 31/31 aprobadas.
 - Build de producción: aprobado; bundle inicial 514,22 kB, con warnings preexistentes de budget/CommonJS.
 - Suite general: sigue bloqueada por los 13 errores de compilación heredados en specs de directivas, guard y servicios. No se modificaron esos tests.
@@ -108,3 +112,7 @@ La prueba del scanner verifica el evento y su resultado; no certifica acceso fí
 - `git diff --check`: sin errores.
 
 La rama se entrega para revisión y merge manual. No se continúa con el Bloque 3 ni se realiza despliegue.
+
+## Ajuste previo al Bloque 3
+
+Se realizó en la misma rama del Bloque 2 porque aún no estaba mergeada en main. Incluye checkout, Candy, pago, eliminación del acceso desde entrada, servicios Compra/Candy y pruebas. No agrega SQL ni dependencias. El carrito es propio de la pestaña; no se sincroniza entre dispositivos. Las escrituras de pago y del pedido siguen sin constituir una transacción conjunta. Build y las 71 pruebas específicas aprobados.

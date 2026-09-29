@@ -9,6 +9,8 @@ import { Auth } from '../../../services/auth';
 import { Compra } from '../../../models/compra';
 import { Beneficio } from '../../../models/beneficio';
 import { ButacaFuncion } from '../../../models/butaca-funcion';
+import { CandyService } from '../../../services/candy';
+import { PedidoCandy } from '../../../models/pedido-candy';
 
 @Component({
   selector: 'app-pago', imports: [FormsModule, RouterLink],
@@ -24,14 +26,16 @@ export class Pago implements OnInit {
   beneficios = signal<Beneficio[]>([]);
   butacas = signal<ButacaFuncion[]>([]);
   beneficioId = signal<number | null>(null);
+  pedidoCandy = signal<PedidoCandy | null>(null);
+  totalCandy = computed(() => this.pedidoCandy()?.estado !== 'cancelado' ? this.pedidoCandy()?.total ?? 0 : 0);
   descuento = computed(() => this.beneficioId() && this.compra()?.estado === 'pendiente'
     ? this.fidelizacionService.calcularDescuentoEntrada(Number(this.compra()?.total), this.butacas()) : 0);
-  total = computed(() => Math.round((Number(this.compra()?.total ?? 0) - this.descuento()) * 100) / 100);
+  total = computed(() => Math.round((Number(this.compra()?.total ?? 0) - this.descuento() + this.totalCandy()) * 100) / 100);
 
   constructor(private route: ActivatedRoute, private router: Router,
     private compraService: CompraService, private butacaService: ButacaService,
     private entradaService: EntradaService, private fidelizacionService: FidelizacionService,
-    private authService: Auth) {}
+    private authService: Auth, private candyService: CandyService) {}
 
   async ngOnInit(): Promise<void> {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -48,6 +52,7 @@ export class Pago implements OnInit {
       this.beneficios.set([]);
       this.beneficioId.set(null);
       if (!compra) return;
+      this.pedidoCandy.set(await this.candyService.obtenerPedidoPorCompra(compra.id));
       const sesion = await this.authService.obtenerSesion();
       if (compra.usuario_id && compra.usuario_id !== sesion?.user.id) {
         this.compra.set(null);
@@ -79,6 +84,12 @@ export class Pago implements OnInit {
       const sesion = await this.authService.obtenerSesion();
       if (compra.usuario_id && compra.usuario_id !== sesion?.user.id) throw new Error('La compra pertenece a otra cuenta.');
       if (compra.estado === 'cancelada') throw new Error('La compra está cancelada.');
+      let pedido = await this.candyService.obtenerPedidoPorCompra(compra.id);
+      if (pedido && ((pedido.estado === 'cancelado' && (pedido.total > 0 || pedido.detalles.length > 0)) ||
+          (pedido.estado === 'pendiente' && !pedido.detalles.length))) {
+        throw new Error('Candy está incompleto. Volvé al checkout antes de pagar.');
+      }
+      this.pedidoCandy.set(pedido);
       if (compra.estado === 'pendiente') {
         const reserva = await this.butacaService.obtenerReservaPorToken(compra.reserva_token);
         if (!reserva.length || reserva.some(b => !b.expires_at || new Date(b.expires_at).getTime() <= Date.now())) {
@@ -91,6 +102,12 @@ export class Pago implements OnInit {
         compra = confirmada;
       }
       this.compra.set(compra);
+      // Una única confirmación del usuario completa ambas partes del pago simulado.
+      // Las escrituras son separadas; un reintento recupera el estado ya pagado.
+      if (pedido && pedido.estado !== 'cancelado') {
+        pedido = await this.candyService.confirmarPagoPedido(compra.id);
+        this.pedidoCandy.set(pedido);
+      }
       if (!await this.butacaService.confirmarButacasReserva(compra.reserva_token)) {
         throw new Error('La compra está pagada, pero falta confirmar sus butacas. Reintentá para completar la emisión.');
       }
@@ -98,9 +115,14 @@ export class Pago implements OnInit {
       if (!entrada) entrada = await this.entradaService.crearEntrada(compra.id);
       if (!entrada) throw new Error('Falta generar la entrada. Reintentá sin volver a pagar.');
       this.codigoEntrada.set(entrada.codigo);
+      this.candyService.limpiarSeleccion(compra.reserva_token);
       sessionStorage.removeItem(`cinebera-expira-funcion-${compra.funcion_id}`);
       if (compra.usuario_id && !await this.fidelizacionService.acreditarPuntosPorCompra(compra.id, compra.usuario_id)) {
         this.aviso.set('La entrada está lista. No se pudieron acreditar los puntos; podés reintentar desde esta compra.');
+        return;
+      }
+      if (pedido?.estado === 'pagado' && !await this.fidelizacionService.acreditarPuntosPorCandy(pedido.id)) {
+        this.aviso.set('La compra está completa. Falta acreditar los puntos de Candy; podés reintentar sin otro pago.');
         return;
       }
       await this.router.navigate(['/entrada', entrada.codigo]);

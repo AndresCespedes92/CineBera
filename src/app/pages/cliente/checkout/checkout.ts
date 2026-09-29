@@ -1,3 +1,5 @@
+import { CandyService } from '../../../services/candy';
+import { ItemCarritoCandy } from '../../../models/item-carrito-candy';
 import {
   Component,
   OnInit,
@@ -63,6 +65,14 @@ import {
   styleUrl: './checkout.css'
 })
 export class Checkout implements OnInit, OnDestroy {
+  seleccionCandy = signal<ItemCarritoCandy[]>([]);
+  preparandoPago = signal(false);
+  errorPago = signal('');
+  totalCandy = computed(() => Math.round(this.seleccionCandy().reduce((s,i)=>s+i.producto.precio*i.cantidad,0)*100)/100);
+  async irACandy(): Promise<void> {
+    if (!this.reservaVencida() && !this.preparandoPago()) await this.router.navigate(['/candy'], {queryParams:{reserva:this.reservaToken}});
+  }
+
 
 
   /*
@@ -268,7 +278,8 @@ porcentajeMayor50 =
      * Router nos permite navegar hacia
      * la pantalla de pago o volver a Butacas.
      */
-    private router: Router
+    private router: Router,
+    private candyService: CandyService
   ) {}
 
 
@@ -302,6 +313,7 @@ porcentajeMayor50 =
     /*
      * Reconstruimos el checkout.
      */
+    this.seleccionCandy.set(this.candyService.obtenerSeleccion(this.reservaToken));
     this.cargarCheckout();
 
   }
@@ -1040,159 +1052,26 @@ calcularTotalFinal(): number {
    * En este punto todavía NO estamos cobrando.
    */
   async irAlPago(): Promise<void> {
-
-
-    /*
-     * No permitimos avanzar si terminó
-     * el tiempo de la reserva.
-     */
-    if (this.reservaVencida()) {
-
-      console.log(
-        'La reserva venció. Debe seleccionar nuevamente las butacas.'
-      );
-
-      return;
-    }
-
-
-    /*
-     * Necesitamos una función válida porque
-     * la compra debe quedar asociada a ella.
-     */
-    const funcionActual =
-      this.funcion();
-
-
-    if (!funcionActual) {
-
-      console.error(
-        'No se encontró la función de la compra.'
-      );
-
-      return;
-    }
-
-
-    /*
-     * Verificamos si ya habíamos creado
-     * una compra para esta reserva.
-     *
-     * Esto evita duplicados si el usuario
-     * presiona varias veces el botón.
-     */
-    const compraExistente =
-      await this.compraService
-        .obtenerCompraPorReserva(
-          this.reservaToken
-        );
-
-
-    if (compraExistente) {
-
-      console.log(
-        'Compra pendiente existente:',
-        compraExistente
-      );
-
-
-      await this.router.navigate([
-        '/pago',
-        compraExistente.id
-      ]);
-
-
-      return;
-    }
-
-
-    /*
-     * No existe todavía una compra.
-     *
-     * Recuperamos la sesión actual.
-     */
-    const sesion =
-      await this.authService
-        .obtenerSesion();
-
-
-    /*
-     * Usuario registrado:
-     *
-     * usuario_id = UUID
-     *
-     * Compra anónima:
-     *
-     * usuario_id = null
-     */
-    const usuarioId =
-      sesion?.user?.id ?? null;
-
-
-    /*
-     * Creamos la compra en estado pendiente.
-     *
-     * IMPORTANTE:
-     *
-     * Antes guardábamos:
-     *
-     * this.calcularTotal()
-     *
-     * Eso ignoraba promociones.
-     *
-     * Ahora guardamos calcularTotalFinal(),
-     * que representa lo que realmente deberá pagar.
-     */
-    const nuevaCompra =
-      await this.compraService
-        .crearCompra({
-
-          reserva_token:
-            this.reservaToken,
-
-          usuario_id:
-            usuarioId,
-
-          funcion_id:
-            funcionActual.id,
-
-          total:
-            this.calcularTotalFinal()
-
-        });
-
-
-    /*
-     * Si Supabase no pudo crear la compra,
-     * detenemos el flujo.
-     */
-    if (!nuevaCompra) {
-
-      console.error(
-        'No fue posible crear la compra.'
-      );
-
-      return;
-    }
-
-
-    console.log(
-      'Compra pendiente creada:',
-      nuevaCompra
-    );
-
-
-    /*
-     * La compra existe correctamente.
-     * Avanzamos hacia Pago.
-     */
-    await this.router.navigate([
-      '/pago',
-      nuevaCompra.id
-    ]);
-
+    if (this.preparandoPago() || this.reservaVencida() || !this.funcion()) return;
+    this.preparandoPago.set(true); this.errorPago.set('');
+    try {
+      const reserva = await this.butacaService.obtenerReservaPorToken(this.reservaToken);
+      if (!reserva.length || reserva.some(b=>!b.expires_at || new Date(b.expires_at).getTime()<=Date.now())) throw new Error('La reserva venció.');
+      let compra = await this.compraService.obtenerCompraPorReserva(this.reservaToken);
+      if (!compra) {
+        const sesion = await this.authService.obtenerSesion();
+        compra = await this.compraService.crearCompra({reserva_token:this.reservaToken,usuario_id:sesion?.user.id ?? null,funcion_id:this.funcion().id,total:this.calcularTotalFinal()});
+      }
+      if (!compra) throw new Error('No se pudo preparar la compra.');
+      if (compra.estado === 'cancelada') throw new Error('La compra está cancelada.');
+      if (compra.estado === 'pendiente') {
+        await this.compraService.actualizarTotalPendiente(compra.id,this.calcularTotalFinal());
+        await this.candyService.prepararPedidoCheckout(compra.id,this.seleccionCandy());
+      }
+      await this.router.navigate(['/pago',compra.id]);
+    } catch(e) { this.errorPago.set(e instanceof Error ? e.message : 'No se pudo preparar el pago.'); }
+    finally { this.preparandoPago.set(false); }
   }
-
 
   /*
    * =====================================================

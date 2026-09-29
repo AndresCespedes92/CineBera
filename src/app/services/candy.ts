@@ -6,6 +6,50 @@ import { PedidoCandy } from '../models/pedido-candy';
 
 @Injectable({ providedIn: 'root' })
 export class CandyService {
+  // El borrador pertenece a una reserva y sobrevive a la navegación y recarga.
+  obtenerSeleccion(token: string): ItemCarritoCandy[] {
+    try {
+      const items = JSON.parse(sessionStorage.getItem(`cinebera-candy-${token}`) ?? '[]');
+      return Array.isArray(items) ? items.filter(i => Number.isInteger(i?.producto?.id) && Number.isInteger(i.cantidad) && i.cantidad > 0) : [];
+    } catch { return []; }
+  }
+
+  guardarSeleccion(token: string, items: ItemCarritoCandy[]): void {
+    sessionStorage.setItem(`cinebera-candy-${token}`, JSON.stringify(items));
+  }
+
+  limpiarSeleccion(token: string): void { sessionStorage.removeItem(`cinebera-candy-${token}`); }
+
+  async prepararPedidoCheckout(compraId: number, items: ItemCarritoCandy[]): Promise<void> {
+    await this.validarCompra(compraId, 'pendiente');
+    const existente = await this.obtenerPedidoPorCompra(compraId);
+    if (existente?.estado === 'pagado') throw new Error('Este pedido ya fue pagado.');
+    if (!existente && !items.length) return;
+    if (items.some(i => !Number.isInteger(i.cantidad) || i.cantidad <= 0)) throw new Error('Cantidad Candy inválida.');
+    const productos = items.length ? await this.obtenerProductosActivos() : [];
+    const detalles = items.map(item => {
+      const producto = productos.find(p => p.id === item.producto.id);
+      if (!producto || producto.precio !== item.producto.precio) throw new Error('Cambió el catálogo Candy. Volvé a Candy para revisar la selección.');
+      return { producto_id: producto.id, cantidad: item.cantidad, precio_unitario: producto.precio,
+        subtotal: Math.round(producto.precio * item.cantidad * 100) / 100 };
+    });
+    const total = Math.round(detalles.reduce((s, d) => s + d.subtotal, 0) * 100) / 100;
+    // Mientras reemplazamos detalles, el pedido no puede pagarse ni entregarse.
+    let id = existente?.id;
+    const cabecera = id
+      ? await supabase.from('pedidos_candy').update({ estado: 'cancelado', total }).eq('id', id).neq('estado', 'pagado').select('id').maybeSingle()
+      : await supabase.from('pedidos_candy').insert({ compra_id: compraId, estado: 'cancelado', total, entregado: false }).select('id').single();
+    if (cabecera.error || !cabecera.data) throw new Error('No se pudo preparar Candy. Reintentá desde el checkout.');
+    id = cabecera.data.id;
+    const borrado = await supabase.from('detalles_pedido_candy').delete().eq('pedido_candy_id', id!);
+    if (borrado.error) throw new Error('No se pudo actualizar Candy. Reintentá desde el checkout.');
+    if (detalles.length) {
+      const guardado = await supabase.from('detalles_pedido_candy').insert(detalles.map(d => ({ ...d, pedido_candy_id: id })));
+      if (guardado.error) throw new Error('No se pudo guardar Candy. Reintentá desde el checkout.');
+      const listo = await supabase.from('pedidos_candy').update({ estado: 'pendiente' }).eq('id', id!).eq('estado', 'cancelado').select('id').maybeSingle();
+      if (listo.error || !listo.data) throw new Error('No se pudo completar Candy. Reintentá desde el checkout.');
+    }
+  }
   async obtenerProductosActivos(): Promise<ProductoCandy[]> {
     const { data, error } = await supabase.from('productos_candy').select('*').eq('activo', true).order('nombre');
     if (error) throw new Error('No se pudo cargar el catálogo Candy.');
@@ -82,9 +126,9 @@ export class CandyService {
     return { ...pedido, estado: 'pagado', total };
   }
 
-  private async validarCompra(compraId: number): Promise<void> {
+  private async validarCompra(compraId: number, estado = 'pagada'): Promise<void> {
     const { data, error } = await supabase.from('compras').select('usuario_id,estado').eq('id', compraId).single();
-    if (error || !data || data.estado !== 'pagada') throw new Error('Primero completá la compra de tu entrada.');
+    if (error || !data || data.estado !== estado) throw new Error('La compra no está disponible para esta operación.');
     if (data.usuario_id) {
       const sesion = await supabase.auth.getSession();
       if (sesion.data.session?.user.id !== data.usuario_id) throw new Error('El pedido pertenece a otra cuenta.');

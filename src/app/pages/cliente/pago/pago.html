@@ -8,6 +8,13 @@
     @if (compra(); as actual) {
       <section>
         <p>Compra #{{ actual.id }} · {{ actual.estado }}</p>
+        @if (pedidoCandy(); as pedido) {
+          @if (pedido.estado !== 'cancelado') {
+            <h2>Candy</h2>
+            @for (detalle of pedido.detalles; track detalle.id) { <p>{{ detalle.nombreProducto }} × {{ detalle.cantidad }} · ${{ detalle.subtotal }}</p> }
+            <p>Total Candy: ${{ pedido.total }}</p>
+          }
+        }
         @if (actual.estado === 'pendiente') {
           @if (beneficios().length && actual.total > 0) {
             <label>Usar una entrada gratis
@@ -24,7 +31,7 @@
           @if (descuento() > 0) { <p>Entrada gratis: −${{ descuento() }}</p> }
           <h2>Total a pagar: ${{ total() }}</h2>
         } @else {
-          <p>Total pagado: ${{ actual.total }}</p>
+          <p>Entradas pagadas: ${{ actual.total }} · Candy: ${{ totalCandy() }}</p>
           @if (actual.beneficio_id) { <p>Entrada gratis utilizada: canje #{{ actual.beneficio_id }}.</p> }
         }
         @if (actual.estado !== 'cancelada') {
@@ -36,6 +43,7 @@
           </button>
         }
         <a routerLink="/cartelera">Volver a cartelera</a>
+        @if (actual.estado === 'pendiente') { <a [routerLink]="['/checkout', actual.reserva_token]">Volver al checkout</a> }
       </section>
     } @else { <p>No se encontró una compra disponible.</p> }
   }
