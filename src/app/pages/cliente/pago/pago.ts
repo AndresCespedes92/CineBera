@@ -11,6 +11,7 @@ import { Beneficio } from '../../../models/beneficio';
 import { ButacaFuncion } from '../../../models/butaca-funcion';
 import { CandyService } from '../../../services/candy';
 import { PedidoCandy } from '../../../models/pedido-candy';
+import { ComboService } from '../../../services/combo';
 
 @Component({
   selector: 'app-pago', imports: [FormsModule, RouterLink],
@@ -28,14 +29,14 @@ export class Pago implements OnInit {
   beneficioId = signal<number | null>(null);
   pedidoCandy = signal<PedidoCandy | null>(null);
   totalCandy = computed(() => this.pedidoCandy()?.estado !== 'cancelado' ? this.pedidoCandy()?.total ?? 0 : 0);
-  descuento = computed(() => this.beneficioId() && this.compra()?.estado === 'pendiente'
+  descuento = computed(() => this.beneficioId() && !this.compra()?.combo_id && this.compra()?.estado === 'pendiente'
     ? this.fidelizacionService.calcularDescuentoEntrada(Number(this.compra()?.total), this.butacas()) : 0);
   total = computed(() => Math.round((Number(this.compra()?.total ?? 0) - this.descuento() + this.totalCandy()) * 100) / 100);
 
   constructor(private route: ActivatedRoute, private router: Router,
     private compraService: CompraService, private butacaService: ButacaService,
     private entradaService: EntradaService, private fidelizacionService: FidelizacionService,
-    private authService: Auth, private candyService: CandyService) {}
+    private authService: Auth, private candyService: CandyService, private comboService: ComboService) {}
 
   async ngOnInit(): Promise<void> {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -60,7 +61,7 @@ export class Pago implements OnInit {
       }
       if (compra.estado === 'pendiente') {
         this.butacas.set(await this.butacaService.obtenerReservaPorToken(compra.reserva_token));
-        if (compra.usuario_id) {
+        if (compra.usuario_id && !compra.combo_id) {
           const beneficios = await this.fidelizacionService.obtenerBeneficios(compra.usuario_id);
           this.beneficios.set(beneficios.filter(b => b.beneficio_tipo === 'entrada' && !b.compra_utilizada_id));
         }
@@ -85,6 +86,7 @@ export class Pago implements OnInit {
       if (compra.usuario_id && compra.usuario_id !== sesion?.user.id) throw new Error('La compra pertenece a otra cuenta.');
       if (compra.estado === 'cancelada') throw new Error('La compra está cancelada.');
       let pedido = await this.candyService.obtenerPedidoPorCompra(compra.id);
+      this.comboService.validarPedido(compra, pedido);
       if (pedido && ((pedido.estado === 'cancelado' && (pedido.total > 0 || pedido.detalles.length > 0)) ||
           (pedido.estado === 'pendiente' && !pedido.detalles.length))) {
         throw new Error('Candy está incompleto. Volvé al checkout antes de pagar.');
@@ -95,6 +97,7 @@ export class Pago implements OnInit {
         if (!reserva.length || reserva.some(b => !b.expires_at || new Date(b.expires_at).getTime() <= Date.now())) {
           throw new Error('La reserva venció. Volvé a seleccionar tus butacas.');
         }
+        if ((compra.combo_cantidad ?? 0) > reserva.length) throw new Error('La cantidad de combos supera tus entradas. Volvé al checkout.');
         const confirmada = this.beneficioId()
           ? await this.fidelizacionService.confirmarCompraConBeneficio(compra, this.beneficioId()!, reserva)
           : await this.compraService.confirmarCompra(compra.id);
@@ -116,6 +119,7 @@ export class Pago implements OnInit {
       if (!entrada) throw new Error('Falta generar la entrada. Reintentá sin volver a pagar.');
       this.codigoEntrada.set(entrada.codigo);
       this.candyService.limpiarSeleccion(compra.reserva_token);
+      this.comboService.guardarSeleccion(compra.reserva_token, null);
       sessionStorage.removeItem(`cinebera-expira-funcion-${compra.funcion_id}`);
       if (compra.usuario_id && !await this.fidelizacionService.acreditarPuntosPorCompra(compra.id, compra.usuario_id)) {
         this.aviso.set('La entrada está lista. No se pudieron acreditar los puntos; podés reintentar desde esta compra.');

@@ -1,5 +1,8 @@
 import { CandyService } from '../../../services/candy';
 import { ItemCarritoCandy } from '../../../models/item-carrito-candy';
+import { Combo, SeleccionCombo } from '../../../models/combo';
+import { ComboService, ProductoCombo } from '../../../services/combo';
+import { FormsModule } from '@angular/forms';
 import {
   Component,
   OnInit,
@@ -60,11 +63,62 @@ import {
 
 @Component({
   selector: 'app-checkout',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css'
 })
 export class Checkout implements OnInit, OnDestroy {
+  combos = signal<Combo[]>([]);
+  productosCombo = signal<ProductoCombo[]>([]);
+  seleccionCombo = signal<SeleccionCombo | null>(null);
+  cargandoCombos = signal(true);
+  errorCombos = signal('');
+  avisoCombos = signal('');
+
+  async cargarCombos(): Promise<void> {
+    this.cargandoCombos.set(true); this.errorCombos.set('');
+    try {
+      this.combos.set(await this.comboService.obtenerDisponibles());
+      this.productosCombo.set(await this.comboService.obtenerProductos());
+      const anterior = this.comboService.obtenerSeleccion(this.reservaToken);
+      if (anterior) {
+        const actual = this.combos().find(c => c.id === anterior.combo.id);
+        if (actual && actual.precio === anterior.combo.precio && actual.pochoclo_id === anterior.combo.pochoclo_id &&
+            actual.bebida_id === anterior.combo.bebida_id && anterior.cantidad <= this.butacasReservadas().length) {
+          this.seleccionCombo.set({ combo: actual, cantidad: anterior.cantidad });
+        } else {
+          this.seleccionCombo.set(null);
+          this.comboService.guardarSeleccion(this.reservaToken, null);
+          this.avisoCombos.set('El combo anterior cambió o no corresponde a tus butacas. Revisá el total y elegí nuevamente si querés un combo.');
+        }
+      }
+    } catch(e) { this.errorCombos.set(e instanceof Error ? e.message : 'No se pudieron cargar los combos.'); }
+    finally { this.cargandoCombos.set(false); }
+  }
+
+  elegirCombo(combo: Combo | null): void {
+    const seleccion = combo ? { combo, cantidad: 1 } : null;
+    this.seleccionCombo.set(seleccion);
+    this.comboService.guardarSeleccion(this.reservaToken, seleccion);
+  }
+
+  cambiarCantidadCombo(cantidad: number): void {
+    const actual = this.seleccionCombo();
+    if (!actual) return;
+    if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > this.butacasReservadas().length) {
+      this.errorPago.set('Elegí entre uno y la cantidad de entradas reservadas.'); return;
+    }
+    this.errorPago.set('');
+    this.seleccionCombo.set({ ...actual, cantidad });
+    this.comboService.guardarSeleccion(this.reservaToken, this.seleccionCombo());
+  }
+
+  nombreProductoCombo(id: number): string { return this.productosCombo().find(p => p.id === id)?.nombre ?? 'Producto'; }
+
+  resumenCombos() {
+    return this.comboService.calcularImportes(this.butacasReservadas().map(b => this.obtenerPrecioButaca(b)),
+      this.porcentajeDescuentoAplicado(), this.seleccionCombo());
+  }
   seleccionCandy = signal<ItemCarritoCandy[]>([]);
   preparandoPago = signal(false);
   errorPago = signal('');
@@ -279,7 +333,8 @@ porcentajeMayor50 =
      * la pantalla de pago o volver a Butacas.
      */
     private router: Router,
-    private candyService: CandyService
+    private candyService: CandyService,
+    private comboService: ComboService
   ) {}
 
 
@@ -314,7 +369,7 @@ porcentajeMayor50 =
      * Reconstruimos el checkout.
      */
     this.seleccionCandy.set(this.candyService.obtenerSeleccion(this.reservaToken));
-    this.cargarCheckout();
+    void this.cargarCheckout().then(() => this.cargarCombos());
 
   }
 
@@ -1004,6 +1059,7 @@ porcentajeDescuentoAplicado(): number {
  * descuento = $3.000
  */
 calcularDescuento(): number {
+  if (this.seleccionCombo()) return this.resumenCombos().descuento;
 
   const subtotal =
     this.calcularTotal();
@@ -1032,6 +1088,7 @@ calcularDescuento(): number {
  * subtotal - descuento = total final
  */
 calcularTotalFinal(): number {
+  if (this.seleccionCombo()) return this.resumenCombos().total;
 
   return (
     this.calcularTotal() -
@@ -1052,11 +1109,12 @@ calcularTotalFinal(): number {
    * En este punto todavía NO estamos cobrando.
    */
   async irAlPago(): Promise<void> {
-    if (this.preparandoPago() || this.reservaVencida() || !this.funcion()) return;
+    if (this.preparandoPago() || this.reservaVencida() || !this.funcion() || this.cargandoCombos() || this.errorCombos()) return;
     this.preparandoPago.set(true); this.errorPago.set('');
     try {
       const reserva = await this.butacaService.obtenerReservaPorToken(this.reservaToken);
       if (!reserva.length || reserva.some(b=>!b.expires_at || new Date(b.expires_at).getTime()<=Date.now())) throw new Error('La reserva venció.');
+      if (this.seleccionCombo()) await this.comboService.validarSeleccion(this.seleccionCombo()!, reserva.length);
       let compra = await this.compraService.obtenerCompraPorReserva(this.reservaToken);
       if (!compra) {
         const sesion = await this.authService.obtenerSesion();
@@ -1065,8 +1123,8 @@ calcularTotalFinal(): number {
       if (!compra) throw new Error('No se pudo preparar la compra.');
       if (compra.estado === 'cancelada') throw new Error('La compra está cancelada.');
       if (compra.estado === 'pendiente') {
-        await this.compraService.actualizarTotalPendiente(compra.id,this.calcularTotalFinal());
-        await this.candyService.prepararPedidoCheckout(compra.id,this.seleccionCandy());
+        await this.compraService.actualizarTotalPendiente(compra.id,this.calcularTotalFinal(),this.seleccionCombo());
+        await this.candyService.prepararPedidoCheckout(compra.id,this.seleccionCandy(),this.seleccionCombo());
       }
       await this.router.navigate(['/pago',compra.id]);
     } catch(e) { this.errorPago.set(e instanceof Error ? e.message : 'No se pudo preparar el pago.'); }

@@ -1,0 +1,38 @@
+<section class="admin-recompensas">
+  <header><h1>Combos</h1><p>Una entrada + un pochoclo + una bebida, a precio fijo.</p><a routerLink="/admin/home">Volver al panel</a></header>
+  @if (cargando()) { <p>Cargando combos...</p> }
+  @else {
+    @if (error()) { <p role="alert">{{ error() }}</p><button (click)="cargar()" [disabled]="guardando()">Reintentar carga</button> }
+    @if (mensaje()) { <p role="status">{{ mensaje() }}</p> }
+    <form (ngSubmit)="guardar()" #form="ngForm">
+      <h2>{{ editandoId ? 'Editar combo' : 'Crear combo' }}</h2>
+      <fieldset [disabled]="guardando()">
+        <label>Nombre <input name="nombre" [(ngModel)]="formulario.nombre" required maxlength="80"></label>
+        <label>Precio fijo <input name="precio" type="number" [(ngModel)]="formulario.precio" required min="0.01" step="0.01"></label>
+        <label>Pochoclos <select name="pochoclo" [(ngModel)]="formulario.pochoclo_id" required>
+          <option [ngValue]="0" disabled>Seleccionar</option>
+          @for (producto of productos(); track producto.id) { @if (producto.categoria === 'Pochoclos') { <option [ngValue]="producto.id">{{ producto.nombre }}</option> } }
+        </select></label>
+        <label>Bebida <select name="bebida" [(ngModel)]="formulario.bebida_id" required>
+          <option [ngValue]="0" disabled>Seleccionar</option>
+          @for (producto of productos(); track producto.id) { @if (producto.categoria === 'Bebidas') { <option [ngValue]="producto.id">{{ producto.nombre }}</option> } }
+        </select></label>
+        <label><input name="activo" type="checkbox" [(ngModel)]="formulario.activo"> Activo</label>
+        <button type="submit" [disabled]="form.invalid || !formulario.pochoclo_id || !formulario.bebida_id">{{ guardando() ? 'Guardando...' : 'Guardar' }}</button>
+        <button type="button" (click)="cancelar()">Cancelar edición</button>
+      </fieldset>
+    </form>
+    <div class="lista-recompensas">
+      @for (combo of combos(); track combo.id) {
+        <article class="recompensa"><div>
+          <h2>{{ combo.nombre }} · ${{ combo.precio }}</h2>
+          <p>Una entrada + {{ nombreProducto(combo.pochoclo_id) }} + {{ nombreProducto(combo.bebida_id) }}</p>
+          <p>{{ combo.activo ? 'Activo' : 'Inactivo' }}</p>
+        </div><div class="recompensa__acciones">
+          <button (click)="editar(combo)" [disabled]="guardando()">Editar</button>
+          <button (click)="cambiarEstado(combo)" [disabled]="guardando()">{{ combo.activo ? 'Desactivar' : 'Activar' }}</button>
+        </div></article>
+      } @empty { <p>No hay combos configurados. Creá el primero con el formulario.</p> }
+    </div>
+  }
+</section>

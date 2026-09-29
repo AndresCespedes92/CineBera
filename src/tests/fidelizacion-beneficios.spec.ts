@@ -1,3 +1,4 @@
+import { ComboService } from '../app/services/combo';
 import { FidelizacionService } from '../app/services/fidelizacion';
 import { CandyService } from '../app/services/candy';
 import { ButacaService } from '../app/services/butaca';
@@ -282,7 +283,7 @@ describe('Pantallas: pago, canje y empleado', () => {
     const fidelizacion = {acreditarPuntosPorCompra:vi.fn().mockResolvedValue(true),confirmarCompraConBeneficio:vi.fn().mockResolvedValue({...actual,estado:'pagada',total:0}),calcularDescuentoEntrada:vi.fn().mockReturnValue(8000)};
     const router = {navigate:vi.fn()};
     const auth = {obtenerSesion:vi.fn().mockResolvedValue({user:{id:'cliente'}})};
-    const pagina = new Pago({} as never,router as never,compras as never,butacas as never,entradas as never,fidelizacion as never,auth as never,{obtenerPedidoPorCompra:async()=>null,limpiarSeleccion:()=>{}} as never);
+    const pagina = new Pago({} as never,router as never,compras as never,butacas as never,entradas as never,fidelizacion as never,auth as never,{obtenerPedidoPorCompra:async()=>null,limpiarSeleccion:()=>{}} as never,new ComboService());
     pagina.compra.set(actual);
     return {pagina,compras,butacas,entradas,fidelizacion,router};
   }
@@ -344,6 +345,7 @@ describe('Templates del flujo de beneficios', () => {
       {provide:CompraService,useValue:{}}, {provide:ButacaService,useValue:{}},
       {provide:EntradaService,useValue:{}}, {provide:Auth,useValue:{}},
       {provide:CandyService,useValue:{obtenerPedidoPorCompra:async()=>null}},
+      {provide:ComboService,useValue:new ComboService()},
       {provide:FidelizacionService,useValue:new FidelizacionService()}
     ]}).compileComponents();
     const fixture=TestBed.createComponent(Pago);
@@ -483,18 +485,18 @@ describe('Candy desde checkout y pago conjunto', () => {
   it('checkout prepara el pedido antes de navegar al pago',async()=>{
     const compras={obtenerCompraPorReserva:async()=>compra,actualizarTotalPendiente:vi.fn()};
     const candy={prepararPedidoCheckout:vi.fn()}; const router={navigate:vi.fn()};
-    const pagina=new Checkout({} as never,{obtenerReservaPorToken:async()=>[butaca()]} as never,{} as never,{} as never,{} as never,{} as never,{} as never,compras as never,{} as never,router as never,candy as never);
-    pagina.reservaToken='reserva';pagina.funcion.set({id:4});pagina.seleccionCandy.set([{producto:pochoclo,cantidad:2}]);
+    const pagina=new Checkout({} as never,{obtenerReservaPorToken:async()=>[butaca()]} as never,{} as never,{} as never,{} as never,{} as never,{} as never,compras as never,{} as never,router as never,candy as never,new ComboService());
+    pagina.reservaToken='reserva';pagina.funcion.set({id:4});pagina.cargandoCombos.set(false);pagina.seleccionCandy.set([{producto:pochoclo,cantidad:2}]);
     vi.spyOn(pagina,'calcularTotalFinal').mockReturnValue(8000);
     await pagina.irAlPago();
-    expect(compras.actualizarTotalPendiente).toHaveBeenCalledWith(20,8000);
-    expect(candy.prepararPedidoCheckout).toHaveBeenCalledWith(20,[{producto:pochoclo,cantidad:2}]);
+    expect(compras.actualizarTotalPendiente).toHaveBeenCalledWith(20,8000,null);
+    expect(candy.prepararPedidoCheckout).toHaveBeenCalledWith(20,[{producto:pochoclo,cantidad:2}],null);
     expect(router.navigate).toHaveBeenCalledWith(['/pago',20]);
   });
   it('un fallo guardando Candy no permite navegar al pago',async()=>{
     const router={navigate:vi.fn()};
-    const pagina=new Checkout({} as never,{obtenerReservaPorToken:async()=>[butaca()]} as never,{} as never,{} as never,{} as never,{} as never,{} as never,{obtenerCompraPorReserva:async()=>compra,actualizarTotalPendiente:async()=>{}} as never,{} as never,router as never,{prepararPedidoCheckout:async()=>{throw new Error('fallo Candy');}} as never);
-    pagina.funcion.set({id:4});await pagina.irAlPago();
+    const pagina=new Checkout({} as never,{obtenerReservaPorToken:async()=>[butaca()]} as never,{} as never,{} as never,{} as never,{} as never,{} as never,{obtenerCompraPorReserva:async()=>compra,actualizarTotalPendiente:async()=>{}} as never,{} as never,router as never,{prepararPedidoCheckout:async()=>{throw new Error('fallo Candy');}} as never,new ComboService());
+    pagina.funcion.set({id:4});pagina.cargandoCombos.set(false);await pagina.irAlPago();
     expect(router.navigate).not.toHaveBeenCalled();expect(pagina.errorPago()).toBe('fallo Candy');expect(pagina.preparandoPago()).toBe(false);
   });
   it('una confirmación paga ambas partes y acredita Candy sin descontarlo con la entrada gratis',async()=>{
@@ -502,7 +504,7 @@ describe('Candy desde checkout y pago conjunto', () => {
     const candy={obtenerPedidoPorCompra:async()=>pedido,confirmarPagoPedido:vi.fn().mockResolvedValue({...pedido,estado:'pagado'}),limpiarSeleccion:vi.fn()};
     const fidelizacion={calcularDescuentoEntrada:()=>8000,confirmarCompraConBeneficio:vi.fn().mockResolvedValue({...compra,total:0,estado:'pagada'}),acreditarPuntosPorCompra:async()=>true,acreditarPuntosPorCandy:vi.fn().mockResolvedValue(true)};
     const router={navigate:vi.fn()};
-    const pagina=new Pago({} as never,router as never,{obtenerCompraPorId:async()=>compra} as never,{obtenerReservaPorToken:async()=>[butaca()],confirmarButacasReserva:async()=>true} as never,{obtenerEntradaPorCompra:async()=>({codigo:'qr'})} as never,fidelizacion as never,{obtenerSesion:async()=>({user:{id:'cliente'}})} as never,candy as never);
+    const pagina=new Pago({} as never,router as never,{obtenerCompraPorId:async()=>compra} as never,{obtenerReservaPorToken:async()=>[butaca()],confirmarButacasReserva:async()=>true} as never,{obtenerEntradaPorCompra:async()=>({codigo:'qr'})} as never,fidelizacion as never,{obtenerSesion:async()=>({user:{id:'cliente'}})} as never,candy as never,new ComboService());
     pagina.compra.set(compra);pagina.pedidoCandy.set(pedido as never);pagina.beneficioId.set(30);
     expect(pagina.total()).toBe(500);
     await pagina.confirmarPago();

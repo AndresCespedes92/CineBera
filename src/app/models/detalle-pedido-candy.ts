@@ -13,6 +13,7 @@ export interface DetallePedidoCandy {
   nombreProducto: string;
 
   cantidad: number;
+  cantidadCombo?: number;
 
   precioUnitario: number;
 

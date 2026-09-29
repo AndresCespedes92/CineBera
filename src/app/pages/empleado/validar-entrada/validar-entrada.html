@@ -187,11 +187,12 @@
         <span>
           Cantidad:
           {{ detalle.cantidad }}
+          @if (detalle.cantidadCombo) { ({{ detalle.cantidadCombo }} incluidos en combo) }
         </span>
 
         <span>
           ${{ detalle.precioUnitario }}
-          c/u
+          por unidad adicional
         </span>
 
         <span>

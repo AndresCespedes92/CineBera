@@ -10,6 +10,7 @@ import {
   Compra,
   NuevaCompra
 } from '../models/compra';
+import { SeleccionCombo } from '../models/combo';
 
 
 @Injectable({
@@ -17,8 +18,13 @@ import {
 })
 export class CompraService {
 
-  async actualizarTotalPendiente(id: number, total: number): Promise<void> {
-    const { data, error } = await supabase.from('compras').update({ total })
+  async actualizarTotalPendiente(id: number, total: number, seleccion?: SeleccionCombo | null): Promise<void> {
+    const combo = seleccion?.combo;
+    const { data, error } = await supabase.from('compras').update({ total,
+      combo_id: combo?.id ?? null, combo_nombre: combo?.nombre ?? null,
+      combo_precio: combo?.precio ?? null, combo_cantidad: seleccion?.cantidad ?? 0,
+      combo_pochoclo_id: combo?.pochoclo_id ?? null, combo_bebida_id: combo?.bebida_id ?? null
+    })
       .eq('id', id).eq('estado', 'pendiente').select('id').maybeSingle();
     if (error || !data) throw new Error('No se pudo actualizar el resumen de entradas.');
   }
