@@ -1,11 +1,13 @@
+import { MatButtonModule } from '@angular/material/button';
 import { AlertaService } from '../../services/alerta';
 import { Component, OnInit, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { Usuario } from '../../services/usuario';
 
-@Component({selector: 'app-navbar', imports: [RouterLink], templateUrl: './navbar.html', styleUrl: './navbar.css'})
+@Component({selector: 'app-navbar', imports: [RouterLink, RouterLinkActive, MatButtonModule], templateUrl: './navbar.html', styleUrl: './navbar.css'})
 export class Navbar implements OnInit {
+  menuAbierto = signal(false);
   errorAlertas = signal(false);
   errorSesion = signal('');
   cerrando = signal(false);

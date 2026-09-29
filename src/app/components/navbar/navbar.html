@@ -1,4 +1,4 @@
-<nav class="navbar">
+<nav class="navbar" aria-label="Navegación principal" [class.menu-abierto]="menuAbierto()">
 
   <!--
     Logo/nombre de la aplicación.
@@ -14,18 +14,19 @@
   <!-- =========================
        NAVEGACIÓN PRINCIPAL
        ========================= -->
-  <div class="navbar-links">
+  <button matButton="filled" type="button" class="menu-toggle" [attr.aria-expanded]="menuAbierto()" aria-controls="menu-principal menu-sesion" (click)="menuAbierto.set(!menuAbierto())">{{ menuAbierto() ? 'Cerrar menú' : 'Menú' }}</button>
+  <div class="navbar-links" id="menu-principal" (click)="menuAbierto.set(false)" (keydown.escape)="menuAbierto.set(false)">
 
     <!--
       Estas opciones son públicas.
       Pueden utilizarlas tanto visitantes
       como usuarios registrados.
     -->
-    <a routerLink="/">
+    <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/">
       Cartelera
     </a>
 
-    <a routerLink="/proximamente">
+    <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/proximamente">
       Próximamente
     </a>
 
@@ -38,15 +39,15 @@
     -->
     @if (usuarioAutenticado()) {
 
-      <a routerLink="/alertas">Mis alertas @if(alertas.noLeidas()){ ({{alertas.noLeidas()}} nuevas) } @if(errorAlertas()){ (sin actualizar) }</a>
-      <a routerLink="/mis-peliculas">
+      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/alertas">Mis alertas @if(alertas.noLeidas()){ ({{alertas.noLeidas()}} nuevas) } @if(errorAlertas()){ (sin actualizar) }</a>
+      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/mis-peliculas">
         Mis películas
       </a>
 
-      <a routerLink="/fidelizacion">Fidelización / Recompensas</a>
-      @if (rol() === 'admin') { <a routerLink="/admin/home">Administración</a> }
-      @if (rol() === 'admin' || rol() === 'empleado') { <a routerLink="/empleado/validar-entrada">Entradas y retiros Candy</a> }
-      <a routerLink="/perfil">
+      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/fidelizacion">Fidelización / Recompensas</a>
+      @if (rol() === 'admin') { <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/admin/home">Administración</a> }
+      @if (rol() === 'admin' || rol() === 'empleado') { <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/empleado/validar-entrada">Entradas y retiros Candy</a> }
+      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/perfil">
         Mi perfil
       </a>
 
@@ -58,7 +59,7 @@
   <!-- =========================
        ESTADO DE AUTENTICACIÓN
        ========================= -->
-  <div class="navbar-auth">
+  <div class="navbar-auth" id="menu-sesion">
 
     @if (usuarioAutenticado()) {
 
