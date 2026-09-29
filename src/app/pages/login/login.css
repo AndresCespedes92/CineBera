@@ -7,7 +7,7 @@
 
   padding: 24px;
 
-  background-color: #f5f5f5;
+  background-color: var(--cine-bg);
 }
 
 
@@ -17,9 +17,9 @@
 
   padding: 32px;
 
-  background-color: #ffffff;
+  background-color: var(--cine-surface);
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 }
 
 
@@ -38,7 +38,7 @@
 .login-header p {
   margin: 0;
 
-  color: #666666;
+  color: var(--cine-muted);
 }
 
 
@@ -55,7 +55,7 @@
 .form-field input {
   padding: 10px;
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 
   font-size: 16px;
 }
@@ -66,16 +66,16 @@
 
   padding: 10px;
 
-  background-color: #eeeeee;
+  background-color: var(--cine-panel);
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 
   cursor: pointer;
 }
 
 
 .boton-ingresar:hover {
-  background-color: #dddddd;
+  background-color: var(--cine-panel);
 }
 
 
@@ -89,10 +89,10 @@
 .registro-cliente p {
   margin-bottom: 8px;
 
-  color: #666666;
+  color: var(--cine-muted);
 }
 
 
 .registro-cliente a {
-  color: #222222;
+  color: var(--cine-text);
 }

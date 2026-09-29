@@ -2,7 +2,7 @@
 <main class="cliente-home">
  <h1>Mis alertas</h1>
  <p>Te avisamos aquí cuando se habilita la venta o preventa de una película que seguís. Se comprueba al entrar a CineBera o actualizar esta pantalla; no se envían avisos con la aplicación cerrada.</p>
- <button type="button" (click)="cargar()" [disabled]="cargando()">Actualizar alertas</button>
+ <button matButton="filled" type="button" (click)="cargar()" [disabled]="cargando()">Actualizar alertas</button>
  @if(cargando()){<p role="status">Comprobando disponibilidad...</p>}
  @else if(error()){<p role="alert">{{error()}}</p>}
  @else {
@@ -10,11 +10,11 @@
    <article><h2>{{alerta.titulo}}</h2>
     @if(alerta.notificada_at){
      <p>{{alerta.leida?'Aviso leído':'Nuevo aviso'}}: se habilitó la venta de entradas.</p>
-     @if(!alerta.leida){<button type="button" (click)="actualizar(alerta.pelicula_id,true)">Marcar como leída</button>}
+     @if(!alerta.leida){<button matButton="filled" type="button" (click)="actualizar(alerta.pelicula_id,true)">Marcar como leída</button>}
     }
     @if(alerta.disponible){<p>Venta habilitada. Butacas sujetas a disponibilidad.</p><a [routerLink]="['/pelicula',alerta.pelicula_id,'funciones']">Ver funciones</a>}
     @else {<p>Actualmente no hay funciones habilitadas para comprar. Tu alerta sigue activa.</p>}
-    <p><button type="button" (click)="actualizar(alerta.pelicula_id,false)">Desactivar alerta</button></p>
+    <p><button matButton="filled" type="button" (click)="actualizar(alerta.pelicula_id,false)">Desactivar alerta</button></p>
    </article>
   } @empty {<p>No tenés alertas activas. <a routerLink="/proximamente">Elegir próximos estrenos</a></p>}
  }

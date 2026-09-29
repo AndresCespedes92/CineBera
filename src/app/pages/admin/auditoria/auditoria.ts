@@ -1,10 +1,11 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, JsonPipe } from '@angular/common';
 import { AuditoriaService } from '../../../services/auditoria';
 import { AccionAuditoria, accionesAuditoria, RegistroAuditoria } from '../../../models/auditoria';
 
-@Component({selector: 'app-auditoria', imports: [FormsModule, DatePipe, JsonPipe], templateUrl: './auditoria.html', styleUrl: '../recompensas/recompensas.css'})
+@Component({selector: 'app-auditoria', imports: [MatButtonModule, FormsModule, DatePipe, JsonPipe], templateUrl: './auditoria.html', styleUrl: '../recompensas/recompensas.css'})
 export class Auditoria implements OnInit {
   acciones = accionesAuditoria;
   accion: AccionAuditoria | '' = '';

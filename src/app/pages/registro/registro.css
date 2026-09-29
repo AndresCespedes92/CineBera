@@ -6,7 +6,7 @@
 
   padding: 32px 24px;
 
-  background-color: #f5f5f5;
+  background-color: var(--cine-bg);
 }
 
 
@@ -16,9 +16,9 @@
 
   padding: 32px;
 
-  background-color: #ffffff;
+  background-color: var(--cine-surface);
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 }
 
 
@@ -27,7 +27,7 @@
 
   margin-bottom: 24px;
 
-  color: #444444;
+  color: var(--cine-text);
 
   text-decoration: none;
 }
@@ -46,7 +46,7 @@
 .registro-header p {
   margin: 0;
 
-  color: #666666;
+  color: var(--cine-muted);
 }
 
 
@@ -64,14 +64,14 @@
 .form-field select {
   padding: 10px;
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 
   font-size: 16px;
 }
 
 
 .error {
-  color: #a00000;
+  color: var(--cine-danger);
 
   font-size: 13px;
 }
@@ -82,16 +82,16 @@
 
   padding: 12px;
 
-  background-color: #eeeeee;
+  background-color: var(--cine-panel);
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 
   cursor: pointer;
 }
 
 
 .boton-registrar:hover {
-  background-color: #dddddd;
+  background-color: var(--cine-panel);
 }
 
 
@@ -105,25 +105,25 @@
 .login-link p {
   margin-bottom: 8px;
 
-  color: #666666;
+  color: var(--cine-muted);
 }
 
 .input-valido {
-  border: 2px solid #2e7d32;
-  background-color: #f1f8f2;
+  border: 2px solid var(--cine-success);
+  background-color: var(--cine-surface);
   outline: none;
 }
 
 .input-invalido {
-  border: 2px solid #c62828;
-  background-color: #fdf2f2;
+  border: 2px solid var(--cine-danger);
+  background-color: var(--cine-surface);
   outline: none;
 }
 
 .mensaje-error {
   display: block;
   margin-top: 4px;
-  color: #c62828;
+  color: var(--cine-danger);
   font-size: 0.85rem;
 }
 
@@ -136,9 +136,9 @@
 .fecha-nacimiento select {
   width: 100%;
   padding: 12px;
-  border: 1px solid #bdbdbd;
+  border: 1px solid var(--cine-border);
   border-radius: 4px;
-  background-color: white;
+  background-color: var(--cine-surface);
   font-size: 1rem;
 }
 

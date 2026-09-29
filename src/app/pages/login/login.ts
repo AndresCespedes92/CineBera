@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, OnInit } from '@angular/core';
 import {
   Router,
@@ -15,7 +16,7 @@ import { Usuario } from '../../services/usuario';
    * se utiliza desde el HTML para navegar
    * hacia el registro de clientes.
    */
-  imports: [
+  imports: [MatButtonModule,
     RouterLink,
     FormsModule
   ],
@@ -41,7 +42,7 @@ export class Login {
     private usuarioService: Usuario
   ) {}
 
-  
+
   /*
    * LOGIN TEMPORAL
    *

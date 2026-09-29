@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Navbar } from '../../../components/navbar/navbar';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -10,7 +11,7 @@ import { Beneficio } from '../../../models/beneficio';
 
 @Component({
   selector: 'app-fidelizacion',
-  imports: [Navbar,RouterLink, QRCodeComponent, DatePipe],
+  imports: [MatButtonModule, Navbar,RouterLink, QRCodeComponent, DatePipe],
   templateUrl: './fidelizacion.html',
   styleUrl: './fidelizacion.css'
 })

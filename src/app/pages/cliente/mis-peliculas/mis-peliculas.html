@@ -4,7 +4,7 @@
   <p>Crédito disponible: ARS {{ saldo() }}</p>
   <p>Podés cancelar hasta dos horas antes de la función si no usaste la entrada ni retiraste Candy. Se cancela toda la compra y se genera crédito; no hay devolución de dinero. Los canjes ya usados no se restituyen.</p>
   @if (mensaje()) { <p role="status">{{ mensaje() }}</p> }
-  <button type="button" (click)="cargar()" [disabled]="cargando()">Actualizar historial</button>
+  <button matButton="filled" type="button" (click)="cargar()" [disabled]="cargando()">Actualizar historial</button>
   @if (error()) { <p role="alert">{{ error() }}</p> }
   @if (cargando()) { <p role="status">Cargando tus películas...</p> }
   <section class="cartelera-listado" aria-label="Historial de películas">
@@ -16,13 +16,13 @@
         <p>Compra #{{ pelicula.compraId }} · {{ pelicula.estado }}</p>
         @if (pelicula.estado === 'cancelada') {
           <p>Reintegro en crédito: ARS {{ pelicula.reintegro }}</p>
-          @if (!pelicula.cancelacionCompleta) { <button type="button" (click)="cancelar(pelicula.compraId)" [disabled]="procesando()">Completar cancelación pendiente</button> }
+          @if (!pelicula.cancelacionCompleta) { <button matButton="filled" type="button" (click)="cancelar(pelicula.compraId)" [disabled]="procesando()">Completar cancelación pendiente</button> }
         } @else {
           @if (confirmarCancelacion() === pelicula.compraId) {
             <p>¿Cancelar toda esta compra, incluidas sus entradas y Candy?</p>
-            <button type="button" (click)="cancelar(pelicula.compraId)" [disabled]="procesando()">Confirmar cancelación</button>
-            <button type="button" (click)="confirmarCancelacion.set(null)" [disabled]="procesando()">Conservar compra</button>
-          } @else { <button type="button" (click)="confirmarCancelacion.set(pelicula.compraId)" [disabled]="procesando()">{{ pelicula.estado === 'pendiente' ? 'Anular reserva pendiente' : 'Cancelar compra' }}</button> }
+            <button matButton="filled" type="button" (click)="cancelar(pelicula.compraId)" [disabled]="procesando()">Confirmar cancelación</button>
+            <button matButton="filled" type="button" (click)="confirmarCancelacion.set(null)" [disabled]="procesando()">Conservar compra</button>
+          } @else { <button matButton="filled" type="button" (click)="confirmarCancelacion.set(pelicula.compraId)" [disabled]="procesando()">{{ pelicula.estado === 'pendiente' ? 'Anular reserva pendiente' : 'Cancelar compra' }}</button> }
           <p><a [routerLink]="['/pago',pelicula.compraId]">Consultar pago / completar emisión</a></p>
         }
         <p>Función: {{ pelicula.fechaFuncion ? (pelicula.fechaFuncion | date:'dd/MM/yyyy HH:mm') : 'Fecha no disponible' }}</p>
@@ -35,5 +35,5 @@
       @if (!cargando() && !error()) { <p>Todavía no tenés películas compradas. <a routerLink="/cartelera">Ver cartelera</a></p> }
     }
   </section>
-  @if (siguiente() !== null) { <button type="button" (click)="cargar(true)" [disabled]="cargando()">Cargar más</button> }
+  @if (siguiente() !== null) { <button matButton="filled" type="button" (click)="cargar(true)" [disabled]="cargando()">Cargar más</button> }
 </main>

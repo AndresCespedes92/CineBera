@@ -4,7 +4,7 @@
   </header>
   @if (cargando()) { <p role="status">Cargando Candy...</p> }
   @else {
-    @if (error()) { <p role="alert">{{ error() }}</p><button (click)="cargar()" [disabled]="guardando()">Reintentar carga</button> }
+    @if (error()) { <p role="alert">{{ error() }}</p><button matButton="filled" (click)="cargar()" [disabled]="guardando()">Reintentar carga</button> }
     @if (mensaje()) { <p role="status">{{ mensaje() }}</p> }
     <form (ngSubmit)="guardarProducto()" #productoForm="ngForm">
       <h2>{{ productoId ? 'Editar producto' : 'Crear producto' }}</h2>
@@ -18,8 +18,8 @@
         <label>Precio <input name="precio" type="number" [(ngModel)]="producto.precio" required min="0.01" max="99999999.99" step="0.01"></label>
         <label>URL de imagen (opcional) <input name="imagen" type="url" [(ngModel)]="producto.imagenUrl"></label>
         <label><input name="activo" type="checkbox" [(ngModel)]="producto.activo"> Activo</label>
-        <button type="submit" [disabled]="productoForm.invalid || !producto.categoriaId">Guardar producto</button>
-        <button type="button" (click)="cancelarProducto()">Cancelar edición</button>
+        <button matButton="filled" type="submit" [disabled]="productoForm.invalid || !producto.categoriaId">Guardar producto</button>
+        <button matButton="filled" type="button" (click)="cancelarProducto()">Cancelar edición</button>
       </fieldset>
     </form>
     <div class="lista-recompensas">
@@ -28,8 +28,8 @@
           <h3>{{ p.nombre }} · ARS {{ p.precio }}</h3><p>{{ p.descripcion }}</p>
           <p>{{ nombreCategoria(p.categoriaId) }} · {{ p.activo ? 'Activo' : 'Inactivo' }}</p>
         </div><div class="recompensa__acciones">
-          <button (click)="editarProducto(p)" [disabled]="guardando()">Editar {{ p.nombre }}</button>
-          <button (click)="cambiarProducto(p)" [disabled]="guardando()">{{ p.activo ? 'Desactivar' : 'Activar' }} {{ p.nombre }}</button>
+          <button matButton="filled" (click)="editarProducto(p)" [disabled]="guardando()">Editar {{ p.nombre }}</button>
+          <button matButton="filled" (click)="cambiarProducto(p)" [disabled]="guardando()">{{ p.activo ? 'Desactivar' : 'Activar' }} {{ p.nombre }}</button>
         </div></article>
       } @empty { <p>No hay productos. Creá el primero con el formulario.</p> }
     </div>
@@ -39,16 +39,16 @@
       <fieldset [disabled]="guardando()">
         <label>Nombre <input name="nombreCategoria" [(ngModel)]="categoria.nombre" required maxlength="80" [readonly]="categoriaProtegida()"></label>
         <label><input name="categoriaActiva" type="checkbox" [(ngModel)]="categoria.activo"> Activa</label>
-        <button type="submit" [disabled]="categoriaForm.invalid">Guardar categoría</button>
-        <button type="button" (click)="cancelarCategoria()">Cancelar edición</button>
+        <button matButton="filled" type="submit" [disabled]="categoriaForm.invalid">Guardar categoría</button>
+        <button matButton="filled" type="button" (click)="cancelarCategoria()">Cancelar edición</button>
       </fieldset>
     </form>
     <div class="lista-recompensas">
       @for (c of categorias(); track c.id) {
         <article class="recompensa"><h3>{{ c.nombre }} · {{ c.activo ? 'Activa' : 'Inactiva' }}</h3>
           <div class="recompensa__acciones">
-            <button (click)="editarCategoria(c)" [disabled]="guardando()">Editar {{ c.nombre }}</button>
-            <button (click)="cambiarCategoria(c)" [disabled]="guardando()">{{ c.activo ? 'Desactivar' : 'Activar' }} {{ c.nombre }}</button>
+            <button matButton="filled" (click)="editarCategoria(c)" [disabled]="guardando()">Editar {{ c.nombre }}</button>
+            <button matButton="filled" (click)="cambiarCategoria(c)" [disabled]="guardando()">{{ c.activo ? 'Desactivar' : 'Activar' }} {{ c.nombre }}</button>
           </div>
         </article>
       } @empty { <p>No hay categorías. Creá una antes de cargar productos.</p> }

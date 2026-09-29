@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component } from '@angular/core';
 import {
   FormControl,
@@ -30,7 +31,7 @@ import {
    * lo utilizaremos para que el cliente pueda
    * volver al Login.
    */
-  imports: [
+  imports: [MatButtonModule,
     ReactiveFormsModule,
     RouterLink, NgClass
   ],
@@ -148,7 +149,7 @@ registroForm = new FormGroup({
     validators: [Validators.required,Validators.min(0)]
   })
 
-}, 
+},
   {
     // Este validador analiza el formulario completo.
     validators: [
@@ -157,7 +158,7 @@ registroForm = new FormGroup({
 ]
   });
 
-  
+
   /*
    * AGREGAR VALIDAR - CONFIRMAR CONTRASEÑA
    */

@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import {
   ChangeDetectorRef,
   Component,
@@ -27,7 +28,7 @@ import {
 @Component({
   selector: 'app-editar-pelicula',
 
-  imports: [
+  imports: [MatButtonModule,
     FormsModule,
     RouterLink
   ],

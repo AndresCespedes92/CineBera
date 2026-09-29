@@ -23,3 +23,5 @@ PrimeNG ofrece componentes y temas basados en tokens: https://primeng.dev/themin
 Referencia de cine consultada: https://www.cinemark.com.ar/ muestra cartelera, filtros y metadatos de películas. El acceso web a Cinépolis no pudo verificarse en esta revisión. La adaptación visual y evaluación móvil quedan pendientes del bloque de diseño. Conservar el flujo acordado: checkout > Candy > checkout > Ir al pago, y usar Figma como referencia visual principal.
 
 Compilación de producción aprobada; persisten avisos de presupuesto inicial (520,16 kB frente a 500 kB) y dependencias CommonJS.
+
+Actualización UX: la confirmación dentro de la app ahora usa MatDialog de Angular Material. El contrato del guard admite Observable además de boolean. Antes de cerrar o recargar se conserva el aviso nativo del navegador. Ver docs/ux-etapa-4.md.

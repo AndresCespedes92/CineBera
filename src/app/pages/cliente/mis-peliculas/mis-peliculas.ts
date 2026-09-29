@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { CreditoService } from '../../../services/credito';
 import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -6,7 +7,7 @@ import { Navbar } from '../../../components/navbar/navbar';
 import { CompraService } from '../../../services/compra';
 import { PeliculaComprada } from '../../../models/pelicula-comprada';
 
-@Component({selector:'app-mis-peliculas',imports:[Navbar,RouterLink,DatePipe],
+@Component({selector:'app-mis-peliculas',imports: [MatButtonModule, Navbar,RouterLink,DatePipe],
   templateUrl:'./mis-peliculas.html',styleUrl:'../home/home.css'})
 export class MisPeliculas implements OnInit {
   peliculas = signal<PeliculaComprada[]>([]);

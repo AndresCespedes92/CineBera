@@ -6,7 +6,7 @@
     <fieldset [disabled]="cargando() || exportando()">
       <label>Desde <input type="date" name="desde" [(ngModel)]="desde" required></label>
       <label>Hasta <input type="date" name="hasta" [(ngModel)]="hasta" required></label>
-      <button type="submit" [disabled]="form.invalid">Consultar</button>
+      <button matButton="filled" type="submit" [disabled]="form.invalid">Consultar</button>
     </fieldset>
   </form>
   <p>Hasta 366 días por consulta. Los filtros se aplican al pulsar Consultar.</p>
@@ -17,10 +17,10 @@
     <p>Facturación: ARS {{ r.totales.total | number:'1.2-2' }} · Entradas: {{ r.totales.entradas }} · Compras: {{ r.totales.compras }}</p>
     @if (r.comprasSinButacas) { <p role="alert">Advertencia: {{ r.comprasSinButacas }} compras pagadas no tienen butacas confirmadas. Revisá esos registros; no se estimaron sus entradas.</p> }
     @if (!r.totales.compras) { <p>No hay ventas pagadas para este período.</p> }
-    <button (click)="exportar('pdf')" [disabled]="exportando()">Exportar PDF</button>
-    <button (click)="exportar('excel')" [disabled]="exportando()">Exportar Excel (XML)</button>
+    <button matButton="filled" (click)="exportar('pdf')" [disabled]="exportando()">Exportar PDF</button>
+    <button matButton="filled" (click)="exportar('excel')" [disabled]="exportando()">Exportar Excel (XML)</button>
     @if (exportando()) { <p role="status">Preparando descarga...</p> }
-    <table>
+    <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla desplazable"><table>
       <caption>Ventas por día de pago. Importes en ARS.</caption>
       <thead><tr><th scope="col">Fecha</th><th scope="col">Compras</th><th scope="col">Entradas</th><th scope="col">Entradas/combos</th><th scope="col">Candy extra</th><th scope="col">Total</th></tr></thead>
       <tbody>
@@ -29,6 +29,6 @@
         }
       </tbody>
       <tfoot><tr><th scope="row">Total</th><td>{{ r.totales.compras }}</td><td>{{ r.totales.entradas }}</td><td>{{ r.totales.entradasCombos | number:'1.2-2' }}</td><td>{{ r.totales.candy | number:'1.2-2' }}</td><td>{{ r.totales.total | number:'1.2-2' }}</td></tr></tfoot>
-    </table>
+    </table></div>
   } @else { @if (!cargando() && !error()) { <p>Elegí un período y pulsá Consultar.</p> } }
 </section>

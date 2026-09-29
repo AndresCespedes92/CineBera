@@ -88,7 +88,7 @@
         {{ cupon.porcentaje }}%
       </strong>
 
-      <button
+      <button matButton="filled"
         type="button"
         (click)="editarCupon(cupon)"
       >
@@ -100,7 +100,7 @@
   Simplemente modificamos si está disponible
   para los clientes.
 -->
-<button
+<button matButton="filled"
   type="button"
   [disabled]="guardando()"
   (click)="cambiarEstado(cupon)"
@@ -137,7 +137,7 @@
       </label>
 
 
-      <button
+      <button matButton="filled"
         type="button"
         [disabled]="guardando()"
         (click)="guardarCupon(cupon)"
@@ -151,7 +151,7 @@
       </button>
 
 
-      <button
+      <button matButton="filled"
         type="button"
         [disabled]="guardando()"
         (click)="cancelarEdicion()"

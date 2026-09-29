@@ -1,10 +1,11 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EstadisticaService } from '../../../services/estadistica';
 import { fechaBuenosAires } from '../../../services/reporte';
 import { Estadisticas } from '../../../models/grafico';
 
-@Component({selector: 'app-graficos', imports: [FormsModule], templateUrl: './graficos.html', styleUrl: '../recompensas/recompensas.css'})
+@Component({selector: 'app-graficos', imports: [MatButtonModule, FormsModule], templateUrl: './graficos.html', styleUrl: '../recompensas/recompensas.css'})
 export class Graficos {
   fecha = fechaBuenosAires();
   tipo: 'semana' | 'mes' = 'semana';

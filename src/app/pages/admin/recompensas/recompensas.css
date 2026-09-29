@@ -19,10 +19,10 @@
 
   padding: 20px;
 
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--cine-border);
   border-radius: 8px;
 
-  background: #ffffff;
+  background: var(--cine-surface);
 }
 
 .recompensa__informacion {

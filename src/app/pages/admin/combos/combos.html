@@ -2,7 +2,7 @@
   <header><h1>Combos</h1><p>Una entrada + un pochoclo + una bebida, a precio fijo.</p><a routerLink="/admin/home">Volver al panel</a></header>
   @if (cargando()) { <p>Cargando combos...</p> }
   @else {
-    @if (error()) { <p role="alert">{{ error() }}</p><button (click)="cargar()" [disabled]="guardando()">Reintentar carga</button> }
+    @if (error()) { <p role="alert">{{ error() }}</p><button matButton="filled" (click)="cargar()" [disabled]="guardando()">Reintentar carga</button> }
     @if (mensaje()) { <p role="status">{{ mensaje() }}</p> }
     <form (ngSubmit)="guardar()" #form="ngForm">
       <h2>{{ editandoId ? 'Editar combo' : 'Crear combo' }}</h2>
@@ -18,8 +18,8 @@
           @for (producto of productos(); track producto.id) { @if (producto.categoria === 'Bebidas') { <option [ngValue]="producto.id">{{ producto.nombre }}</option> } }
         </select></label>
         <label><input name="activo" type="checkbox" [(ngModel)]="formulario.activo"> Activo</label>
-        <button type="submit" [disabled]="form.invalid || !formulario.pochoclo_id || !formulario.bebida_id">{{ guardando() ? 'Guardando...' : 'Guardar' }}</button>
-        <button type="button" (click)="cancelar()">Cancelar edición</button>
+        <button matButton="filled" type="submit" [disabled]="form.invalid || !formulario.pochoclo_id || !formulario.bebida_id">{{ guardando() ? 'Guardando...' : 'Guardar' }}</button>
+        <button matButton="filled" type="button" (click)="cancelar()">Cancelar edición</button>
       </fieldset>
     </form>
     <div class="lista-recompensas">
@@ -29,8 +29,8 @@
           <p>Una entrada + {{ nombreProducto(combo.pochoclo_id) }} + {{ nombreProducto(combo.bebida_id) }}</p>
           <p>{{ combo.activo ? 'Activo' : 'Inactivo' }}</p>
         </div><div class="recompensa__acciones">
-          <button (click)="editar(combo)" [disabled]="guardando()">Editar</button>
-          <button (click)="cambiarEstado(combo)" [disabled]="guardando()">{{ combo.activo ? 'Desactivar' : 'Activar' }}</button>
+          <button matButton="filled" (click)="editar(combo)" [disabled]="guardando()">Editar</button>
+          <button matButton="filled" (click)="cambiarEstado(combo)" [disabled]="guardando()">{{ combo.activo ? 'Desactivar' : 'Activar' }}</button>
         </div></article>
       } @empty { <p>No hay combos configurados. Creá el primero con el formulario.</p> }
     </div>

@@ -1,8 +1,143 @@
-.mapa-scroll{overflow-x:auto;overscroll-behavior-x:contain;padding:1rem 0;border:1px solid var(--cine-border);border-radius:6px;background:var(--cine-surface)}
-.pantalla{width:1050px;margin:1rem auto 2rem;text-align:center;padding:.6rem;border-top:3px solid var(--cine-accent);color:var(--cine-muted);letter-spacing:.3em}
-.mapa-butacas{width:max-content;min-width:1050px;margin:auto;padding:0 1rem}.fila{display:flex;align-items:center;margin-bottom:8px}.nombre-fila,.fila-vacia span:first-child{width:30px;text-align:center;font-weight:600}.sector{display:flex;gap:4px}.pasillo{width:30px;flex-shrink:0}
-.sector button{width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--cine-muted);border-radius:4px 4px 10px 10px;background:var(--cine-bg);color:var(--cine-text)}
-.sector .butaca-vip{border:2px solid var(--cine-vip);color:var(--cine-vip)}.sector .butaca-accesible{border:2px dashed var(--cine-info);color:var(--cine-info)}.sector .butaca-seleccionada{background:var(--cine-accent);color:var(--cine-bg);border-color:var(--cine-accent)}.sector .butaca-ocupada{background:var(--cine-panel);border-style:dashed;color:var(--cine-muted);text-decoration:line-through;opacity:.65}
-.fila-vacia{display:flex;align-items:center;height:48px}.fila-vacia span:last-child{width:100%;text-align:center;color:var(--cine-info)}
-.resumen-seleccion{margin-top:2rem;padding:1.5rem;border:1px solid var(--cine-border);border-radius:6px;background:var(--cine-surface)}.lista-seleccionadas{display:flex;flex-wrap:wrap;gap:.5rem}.lista-seleccionadas span{padding:.5rem;background:var(--cine-panel);border-radius:4px}.informacion-precio{padding:1rem;border-left:3px solid var(--cine-accent)}
-.leyenda-butacas{list-style:none;display:flex;gap:1rem;flex-wrap:wrap;padding:0;font-size:.85rem}.leyenda-butacas li{display:flex;gap:.5rem;align-items:center}.leyenda-butacas i{width:18px;height:18px;border:1px solid var(--cine-muted);border-radius:3px}.leyenda-butacas .vip{border-color:var(--cine-vip)}.leyenda-butacas .accesible{border:2px dashed var(--cine-info)}.leyenda-butacas .seleccionada{background:var(--cine-accent)}.leyenda-butacas .ocupada{background:var(--cine-panel);border-style:dashed}.ayuda-mapa{color:var(--cine-muted);font-size:.85rem}.error,.mensaje-edad{color:var(--cine-danger)}
+.mapa-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 1rem 0;
+  border: 1px solid var(--cine-border);
+  border-radius: 6px;
+  background: var(--cine-surface);
+}
+.pantalla {
+  width: 1050px;
+  margin: 1rem auto 2rem;
+  text-align: center;
+  padding: 0.6rem;
+  border-top: 3px solid var(--cine-accent);
+  color: var(--cine-muted);
+  letter-spacing: 0.3em;
+}
+.mapa-butacas {
+  width: max-content;
+  min-width: 1050px;
+  margin: auto;
+  padding: 0 1rem;
+}
+.fila {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.nombre-fila,
+.fila-vacia span:first-child {
+  width: 30px;
+  text-align: center;
+  font-weight: 600;
+}
+.sector {
+  display: flex;
+  gap: 4px;
+}
+.pasillo {
+  width: 30px;
+  flex-shrink: 0;
+}
+.sector button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--cine-muted);
+  border-radius: 4px 4px 10px 10px;
+  background: var(--cine-bg);
+  color: var(--cine-text);
+}
+.sector .butaca-vip {
+  border: 2px solid var(--cine-vip);
+  color: var(--cine-vip);
+}
+.sector .butaca-accesible {
+  border: 2px dashed var(--cine-info);
+  color: var(--cine-info);
+}
+.sector .butaca-seleccionada {
+  background: var(--cine-accent);
+  color: var(--cine-bg);
+  border-color: var(--cine-accent);
+}
+.sector .butaca-ocupada {
+  background: var(--cine-panel);
+  border-style: dashed;
+  color: var(--cine-muted);
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+.fila-vacia {
+  display: flex;
+  align-items: center;
+  height: 48px;
+}
+.fila-vacia span:last-child {
+  width: 100%;
+  text-align: center;
+  color: var(--cine-info);
+}
+.resumen-seleccion {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--cine-border);
+  border-radius: 6px;
+  background: var(--cine-surface);
+}
+.lista-seleccionadas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.lista-seleccionadas span {
+  padding: 0.5rem;
+  background: var(--cine-panel);
+  border-radius: 4px;
+}
+.informacion-precio {
+  padding: 1rem;
+  border-left: 3px solid var(--cine-accent);
+}
+.leyenda-butacas {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0;
+  font-size: 0.85rem;
+}
+.leyenda-butacas li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.leyenda-butacas i {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--cine-muted);
+  border-radius: 3px;
+}
+.leyenda-butacas .vip {
+  border-color: var(--cine-vip);
+}
+.leyenda-butacas .accesible {
+  border: 2px dashed var(--cine-info);
+}
+.leyenda-butacas .seleccionada {
+  background: var(--cine-accent);
+}
+.leyenda-butacas .ocupada {
+  background: var(--cine-panel);
+  border-style: dashed;
+}
+.ayuda-mapa {
+  color: var(--cine-muted);
+  font-size: 0.85rem;
+}
+.error,
+.mensaje-edad {
+  color: var(--cine-danger);
+}
