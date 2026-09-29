@@ -1,3 +1,4 @@
+import { cambiosPendientesGuard } from './guards/cambios-pendientes-guard';
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth-guard';
 import { roleGuard } from './guards/role-guard';
@@ -212,7 +213,7 @@ export const routes: Routes = [
     { path: 'graficos', loadComponent: () => import('./pages/admin/graficos/graficos').then(m => m.Graficos) },
     { path: 'reportes', loadComponent: () => import('./pages/admin/reportes/reportes').then(m => m.Reportes) },
     { path: 'candy', loadComponent: () => import('./pages/admin/candy/candy').then(m => m.AdminCandy) },
-    { path: 'combos', loadComponent: () => import('./pages/admin/combos/combos').then(m => m.Combos) },
+    { path: 'combos', canDeactivate: [cambiosPendientesGuard], loadComponent: () => import('./pages/admin/combos/combos').then(m => m.Combos) },
 
     /*
      * /admin/home
