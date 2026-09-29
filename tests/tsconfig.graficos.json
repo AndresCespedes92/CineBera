@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "../src/tests/graficos.spec.ts",
+    "../src/tests/reportes.spec.ts"
+  ]
+}

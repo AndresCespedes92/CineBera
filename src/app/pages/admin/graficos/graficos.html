@@ -1,0 +1,39 @@
+<section class="admin-recompensas">
+  <h1>Gráficos de ventas</h1>
+  <form (ngSubmit)="consultar()" #form="ngForm">
+    <fieldset [disabled]="cargando()">
+      <label>Período <select name="tipo" [(ngModel)]="tipo"><option value="semana">Semana (lunes a domingo)</option><option value="mes">Mes calendario</option></select></label>
+      <label>Fecha dentro del período <input type="date" name="fecha" [(ngModel)]="fecha" required></label>
+      <button type="submit" [disabled]="form.invalid">Consultar gráficos</button>
+    </fieldset>
+  </form>
+  @if (cargando()) { <p role="status">Consultando ventas...</p> }
+  @if (error()) { <p role="alert">{{ error() }} Volvé a pulsar Consultar gráficos para reintentar.</p> }
+  @if (datos(); as d) {
+    <h2>{{ d.tipo === 'semana' ? 'Semana' : 'Mes' }} consultado: {{ d.desde }} al {{ d.hasta }}</h2>
+    <p>Se muestran hasta diez resultados por gráfico. Los empates se ordenan por nombre. Cada barra se compara con el máximo de su gráfico.</p>
+    <section aria-labelledby="peliculas-titulo">
+      <h2 id="peliculas-titulo">Películas más vistas</h2>
+      <p>Butacas ocupadas de compras pagadas para funciones del período. Incluye beneficios y ventas anticipadas; no acredita asistencia. Excluye cancelaciones y butacas sin compra pagada asociada.</p>
+      <ol>
+        @for (p of d.peliculas.slice(0, 10); track p.id) {
+          <li><strong>{{ p.nombre }}</strong> — {{ p.cantidad }} entradas<br>
+            <svg width="240" height="18" viewBox="0 0 240 18" aria-hidden="true" focusable="false"><rect x="0" y="0" [attr.width]="ancho(p.cantidad, d.peliculas[0].cantidad)" height="18" fill="currentColor" /></svg>
+          </li>
+        } @empty { <li>No hay entradas confirmadas para funciones de este período.</li> }
+      </ol>
+    </section>
+    <section aria-labelledby="candy-titulo">
+      <h2 id="candy-titulo">Productos Candy más vendidos</h2>
+      <p>Unidades de pedidos pagados cuya compra sigue pagada, según día de pago en Buenos Aires. Incluye productos de combos una sola vez; no incluye canjes gratuitos. Conserva productos hoy inactivos.</p>
+      @if (d.candy.length) { <p>Mayor cantidad: {{ d.candy[0].cantidad }} unidades. Puede haber varios productos empatados.</p> }
+      <ol>
+        @for (p of d.candy.slice(0, 10); track p.id) {
+          <li><strong>{{ p.nombre }}</strong> — {{ p.cantidad }} unidades<br>
+            <svg width="240" height="18" viewBox="0 0 240 18" aria-hidden="true" focusable="false"><rect x="0" y="0" [attr.width]="ancho(p.cantidad, d.candy[0].cantidad)" height="18" fill="currentColor" /></svg>
+          </li>
+        } @empty { <li>No hay ventas Candy para este período.</li> }
+      </ol>
+    </section>
+  } @else { @if (!cargando() && !error()) { <p>Elegí una fecha y consultá su semana o mes.</p> } }
+</section>
