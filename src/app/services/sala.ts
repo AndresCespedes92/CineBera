@@ -19,7 +19,7 @@ export class SalaService {
    * Obtiene solamente las salas
    * habilitadas para utilizarse.
    */
-  async obtenerSalasActivas(): Promise<Sala[]> {
+  async obtenerSalasActivas(lanzarError = false): Promise<Sala[]> {
 
     const {
       data,
@@ -32,7 +32,7 @@ export class SalaService {
         true
       )
       .order(
-        'nombre',
+        'id',
         {
           ascending: true
         }
@@ -46,6 +46,11 @@ export class SalaService {
         error
       );
 
+      // Un error de lectura no significa que no existan salas disponibles.
+      // La planificación pide detenerse; los consumidores anteriores conservan su comportamiento.
+      if (lanzarError) {
+        throw new Error('No se pudieron obtener las salas. Volvé a intentar.');
+      }
       return [];
     }
 
