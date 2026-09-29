@@ -340,7 +340,7 @@ export class PeliculaService {
         error
       );
 
-      return [];
+      throw new Error('No se pudo cargar la cartelera.');
     }
 
 

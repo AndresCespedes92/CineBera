@@ -1,0 +1,26 @@
+<section aria-label="Reseñas CineBera">
+  <h2>Reseñas CineBera</h2>
+  @if (cargando()) { <p role="status">Cargando reseñas...</p> }
+  @else {
+    @if (error()) { <p role="alert">{{ error() }}</p><button type="button" (click)="cargar()" [disabled]="guardando()">Recargar reseñas</button> }
+    @else {
+      <p>Promedio CineBera: {{ promedio() ?? 'Sin valoraciones' }} @if (promedio()) { / 5 · {{ filas().length }} reseñas }</p>
+      @if (usuario()) {
+        <form (ngSubmit)="guardar()">
+          <h3>{{ propia() ? 'Editar mi reseña' : 'Escribir mi reseña' }}</h3>
+          <label>Estrellas <select name="estrellas" [(ngModel)]="estrellas" [disabled]="guardando()">
+            @for (valor of [1,2,3,4,5]; track valor) { <option [ngValue]="valor">{{ valor }} de 5</option> }
+          </select></label>
+          <label>Comentario (hasta 300 caracteres)
+            <textarea name="comentario" [(ngModel)]="comentario" required maxlength="300" [disabled]="guardando()"></textarea>
+          </label>
+          <button type="submit" [disabled]="guardando() || !comentario.trim()">{{ guardando() ? 'Guardando...' : 'Guardar reseña' }}</button>
+        </form>
+      } @else { <p><a routerLink="/login">Iniciá sesión</a> para escribir una reseña.</p> }
+      @for (resena of filas(); track resena.usuario_id) {
+        <article><p><strong>{{ resena.usuario_id === usuario() ? 'Mi reseña' : 'Cliente CineBera' }} · {{ resena.estrellas }} / 5</strong></p><p>{{ resena.comentario }}</p></article>
+      } @empty { <p>Todavía no hay reseñas para esta película.</p> }
+    }
+    @if (mensaje()) { <p role="status">{{ mensaje() }}</p> }
+  }
+</section>
