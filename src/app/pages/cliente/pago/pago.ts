@@ -1,3 +1,4 @@
+import { CreditoService } from '../../../services/credito';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -28,6 +29,12 @@ export class Pago implements OnInit {
   butacas = signal<ButacaFuncion[]>([]);
   beneficioId = signal<number | null>(null);
   pedidoCandy = signal<PedidoCandy | null>(null);
+  saldoCredito = signal(0);
+  creditoReservado = signal(0);
+  usarCredito = signal(false);
+  creditoCargado = signal(false);
+  creditoAplicado = computed(() => this.creditoReservado() || (this.usarCredito() ? Math.min(this.saldoCredito(),this.total()) : 0));
+  restante = computed(() => Math.round(Math.max(0,this.total()-this.creditoAplicado())*100)/100);
   totalCandy = computed(() => this.pedidoCandy()?.estado !== 'cancelado' ? this.pedidoCandy()?.total ?? 0 : 0);
   descuento = computed(() => this.beneficioId() && !this.compra()?.combo_id && this.compra()?.estado === 'pendiente'
     ? this.fidelizacionService.calcularDescuentoEntrada(Number(this.compra()?.total), this.butacas()) : 0);
@@ -36,7 +43,19 @@ export class Pago implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router,
     private compraService: CompraService, private butacaService: ButacaService,
     private entradaService: EntradaService, private fidelizacionService: FidelizacionService,
-    private authService: Auth, private candyService: CandyService, private comboService: ComboService) {}
+    private authService: Auth, private candyService: CandyService, private comboService: ComboService, private creditoService: CreditoService = new CreditoService()) {}
+
+  async anularReservaConCredito(): Promise<void> {
+    const compra=this.compra();
+    if(!compra || this.procesando()) return;
+    this.procesando.set(true); this.error.set('');
+    try {
+      await this.creditoService.cancelar(compra.id);
+      await this.cargarCompra(compra.id);
+      this.aviso.set('Reserva anulada. El crédito reservado volvió a tu cuenta.');
+    } catch(e) { this.error.set(e instanceof Error ? e.message : 'No se pudo anular la reserva.'); }
+    finally {this.procesando.set(false);}
+  }
 
   async ngOnInit(): Promise<void> {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -45,6 +64,9 @@ export class Pago implements OnInit {
   }
 
   async cargarCompra(id: number): Promise<void> {
+    this.creditoCargado.set(false);
+    this.saldoCredito.set(0);
+    this.creditoReservado.set(0);
     this.cargando.set(true);
     this.error.set('');
     try {
@@ -59,6 +81,11 @@ export class Pago implements OnInit {
         this.compra.set(null);
         throw new Error('Iniciá sesión con la cuenta de esta compra.');
       }
+      if (compra.usuario_id) {
+        this.saldoCredito.set(await this.creditoService.obtenerSaldo());
+        this.creditoReservado.set(await this.creditoService.obtenerUso(compra.id));
+      }
+      this.creditoCargado.set(true);
       if (compra.estado === 'pendiente') {
         this.butacas.set(await this.butacaService.obtenerReservaPorToken(compra.reserva_token));
         if (compra.usuario_id && !compra.combo_id) {
@@ -85,6 +112,7 @@ export class Pago implements OnInit {
       const sesion = await this.authService.obtenerSesion();
       if (compra.usuario_id && compra.usuario_id !== sesion?.user.id) throw new Error('La compra pertenece a otra cuenta.');
       if (compra.estado === 'cancelada') throw new Error('La compra está cancelada.');
+      this.compra.set(compra);
       let pedido = await this.candyService.obtenerPedidoPorCompra(compra.id);
       this.comboService.validarPedido(compra, pedido);
       if (pedido && ((pedido.estado === 'cancelado' && (pedido.total > 0 || pedido.detalles.length > 0)) ||
@@ -97,7 +125,20 @@ export class Pago implements OnInit {
         if (!reserva.length || reserva.some(b => !b.expires_at || new Date(b.expires_at).getTime() <= Date.now())) {
           throw new Error('La reserva venció. Volvé a seleccionar tus butacas.');
         }
+        this.butacas.set(reserva);
         if ((compra.combo_cantidad ?? 0) > reserva.length) throw new Error('La cantidad de combos supera tus entradas. Volvé al checkout.');
+        if (compra.usuario_id) {
+          const reservado = await this.creditoService.obtenerUso(compra.id);
+          this.creditoReservado.set(reservado);
+          if(reservado > this.total()) throw new Error('El crédito reservado supera el total. Anulá esta reserva para recuperar el saldo.');
+          if(!reservado && this.usarCredito()) {
+            const importe = Math.round(Math.min(await this.creditoService.obtenerSaldo(),this.total())*100)/100;
+            if(importe > 0) {
+              await this.creditoService.registrar(compra.id,'uso',-importe);
+              this.creditoReservado.set(importe);
+            }
+          }
+        }
         const confirmada = this.beneficioId()
           ? await this.fidelizacionService.confirmarCompraConBeneficio(compra, this.beneficioId()!, reserva)
           : await this.compraService.confirmarCompra(compra.id);

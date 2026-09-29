@@ -1,3 +1,4 @@
+import { CreditoService } from '../app/services/credito';
 import { ComboService } from '../app/services/combo';
 import { FidelizacionService } from '../app/services/fidelizacion';
 import { CandyService } from '../app/services/candy';
@@ -29,7 +30,9 @@ function simularSesion(id: string | null = 'cliente') {
   vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({ data: { session: id ? { user: { id } } : null }, error: null } as never);
 }
 
-beforeEach(() => {
+beforeEach(()=>{
+  vi.spyOn(CreditoService.prototype,'obtenerSaldo').mockResolvedValue(0);
+  vi.spyOn(CreditoService.prototype,'obtenerUso').mockResolvedValue(0);
   respuestas = [];
   consultas = [];
   simularSesion();
@@ -221,10 +224,10 @@ describe('Entrega de canjes Candy', () => {
 describe('Pedidos Candy pagados', () => {
   const servicio = new CandyService();
   it('no permite entregar un pedido que aún no fue pagado', async () => {
-    responder('pedidos_candy',null);
+    responder('pedidos_candy',{compra_id:20});responder('compras',{estado:'pagada'});responder('pedidos_candy',null);
     expect(await servicio.entregarPedido(40)).toBeNull();
-    expect(consultas[0].pasos).toContainEqual({metodo:'eq',args:['estado','pagado']});
-    expect(consultas[0].pasos).toContainEqual({metodo:'eq',args:['entregado',false]});
+    expect(consultas[2].pasos).toContainEqual({metodo:'eq',args:['estado','pagado']});
+    expect(consultas[2].pasos).toContainEqual({metodo:'eq',args:['entregado',false]});
   });
   it('confirma el importe de los detalles persistidos', async () => {
     responder('compras',{estado:'pagada',usuario_id:'cliente'});
@@ -360,8 +363,8 @@ describe('Templates del flujo de beneficios', () => {
     select.selectedIndex=1; select.dispatchEvent(new Event('change'));
     fixture.detectChanges(); await fixture.whenStable();
     expect(fixture.componentInstance.beneficioId()).toBe(30);
-    expect(fixture.nativeElement.textContent).toContain('Total a pagar: $0');
-    expect(fixture.nativeElement.textContent).toContain('Confirmar entrada gratis');
+    expect(fixture.nativeElement.textContent).toContain('Restante por pagar: ARS 0');
+    expect(fixture.nativeElement.textContent).toContain('Confirmar compra sin pago adicional');
   });
   it('distingue beneficio pendiente, entrada usada y Candy entregado en el historial', async () => {
     const items = [

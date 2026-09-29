@@ -22,7 +22,8 @@
  */
 export type TipoMovimientoPuntos =
   | 'compra'
-  | 'canje';
+  | 'canje'
+  | 'cancelacion';
 
 
 export interface MovimientoPuntos {

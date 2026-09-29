@@ -1,3 +1,4 @@
+import { CreditoService } from '../app/services/credito';
 import { CompraService } from '../app/services/compra';
 import { MisPeliculas } from '../app/pages/cliente/mis-peliculas/mis-peliculas';
 import { supabase } from '../app/supabase';
@@ -7,10 +8,12 @@ import { Auth } from '../app/services/auth';
 import { routes } from '../app/app.routes';
 import { authGuard } from '../app/guards/auth-guard';
 const compra={id:30,funciones:{fecha:'2026-10-01',hora:'18:30:00',peliculas:{id:7,titulo:'Película',poster_url:'poster.jpg'}},entradas:{codigo:'entrada'}};
-const tarjeta={compraId:30,peliculaId:7,titulo:'Película',poster:'poster.jpg',fechaFuncion:'2026-10-01T18:30:00',calificacion:4,codigoEntrada:'entrada'};
+const tarjeta={compraId:30,estado:'pagada' as const,reintegro:0,cancelacionCompleta:false,peliculaId:7,titulo:'Película',poster:'poster.jpg',fechaFuncion:'2026-10-01T18:30:00',calificacion:4,codigoEntrada:'entrada'};
 let respuestas:{tabla:string;data:unknown;error?:unknown}[];
 let llamadas:{tabla:string;pasos:{metodo:string;args:unknown[]}[]}[];
 beforeEach(()=>{
+  vi.spyOn(CreditoService.prototype,'obtenerSaldo').mockResolvedValue(0);
+  vi.spyOn(CreditoService.prototype,'obtenerUso').mockResolvedValue(0);
  respuestas=[];llamadas=[];
  vi.spyOn(supabase.auth,'getUser').mockResolvedValue({data:{user:{id:'propietario'}},error:null} as never);
  vi.spyOn(supabase,'from').mockImplementation(((tabla:string)=>{
@@ -28,7 +31,7 @@ describe('Historial personal',()=>{
   respuestas=[{tabla:'compras',data:[compra]},{tabla:'resenas',data:[{pelicula_id:7,estrellas:4}]}];
   expect(await servicio.obtenerMisPeliculas()).toEqual({peliculas:[tarjeta],siguiente:null});
   expect(llamadas[0].pasos).toContainEqual({metodo:'eq',args:['usuario_id','propietario']});
-  expect(llamadas[0].pasos).toContainEqual({metodo:'eq',args:['estado','pagada']});
+  expect(llamadas[0].pasos).toContainEqual({metodo:'in',args:['estado',['pagada','cancelada','pendiente']]});
   expect(llamadas[1].pasos).toContainEqual({metodo:'eq',args:['usuario_id','propietario']});
  });
  it.each([null,{id:'anon',is_anonymous:true}])('rechaza visitante o cuenta anónima antes de consultar',async user=>{

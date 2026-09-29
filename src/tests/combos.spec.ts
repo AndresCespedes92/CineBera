@@ -1,3 +1,4 @@
+import { CreditoService } from '../app/services/credito';
 import { ComboService } from '../app/services/combo';
 import { CandyService } from '../app/services/candy';
 import { CompraService } from '../app/services/compra';
@@ -29,6 +30,8 @@ let consultas: {tabla:string;pasos:{metodo:string;args:unknown[]}[]}[];
 function responder(tabla:string,data:unknown,error:unknown=null) {respuestas.push({tabla,data,error});}
 const escrito=(indice:number,metodo='insert')=>consultas[indice].pasos.find(p=>p.metodo===metodo)?.args[0];
 beforeEach(()=>{
+  vi.spyOn(CreditoService.prototype,'obtenerSaldo').mockResolvedValue(0);
+  vi.spyOn(CreditoService.prototype,'obtenerUso').mockResolvedValue(0);
   respuestas=[];consultas=[];
   vi.spyOn(supabase.auth,'getSession').mockResolvedValue({data:{session:{user:{id:'cliente'}}},error:null} as never);
   vi.spyOn(supabase,'from').mockImplementation(((tabla:string)=>{
@@ -109,12 +112,12 @@ describe('Administración y copia histórica',()=>{
     responder('combos',null);await expect(servicio.cambiarEstado(1,false)).rejects.toThrow('estado');
   });
   it('guarda el precio, cantidad y productos históricos en la compra pendiente',async()=>{
-    responder('compras',{id:20});await new CompraService().actualizarTotalPendiente(20,12000,seleccion);
-    expect(escrito(0,'update')).toMatchObject({total:12000,combo_id:1,combo_precio:12000,combo_cantidad:1,combo_pochoclo_id:8,combo_bebida_id:11});
+    responder('movimientos_credito',null);responder('compras',{id:20});await new CompraService().actualizarTotalPendiente(20,12000,seleccion);
+    expect(escrito(1,'update')).toMatchObject({total:12000,combo_id:1,combo_precio:12000,combo_cantidad:1,combo_pochoclo_id:8,combo_bebida_id:11});
   });
   it('quitar el combo limpia la copia anterior',async()=>{
-    responder('compras',{id:20});await new CompraService().actualizarTotalPendiente(20,8000,null);
-    expect(escrito(0,'update')).toMatchObject({total:8000,combo_id:null,combo_precio:null,combo_cantidad:0});
+    responder('movimientos_credito',null);responder('compras',{id:20});await new CompraService().actualizarTotalPendiente(20,8000,null);
+    expect(escrito(1,'update')).toMatchObject({total:8000,combo_id:null,combo_precio:null,combo_cantidad:0});
   });
 });
 
