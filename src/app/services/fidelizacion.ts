@@ -40,8 +40,8 @@ export class FidelizacionService {
     let nombreBeneficio = actual.nombre;
     if (actual.tipo === 'candy') {
       if (!actual.producto_candy_id) return false;
-      const producto = await supabase.from('productos_candy').select('id,nombre')
-        .eq('id', actual.producto_candy_id).eq('activo', true).maybeSingle();
+      const producto = await supabase.from('productos_candy').select('id,nombre,categorias_candy!inner(activo)')
+        .eq('id', actual.producto_candy_id).eq('activo', true).eq('categorias_candy.activo', true).maybeSingle();
       if (producto.error || !producto.data) return false;
       nombreBeneficio = producto.data.nombre;
     }
