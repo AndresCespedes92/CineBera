@@ -30,3 +30,16 @@ export interface NuevaFuncionSupabase {
   idioma: string;
   activa: boolean;
 }
+
+/* El administrador elige estos datos; el servicio completa sala_id. */
+export interface SolicitudFuncion {
+  pelicula_id: number;
+  fecha: string;
+  hora: string;
+  formato: string;
+  idioma: string;
+}
+
+export interface FuncionGuardada extends NuevaFuncionSupabase {
+  id: number;
+}

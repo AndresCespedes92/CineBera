@@ -13,6 +13,19 @@
   </p>
 
 
+  @if (mensaje) { <p role="status">{{ mensaje }}</p> }
+  @if (errorCarga) {
+    <p role="alert">{{ errorCarga }}</p>
+    <button type="button" (click)="cargarDatos()" [disabled]="cargando || guardando">Reintentar carga</button>
+  }
+  @if (cargando) { <p role="status">Cargando programación...</p> }
+  @if (resultadoGuardado.length) {
+    <ul aria-label="Salas asignadas">
+      @for (resultado of resultadoGuardado; track $index) { <li>{{ resultado }}</li> }
+    </ul>
+  }
+  <fieldset [disabled]="cargando || guardando || !!errorCarga">
+  <legend>Programar funciones</legend>
   <!-- SELECCIÓN DE PELÍCULA -->
   <div class="campo">
 
@@ -45,34 +58,6 @@
   </div>
 
 
-  <!-- SELECCIÓN DE SALA -->
-  <div class="campo">
-
-    <label for="sala">
-      Sala
-    </label>
-
-    <select
-      id="sala"
-      [(ngModel)]="salaIdSeleccionada">
-
-      <option [ngValue]="null">
-        Seleccionar sala
-      </option>
-
-      @for (
-        sala of salas;
-        track sala.id
-      ) {
-
-        <option [ngValue]="sala.id">
-          {{ sala.nombre }}
-        </option>
-
-      }
-
-    </select>
-
  <!-- SEMANA CINEMATOGRÁFICA -->
 <div class="campo">
 
@@ -83,7 +68,8 @@
   <select
     id="fechaInicioSemana"
     [(ngModel)]="fechaInicioSemana"
-    (change)="generarSemana()">
+    (change)="generarSemana()"
+    [disabled]="obtenerPendientes().length > 0">
 
     <option value="">
       Seleccionar semana
@@ -104,6 +90,18 @@
 
 </div>
 
+<!-- Conservamos la semana; cada casilla representa una fecha concreta. -->
+<fieldset>
+  <legend>Días del horario (jueves a miércoles)</legend>
+  @for (fecha of fechasSemana; track fecha) {
+    <label>
+      <input type="checkbox" [checked]="fechasSeleccionadas.includes(fecha)"
+        (change)="seleccionarDia(fecha, $any($event.target).checked)">
+      {{ nombreDia(fecha) }} {{ formatearFecha(fecha) }}
+    </label>
+  }
+</fieldset>
+<p>La sala se asignará automáticamente al guardar. Para cambiar de semana, guardá o quitá los pendientes.</p>
 <!-- HORA -->
 <div class="campo">
 
@@ -195,9 +193,26 @@
 
 </div>
 
-  </div>
+  </fieldset>
 
-  @if (fechaInicioSemana) {
+  @if (obtenerPendientes().length) {
+    <section class="programacion-preview">
+      <h2>Pendientes de asignación</h2>
+      <div class="funciones-sala">
+        @for (funcion of obtenerPendientes(); track $index) {
+          <article class="funcion-card">
+            <strong>{{ funcion.peliculaTitulo }}</strong>
+            <p>{{ nombreDia(funcion.fecha) }} {{ formatearFecha(funcion.fecha) }} — {{ funcion.hora }}</p>
+            <p>{{ funcion.formato }} · {{ funcion.idioma }}</p>
+            <p>La sala se asignará al guardar el lote completo.</p>
+            <button type="button" (click)="eliminarFuncionTemporal(funcion)" [disabled]="guardando || cargando">Quitar</button>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  @if (fechaInicioSemana && !cargando && !errorCarga) {
 
   <section class="programacion-preview">
 
@@ -213,8 +228,7 @@
         </h2>
 
         <p>
-          Los horarios se repetirán
-          de jueves a miércoles.
+          Funciones guardadas para cada fecha de la semana.
         </p>
 
       </div>
@@ -303,6 +317,7 @@
 
 
                 <!-- PELÍCULA -->
+                <p>{{ nombreDia(funcion.fecha) }} {{ formatearFecha(funcion.fecha) }}</p>
 
                 <div class="funcion-datos">
 
@@ -355,7 +370,7 @@
 
                   <button
                     type="button"
-                    (click)="eliminarFuncionTemporal(funcion)">
+                    (click)="eliminarFuncionTemporal(funcion)" [disabled]="guardando || cargando">
 
                     Eliminar
 
@@ -379,15 +394,15 @@
 
 }
 
-@if (programacionTemporal.length > 0) {
+@if (obtenerPendientes().length > 0) {
 
   <div class="guardar-programacion">
 
     <button
       type="button"
-      (click)="guardarProgramacionSemanal()">
+      (click)="guardarProgramacionSemanal()" [disabled]="guardando || cargando || !!errorCarga">
 
-      Guardar programación semanal
+      {{ guardando ? 'Guardando...' : 'Guardar programación semanal' }}
 
     </button>
 
