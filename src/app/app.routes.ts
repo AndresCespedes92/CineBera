@@ -3,6 +3,8 @@ import { authGuard } from './guards/auth-guard';
 import { roleGuard } from './guards/role-guard';
 
 export const routes: Routes = [
+  { path: 'perfil', canActivate: [authGuard], loadComponent: () => import('./pages/cliente/perfil/perfil').then(m => m.Perfil) },
+  { path: 'empleado', pathMatch: 'full', redirectTo: 'empleado/validar-entrada' },
   {path:'alertas',canActivate:[authGuard],loadComponent:()=>import('./pages/cliente/alertas/alertas').then(m=>m.Alertas)},
   {
     path: 'mis-peliculas',
@@ -98,6 +100,7 @@ export const routes: Routes = [
  */
 {
   path: 'fidelizacion',
+  canActivate: [authGuard],
 
   loadComponent: () =>
     import('./pages/cliente/fidelizacion/fidelizacion')
@@ -124,6 +127,8 @@ export const routes: Routes = [
    * para validar las entradas de los clientes.
    */
   path: 'empleado/validar-entrada',
+  canMatch: [roleGuard],
+  data: { roles: ['admin', 'empleado'] },
 
   loadComponent: () =>
     import('./pages/empleado/validar-entrada/validar-entrada')
@@ -195,12 +200,14 @@ export const routes: Routes = [
    * comprobamos que el usuario tenga rol admin.
    */
   canMatch: [roleGuard],
+  data: { roles: ['admin'] },
 
   loadComponent: () =>
     import('./layouts/admin-layout/admin-layout')
       .then(m => m.AdminLayout),
 
   children: [
+    { path: '', pathMatch: 'full', redirectTo: 'home' },
     { path: 'auditoria', loadComponent: () => import('./pages/admin/auditoria/auditoria').then(m => m.Auditoria) },
     { path: 'graficos', loadComponent: () => import('./pages/admin/graficos/graficos').then(m => m.Graficos) },
     { path: 'reportes', loadComponent: () => import('./pages/admin/reportes/reportes').then(m => m.Reportes) },

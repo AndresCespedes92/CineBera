@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/**/*.d.ts",
+    "src/app/guards/*.spec.ts",
+    "src/tests/navegacion.spec.ts",
+    "src/tests/fidelizacion-beneficios.spec.ts",
+    "src/tests/alertas.spec.ts"
+  ]
+}

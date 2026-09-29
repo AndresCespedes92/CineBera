@@ -1,0 +1,9 @@
+<app-navbar />
+<main class="cliente-home">
+  <h1>Mi perfil</h1>
+  @if (cargando()) { <p role="status">Cargando perfil...</p> }
+  @if (error()) { <p role="alert">{{ error() }}</p><button (click)="cargar()" [disabled]="cargando()">Reintentar</button> }
+  @if (datos(); as p) {
+    <dl><dt>Nombre</dt><dd>{{ p.nombre }} {{ p.apellido }}</dd><dt>Correo</dt><dd>{{ p.email }}</dd><dt>Rol</dt><dd>{{ p.rol }}</dd></dl>
+  }
+</main>

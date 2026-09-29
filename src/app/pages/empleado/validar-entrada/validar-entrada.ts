@@ -1,3 +1,4 @@
+import { Navbar } from '../../../components/navbar/navbar';
 /*
  * Componente de ZXing encargado de acceder
  * a la cámara y reconocer códigos QR.
@@ -33,7 +34,7 @@ import {
    * FormsModule nos permite utilizar [(ngModel)]
    * en el input del código manual.
    */
-  imports: [
+  imports: [Navbar,
     FormsModule,
 
     /*

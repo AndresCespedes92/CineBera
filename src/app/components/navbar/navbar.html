@@ -43,6 +43,9 @@
         Mis películas
       </a>
 
+      <a routerLink="/fidelizacion">Fidelización / Recompensas</a>
+      @if (rol() === 'admin') { <a routerLink="/admin/home">Administración</a> }
+      @if (rol() === 'admin' || rol() === 'empleado') { <a routerLink="/empleado/validar-entrada">Entradas y retiros Candy</a> }
       <a routerLink="/perfil">
         Mi perfil
       </a>
@@ -83,7 +86,7 @@
       <button
         type="button"
         class="boton-salir"
-        (click)="cerrarSesion()">
+        (click)="cerrarSesion()" [disabled]="cerrando()">
         Cerrar sesión
       </button>
 
@@ -112,3 +115,4 @@
   </div>
 
 </nav>
+@if (errorSesion()) { <p role="alert">{{ errorSesion() }}</p> }
