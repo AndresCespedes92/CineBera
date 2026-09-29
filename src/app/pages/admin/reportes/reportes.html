@@ -1,0 +1,34 @@
+<section class="admin-recompensas">
+  <h1>Reportes de ventas</h1>
+  <p>{{ criterio }}</p>
+  <p>Una entrada equivale a una butaca ocupada de una compra pagada, incluso si se obtuvo con un beneficio. El combo se suma una sola vez; Candy extra excluye lo incluido en combos.</p>
+  <form (ngSubmit)="consultar()" #form="ngForm">
+    <fieldset [disabled]="cargando() || exportando()">
+      <label>Desde <input type="date" name="desde" [(ngModel)]="desde" required></label>
+      <label>Hasta <input type="date" name="hasta" [(ngModel)]="hasta" required></label>
+      <button type="submit" [disabled]="form.invalid">Consultar</button>
+    </fieldset>
+  </form>
+  <p>Hasta 366 días por consulta. Los filtros se aplican al pulsar Consultar.</p>
+  @if (error()) { <p role="alert">{{ error() }}</p> }
+  @if (cargando()) { <p role="status">Consultando ventas...</p> }
+  @if (reporte(); as r) {
+    <h2>Período consultado: {{ r.desde }} al {{ r.hasta }}</h2>
+    <p>Facturación: ARS {{ r.totales.total | number:'1.2-2' }} · Entradas: {{ r.totales.entradas }} · Compras: {{ r.totales.compras }}</p>
+    @if (r.comprasSinButacas) { <p role="alert">Advertencia: {{ r.comprasSinButacas }} compras pagadas no tienen butacas confirmadas. Revisá esos registros; no se estimaron sus entradas.</p> }
+    @if (!r.totales.compras) { <p>No hay ventas pagadas para este período.</p> }
+    <button (click)="exportar('pdf')" [disabled]="exportando()">Exportar PDF</button>
+    <button (click)="exportar('excel')" [disabled]="exportando()">Exportar Excel (XML)</button>
+    @if (exportando()) { <p role="status">Preparando descarga...</p> }
+    <table>
+      <caption>Ventas por día de pago. Importes en ARS.</caption>
+      <thead><tr><th scope="col">Fecha</th><th scope="col">Compras</th><th scope="col">Entradas</th><th scope="col">Entradas/combos</th><th scope="col">Candy extra</th><th scope="col">Total</th></tr></thead>
+      <tbody>
+        @for (f of r.filas; track f.fecha) {
+          <tr><th scope="row">{{ f.fecha }}</th><td>{{ f.compras }}</td><td>{{ f.entradas }}</td><td>{{ f.entradasCombos | number:'1.2-2' }}</td><td>{{ f.candy | number:'1.2-2' }}</td><td>{{ f.total | number:'1.2-2' }}</td></tr>
+        }
+      </tbody>
+      <tfoot><tr><th scope="row">Total</th><td>{{ r.totales.compras }}</td><td>{{ r.totales.entradas }}</td><td>{{ r.totales.entradasCombos | number:'1.2-2' }}</td><td>{{ r.totales.candy | number:'1.2-2' }}</td><td>{{ r.totales.total | number:'1.2-2' }}</td></tr></tfoot>
+    </table>
+  } @else { @if (!cargando() && !error()) { <p>Elegí un período y pulsá Consultar.</p> } }
+</section>
