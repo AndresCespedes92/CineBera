@@ -39,4 +39,3 @@ describe('roleGuard', () => {
     expect(await ejecutar()).toEqual(TestBed.inject(Router).createUrlTree(['/login']));
   });
 });
-
