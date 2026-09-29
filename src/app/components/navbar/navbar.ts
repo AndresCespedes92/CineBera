@@ -1,3 +1,4 @@
+import { AlertaService } from '../../services/alerta';
 import { Component, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
@@ -32,6 +33,8 @@ export class Navbar implements OnInit {
    * mostrar las opciones de un cliente registrado
    * o las opciones de un visitante anónimo.
    */
+  errorAlertas=signal(false);
+
   usuarioAutenticado =
     signal<boolean>(false);
 
@@ -67,7 +70,8 @@ export class Navbar implements OnInit {
   constructor(
     private authService: Auth,
     private usuarioService: Usuario,
-    private router: Router
+    private router: Router,
+    public alertas: AlertaService
   ) {}
 
 
@@ -81,6 +85,9 @@ export class Navbar implements OnInit {
   async ngOnInit(): Promise<void> {
 
     await this.cargarUsuario();
+    if(this.usuarioAutenticado()) {
+      try {await this.alertas.consultar();} catch {this.errorAlertas.set(true);this.alertas.noLeidas.set(0);}
+    }
 
   }
 
@@ -109,7 +116,7 @@ export class Navbar implements OnInit {
      * Si no existe usuario autenticado,
      * dejamos la navbar en modo visitante.
      */
-    if (!sesion?.user?.id) {
+    if (!sesion?.user?.id || sesion.user.is_anonymous) {
 
       this.usuarioAutenticado.set(false);
 
@@ -171,6 +178,7 @@ export class Navbar implements OnInit {
      * Supabase elimina la sesión autenticada.
      */
     await this.authService.logout();
+    this.alertas.noLeidas.set(0);
 
 
     /*
