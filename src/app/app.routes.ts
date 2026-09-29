@@ -201,6 +201,7 @@ export const routes: Routes = [
       .then(m => m.AdminLayout),
 
   children: [
+    { path: 'auditoria', loadComponent: () => import('./pages/admin/auditoria/auditoria').then(m => m.Auditoria) },
     { path: 'graficos', loadComponent: () => import('./pages/admin/graficos/graficos').then(m => m.Graficos) },
     { path: 'reportes', loadComponent: () => import('./pages/admin/reportes/reportes').then(m => m.Reportes) },
     { path: 'candy', loadComponent: () => import('./pages/admin/candy/candy').then(m => m.AdminCandy) },

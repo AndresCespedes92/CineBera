@@ -1,0 +1,27 @@
+<section class="admin-recompensas">
+  <h1>Auditoría</h1>
+  <p>Primera etapa: consulta administrativa. La captura automática de eventos se incorporará en la segunda etapa; todavía no se registran las operaciones del sistema.</p>
+  <form (ngSubmit)="cargar()">
+    <fieldset [disabled]="cargando()">
+      <label>Acción <select name="accion" [(ngModel)]="accion"><option value="">Todas</option>
+        @for (a of acciones; track a.valor) { <option [value]="a.valor">{{ a.nombre }}</option> }
+      </select></label>
+      <button type="submit">Consultar / actualizar</button>
+    </fieldset>
+  </form>
+  <p>Filtro aplicado: {{ aplicada ? nombre(aplicada) : 'Todas las acciones' }}. Más recientes primero; fechas de Buenos Aires (UTC-03).</p>
+  @if (error()) { <p role="alert">{{ error() }} Podés reintentar la consulta.</p> }
+  @if (cargando()) { <p role="status">Cargando auditoría...</p> }
+  <div class="lista-recompensas">
+    @for (r of registros(); track r.id) {
+      <article class="recompensa"><div>
+        <h2>#{{ r.id }} · {{ nombre(r.accion) }}</h2>
+        <p>Fecha: {{ r.created_at | date:'dd/MM/yyyy HH:mm:ss':'-0300' }}</p>
+        <p>Usuario (UUID): {{ r.usuario_id }}</p>
+        <p>Elemento: {{ r.entidad }} #{{ r.entidad_id }}</p>
+        <details><summary>Información del evento</summary><pre>{{ r.detalles | json }}</pre></details>
+      </div></article>
+    } @empty { @if (!cargando() && !error()) { <p>No hay eventos para este filtro.</p> } }
+  </div>
+  @if (siguiente() !== undefined) { <button (click)="cargar(true)" [disabled]="cargando()">Cargar más</button> }
+</section>

@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "../src/tests/auditoria.spec.ts",
+    "../src/tests/fidelizacion-beneficios.spec.ts"
+  ]
+}
