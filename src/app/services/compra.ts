@@ -26,22 +26,22 @@ export class CompraService {
     if (authError || !user || user.is_anonymous) throw new Error('Iniciá sesión con tu cuenta para consultar tus películas.');
     if (antesDe !== null && (!Number.isSafeInteger(antesDe) || antesDe <= 0)) throw new Error('Página de historial inválida.');
     let consulta = supabase.from('compras').select(
-      'id,funciones(fecha,hora,peliculas(id,titulo,poster_url)),entradas(codigo)'
-    ).eq('usuario_id', user.id).eq('estado', 'pagada').order('id', {ascending: false}).limit(21);
+      'id,estado,credito_reintegro,cancelacion_completa,funciones(fecha,hora,peliculas(id,titulo,poster_url)),entradas(codigo)'
+    ).eq('usuario_id', user.id).in('estado', ['pagada','cancelada','pendiente']).order('id', {ascending: false}).limit(21);
     if (antesDe !== null) consulta = consulta.lt('id', antesDe);
     const { data, error } = await consulta;
     if (error) throw new Error('No se pudo cargar tu historial de películas.');
     type Relacion<T> = T | T[] | null;
     type PeliculaFila = {id: number; titulo: string; poster_url: string | null};
     type FuncionFila = {fecha: string; hora: string; peliculas: Relacion<PeliculaFila>};
-    type CompraFila = {id: number; funciones: Relacion<FuncionFila>; entradas: Relacion<{codigo: string}>};
+    type CompraFila = {id: number; estado?: 'pagada'|'cancelada'|'pendiente'; credito_reintegro?: number; cancelacion_completa?: boolean; funciones: Relacion<FuncionFila>; entradas: Relacion<{codigo: string}>};
     const uno = <T>(relacion: Relacion<T>): T | null => Array.isArray(relacion) ? relacion[0] ?? null : relacion;
     const filas = (data ?? []) as unknown as CompraFila[];
     const pagina = filas.slice(0,20);
     const peliculas = pagina.map(c => {
       const funcion = uno(c.funciones);
       const pelicula = funcion ? uno(funcion.peliculas) : null;
-      return {compraId: c.id, peliculaId: pelicula?.id ?? null, titulo: pelicula?.titulo ?? 'Película no disponible',
+      return {compraId: c.id, estado: c.estado ?? 'pagada', reintegro: Number(c.credito_reintegro ?? 0), cancelacionCompleta: c.cancelacion_completa ?? false, peliculaId: pelicula?.id ?? null, titulo: pelicula?.titulo ?? 'Película no disponible',
         poster: pelicula?.poster_url ?? null, fechaFuncion: funcion ? funcion.fecha + 'T' + funcion.hora : null,
         codigoEntrada: uno(c.entradas)?.codigo ?? null, calificacion: null as number | null};
     });
@@ -59,6 +59,12 @@ export class CompraService {
 
 
   async actualizarTotalPendiente(id: number, total: number, seleccion?: SeleccionCombo | null): Promise<void> {
+    const sesionCredito = await supabase.auth.getSession();
+    if(sesionCredito.data.session && !sesionCredito.data.session.user.is_anonymous) {
+      const credito = await supabase.from('movimientos_credito').select('id').eq('compra_id',id).eq('tipo','uso').maybeSingle();
+      if(credito.error) throw new Error('No se pudo comprobar el crédito de esta compra.');
+      if(credito.data) throw new Error('Esta compra tiene crédito reservado. Completá o anulá la reserva desde Pago.');
+    }
     const combo = seleccion?.combo;
     const { data, error } = await supabase.from('compras').update({ total,
       combo_id: combo?.id ?? null, combo_nombre: combo?.nombre ?? null,

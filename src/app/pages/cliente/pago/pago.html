@@ -36,21 +36,32 @@
           }
           <p>Importe de entradas y combos: ${{ actual.total }}</p>
           @if (descuento() > 0) { <p>Entrada gratis: −${{ descuento() }}</p> }
-          <h2>Total a pagar: ${{ total() }}</h2>
+          <p>Total de la compra: ARS {{ total() }}</p>
+          @if (actual.usuario_id) {
+            <p>Crédito disponible: ARS {{ saldoCredito() }}</p>
+            @if (creditoReservado()) { <p>Crédito ya reservado para esta compra: ARS {{ creditoReservado() }}</p> }
+            @else { <label><input type="checkbox" [ngModel]="usarCredito()" (ngModelChange)="usarCredito.set($event)" [disabled]="procesando() || !creditoCargado()">Usar mi crédito disponible</label> }
+            <p>Crédito aplicado: −ARS {{ creditoAplicado() }}</p>
+          }
+          <h2>Restante por pagar: ARS {{ restante() }}</h2>
+          @if (creditoReservado()) { <p>Si no podés completar este pago, anulá la reserva para recuperar el crédito.</p><button type="button" (click)="anularReservaConCredito()" [disabled]="procesando()">Anular reserva y recuperar crédito</button> }
         } @else {
+          <p>Crédito utilizado: ARS {{ creditoReservado() }} · Pago restante: ARS {{ restante() }}</p>
           <p>Entradas y combos pagados: ${{ actual.total }} · Candy adicional: ${{ totalCandy() }}</p>
           @if (actual.beneficio_id) { <p>Entrada gratis utilizada: canje #{{ actual.beneficio_id }}.</p> }
         }
+        @if (actual.estado === 'cancelada') { <p>Compra cancelada. Reintegro en crédito: ARS {{ actual.credito_reintegro ?? 0 }}.</p> }
         @if (actual.estado !== 'cancelada') {
           <button (click)="confirmarPago()" [disabled]="procesando()">
             @if (procesando()) { Procesando... }
             @else if (actual.estado === 'pagada') { Completar emisión / ver entrada }
-            @else if (total() === 0) { Confirmar entrada gratis }
+            @else if (restante() === 0) { Confirmar compra sin pago adicional }
             @else { Confirmar pago simulado }
           </button>
         }
         <a routerLink="/cartelera">Volver a cartelera</a>
-        @if (actual.estado === 'pendiente') { <a [routerLink]="['/checkout', actual.reserva_token]">Volver al checkout</a> }
+        @if (actual.estado === 'cancelada' && !actual.cancelacion_completa && creditoReservado()) { <button type="button" (click)="anularReservaConCredito()" [disabled]="procesando()">Completar recuperación del crédito</button> }
+        @if (actual.estado === 'pendiente' && !creditoReservado()) { <a [routerLink]="['/checkout', actual.reserva_token]">Volver al checkout</a> }
       </section>
     } @else { <p>No se encontró una compra disponible.</p> }
   }

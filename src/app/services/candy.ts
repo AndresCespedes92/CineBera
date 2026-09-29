@@ -153,6 +153,10 @@ export class CandyService {
   }
 
   async entregarPedido(pedidoId: number): Promise<PedidoCandy | null> {
+    const pedido = await supabase.from('pedidos_candy').select('compra_id').eq('id',pedidoId).single();
+    if(pedido.error || !pedido.data) throw new Error('No se pudo comprobar el pedido.');
+    const compra = await supabase.from('compras').select('estado').eq('id',pedido.data.compra_id).single();
+    if(compra.error || compra.data?.estado !== 'pagada') throw new Error('La compra no está pagada o fue cancelada.');
     const { data, error } = await supabase.from('pedidos_candy')
       .update({ entregado: true, entregado_at: new Date().toISOString() })
       .eq('id', pedidoId).eq('estado', 'pagado').eq('entregado', false).select().maybeSingle();

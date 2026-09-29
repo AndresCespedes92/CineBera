@@ -529,6 +529,7 @@ export class Entrada implements OnInit {
  * No volvemos a consultar Supabase.
  */
 descargarPDF(): void {
+  if(this.compra()?.estado !== 'pagada') return;
 
   /*
    * Leemos el valor actual de nuestros Signals.

@@ -130,7 +130,7 @@ async obtenerEntradaPorCodigo(
 
   const { data, error } = await supabase
     .from('entradas')
-    .select('*')
+    .select('*,compras!inner(estado)').eq('compras.estado','pagada')
     .eq('codigo', codigo)
     .maybeSingle();
 
@@ -164,7 +164,7 @@ async obtenerEntradaPorCodigoManual(
 
   const { data, error } = await supabase
     .from('entradas')
-    .select('*')
+    .select('*,compras!inner(estado)').eq('compras.estado','pagada')
     .eq('codigo_manual', codigoManual.toUpperCase())
     .maybeSingle();
 
@@ -199,6 +199,10 @@ async obtenerEntradaPorCodigoManual(
 async utilizarEntrada(
   entradaId: number
 ): Promise<Entrada | null> {
+  const actual = await supabase.from('entradas').select('compra_id').eq('id',entradaId).single();
+  if(actual.error || !actual.data) return null;
+  const compra = await supabase.from('compras').select('estado').eq('id',actual.data.compra_id).single();
+  if(compra.error || compra.data?.estado !== 'pagada') return null;
 
   const { data, error } = await supabase
     .from('entradas')

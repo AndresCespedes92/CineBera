@@ -1,6 +1,9 @@
 /** Una tarjeta por compra, aunque su entrada incluya varias butacas. */
 export interface PeliculaComprada {
   compraId: number;
+  estado?: 'pagada'|'cancelada'|'pendiente';
+  reintegro?: number;
+  cancelacionCompleta?: boolean;
   peliculaId: number | null;
   titulo: string;
   poster: string | null;

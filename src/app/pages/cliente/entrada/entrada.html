@@ -24,6 +24,7 @@
 
   Así evitamos escribir entrada() constantemente.
 -->
+@else if (compra()?.estado === 'cancelada') { <p>Esta compra fue cancelada. La entrada y el QR ya no son válidos.</p> }
 @else if (entrada(); as entradaActual) {
 
   <main class="pagina-entrada">

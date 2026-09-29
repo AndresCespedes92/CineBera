@@ -51,6 +51,9 @@ export interface Compra {
 
   pagada_at: string | null;
 
+  cancelada_at?: string | null;
+  credito_reintegro?: number;
+  cancelacion_completa?: boolean;
   beneficio_id?: number | null;
   combo_id?: number | null;
   combo_nombre?: string | null;
