@@ -4,7 +4,7 @@ import { AccionAuditoria, accionesAuditoria, RegistroAuditoria } from '../models
 
 @Injectable({providedIn: 'root'})
 export class AuditoriaService {
-  // La escritura de eventos se integrará en la segunda etapa del bloque.
+  // Los eventos se escriben desde triggers; el cliente solamente consulta.
   async obtener(accion: AccionAuditoria | '', antesDe?: number): Promise<{registros: RegistroAuditoria[]; siguiente?: number}> {
     if (accion && !accionesAuditoria.some(a => a.valor === accion)) throw new Error('Acción de auditoría inválida.');
     if (antesDe !== undefined && (!Number.isSafeInteger(antesDe) || antesDe <= 0)) throw new Error('Página inválida.');

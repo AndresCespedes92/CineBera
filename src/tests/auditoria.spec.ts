@@ -1,3 +1,5 @@
+import { EntradaService } from '../app/services/entrada';
+import { ValidarEntrada } from '../app/pages/empleado/validar-entrada/validar-entrada';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { supabase } from '../app/supabase';
@@ -17,7 +19,7 @@ beforeEach(()=>{
   const respuesta=respuestas.shift();if(!respuesta) throw new Error('Consulta inesperada: '+tabla);
   expect(tabla).toBe(respuesta.tabla);const registro={tabla,pasos:[] as {metodo:string;args:unknown[]}[]};consultas.push(registro);
   const q:Record<string,unknown>={};
-  for(const metodo of ['select','eq','gte','gt','lt','in','order','limit','single']) q[metodo]=(...args:unknown[])=>{registro.pasos.push({metodo,args});return q;};
+  for(const metodo of ['update','maybeSingle','select','eq','gte','gt','lt','in','order','limit','single']) q[metodo]=(...args:unknown[])=>{registro.pasos.push({metodo,args});return q;};
   q['then']=(resolve:(v:unknown)=>unknown)=>Promise.resolve({data:respuesta.data,error:respuesta.error}).then(resolve);
   return q;
  }) as never);
@@ -55,4 +57,19 @@ it('renderiza usuario, fecha de Buenos Aires y datos escapados',async()=>{
  await TestBed.configureTestingModule({imports:[Auditoria],providers:[{provide:AuditoriaService,useValue:mock}]}).compileComponents();
  const f=TestBed.createComponent(Auditoria);f.detectChanges();await f.whenStable();await f.componentInstance.cargar();f.detectChanges();
  expect(f.nativeElement.textContent).toContain('actor');expect(f.nativeElement.textContent).toContain('29/09/2026 17:00:00');expect(f.nativeElement.querySelector('script')).toBeNull();
+});
+
+it('un fallo de persistencia de auditoría no se confunde con entrada ya usada',async()=>{
+ r('entradas',{compra_id:1});r('compras',{estado:'pagada'});r('entradas',null,{message:'Fallo al auditar'});
+ await expect(new EntradaService().utilizarEntrada(1)).rejects.toThrow('registrar la operación');
+});
+it('la pantalla muestra error y permite reintentar sin autorizar ingreso',async()=>{
+ const servicio={utilizarEntrada:vi.fn().mockRejectedValue(new Error('Fallo de auditoría'))};const c=new ValidarEntrada(servicio as never,{} as never,{} as never);
+ c.entrada.set({id:1,utilizada:false} as never);await c.validarEntrada();expect(c.mensaje()).toBe('Fallo de auditoría');expect(c.procesando()).toBe(false);expect(c.entrada()?.utilizada).toBe(false);
+ servicio.utilizarEntrada.mockResolvedValue({id:1,utilizada:true});await c.validarEntrada();expect(c.entrada()?.utilizada).toBe(true);expect(c.mensaje()).toContain('Ingreso autorizado');
+});
+it('evita confirmaciones simultáneas desde la pantalla',async()=>{
+ let completar!:(valor:unknown)=>void;const servicio={utilizarEntrada:vi.fn().mockImplementation(()=>new Promise(resolve=>{completar=resolve;}))};const c=new ValidarEntrada(servicio as never,{} as never,{} as never);
+ c.entrada.set({id:1,utilizada:false} as never);const primera=c.validarEntrada();await c.validarEntrada();expect(servicio.utilizarEntrada).toHaveBeenCalledTimes(1);
+ completar({id:1,utilizada:true});await primera;expect(c.procesando()).toBe(false);
 });

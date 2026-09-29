@@ -7,6 +7,9 @@
   },
   "include": [
     "../src/tests/auditoria.spec.ts",
-    "../src/tests/fidelizacion-beneficios.spec.ts"
+    "../src/tests/fidelizacion-beneficios.spec.ts",
+    "../src/tests/credito.spec.ts",
+    "../src/tests/combos.spec.ts",
+    "../src/tests/asignacion-salas.spec.ts"
   ]
 }

@@ -317,83 +317,24 @@ await this.cargarCandyDeEntrada(
    * después de haber encontrado una entrada.
    */
   async validarEntrada(): Promise<void> {
-
-    const entradaActual =
-      this.entrada();
-
-
-    if (!entradaActual) {
-      return;
-    }
-
-
-    /*
-     * Evitamos intentar utilizar nuevamente
-     * una entrada que ya sabemos que fue usada.
-     */
+    const entradaActual = this.entrada();
+    if (!entradaActual || this.procesando()) return;
     if (entradaActual.utilizada) {
-
-      this.mensaje.set(
-        'Esta entrada ya fue utilizada.'
-      );
-
+      this.mensaje.set('Esta entrada ya fue utilizada.');
       return;
-
     }
-
-
     this.procesando.set(true);
-
-
-    /*
-     * EntradaService hace el UPDATE real
-     * contra Supabase.
-     */
-    const entradaUtilizada =
-      await this.entradaService.utilizarEntrada(
-        entradaActual.id
-      );
-
-
-    this.procesando.set(false);
-
-
-    /*
-     * Si devuelve null, no pudo actualizarse.
-     *
-     * Una posibilidad es que otro empleado
-     * haya validado la misma entrada antes.
-     */
-    if (!entradaUtilizada) {
-
-      this.mensaje.set(
-        'La entrada no pudo ser validada. Puede haber sido utilizada anteriormente.'
-      );
-
-      /*
-       * Volvemos a consultar para obtener
-       * el estado actual de Supabase.
-       */
-      await this.buscarEntrada();
-
-      return;
-
-    }
-
-
-    /*
-     * Actualizamos nuestro Signal con la
-     * versión que devuelve Supabase.
-     */
-    this.entrada.set(
-      entradaUtilizada
-    );
-
-
-    this.mensaje.set(
-      'Ingreso autorizado. Entrada utilizada correctamente.'
-    );
-
+    try {
+      const entradaUtilizada = await this.entradaService.utilizarEntrada(entradaActual.id);
+      if (!entradaUtilizada) {
+        await this.buscarEntrada();
+        return;
+      }
+      this.entrada.set(entradaUtilizada);
+      this.mensaje.set('Ingreso autorizado. Entrada utilizada correctamente.');
+    } catch (error) {
+      this.mensaje.set(error instanceof Error ? error.message : 'No se pudo confirmar el ingreso. Reintentá.');
+    } finally { this.procesando.set(false); }
   }
 
  /*

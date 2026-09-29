@@ -1,6 +1,6 @@
 <section class="admin-recompensas">
   <h1>Auditoría</h1>
-  <p>Primera etapa: consulta administrativa. La captura automática de eventos se incorporará en la segunda etapa; todavía no se registran las operaciones del sistema.</p>
+  <p>Registro de creación de funciones, cambios de precio y confirmaciones de ingreso o retiro. Incluye validaciones mediante QR y código manual desde la activación de la auditoría.</p>
   <form (ngSubmit)="cargar()">
     <fieldset [disabled]="cargando()">
       <label>Acción <select name="accion" [(ngModel)]="accion"><option value="">Todas</option>
