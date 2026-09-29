@@ -1,3 +1,5 @@
+import { AlertaService } from '../../../services/alerta';
+import { Auth } from '../../../services/auth';
 import {
   ChangeDetectorRef,
   Component,
@@ -85,12 +87,27 @@ cargando: boolean = true;
    * fecha de estreno CineBera sea futura.
    */
   peliculas: Pelicula[] = [];
+  registrado = false;
+  activas:number[]=[];
+  procesando:number|null=null;
+  error='';
+  errorAlertas='';
+  async cambiarAlerta(id:number){
+    if(this.procesando!==null)return;this.procesando=id;this.errorAlertas='';
+    try {
+      if(this.activas.includes(id))await this.alertas.desactivar(id);else await this.alertas.activar(id);
+      this.activas=(await this.alertas.obtenerSuscripciones()).filter(a=>a.activa).map(a=>a.pelicula_id);
+      await this.alertas.consultar();
+    } catch(e){this.errorAlertas=e instanceof Error?e.message:'No se pudo guardar la alerta.';}
+    finally{this.procesando=null;this.changeDetectorRef.detectChanges();}
+  }
 
 
   constructor(
     private peliculaService: PeliculaService,
     private router: Router,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private alertas:AlertaService, private auth:Auth
   ) {}
 
 
@@ -99,33 +116,18 @@ cargando: boolean = true;
    * los próximos estrenos.
    */
   async ngOnInit(): Promise<void> {
-
-    this.peliculas =
-      await this.peliculaService
-        .obtenerProximamente();
-
-this.cargando = false;
-    /*
-     * Actualizamos la vista después
-     * de recibir los datos asíncronos.
-     */
-    this.changeDetectorRef
-      .detectChanges();
-
-    
-
+    this.cargando=true;this.error='';this.errorAlertas='';
+    try {
+      this.peliculas=await this.peliculaService.obtenerProximamente();
+      const sesion=await this.auth.obtenerSesion();this.registrado=!!sesion && !sesion.user.is_anonymous;
+      if(this.registrado) {
+        try {this.activas=(await this.alertas.obtenerSuscripciones()).filter(a=>a.activa).map(a=>a.pelicula_id);}
+        catch(e){this.errorAlertas=e instanceof Error?e.message:'No se pudieron cargar las alertas.';}
+      }
+    } catch(e){this.error=e instanceof Error?e.message:'No se pudieron cargar los estrenos.';}
+    finally{this.cargando=false;this.changeDetectorRef.detectChanges();}
   }
 
-  
-
-
-  /*
-   * Por ahora reutilizamos el mismo evento
-   * de PeliculaCard.
-   *
-   * Más adelante esta navegación nos permitirá
-   * mostrar preventa o funciones según corresponda.
-   */
   seleccionarPelicula(
     pelicula: Pelicula
   ): void {

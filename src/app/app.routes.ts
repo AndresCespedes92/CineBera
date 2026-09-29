@@ -3,6 +3,7 @@ import { authGuard } from './guards/auth-guard';
 import { roleGuard } from './guards/role-guard';
 
 export const routes: Routes = [
+  {path:'alertas',canActivate:[authGuard],loadComponent:()=>import('./pages/cliente/alertas/alertas').then(m=>m.Alertas)},
   {
     path: 'mis-peliculas',
     canActivate: [authGuard],

@@ -66,8 +66,11 @@
       1. La carga terminó.
       2. El array contiene películas.
     -->
+    @else if(error){<p role="alert">{{error}}</p><button type="button" (click)="ngOnInit()">Reintentar</button>}
     @else if (peliculas.length > 0) {
 
+      @if(errorAlertas){<p role="alert">{{errorAlertas}}</p><button type="button" (click)="ngOnInit()">Actualizar alertas</button>}
+      <p>Las alertas se muestran dentro de CineBera cuando volvés a entrar.</p>
       <div class="proximamente-listado">
 
 
@@ -128,6 +131,8 @@
 
             >
             </app-pelicula-card>
+            @if(registrado){<button type="button" (click)="cambiarAlerta(pelicula.id)" [disabled]="procesando!==null || !!errorAlertas">{{activas.includes(pelicula.id)?'Desactivar alerta':'Avisarme cuando haya entradas'}}</button>}
+            @else {<p>Iniciá sesión para activar una alerta de estreno.</p>}
 
 
             <!--

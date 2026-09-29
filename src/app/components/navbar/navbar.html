@@ -38,6 +38,7 @@
     -->
     @if (usuarioAutenticado()) {
 
+      <a routerLink="/alertas">Mis alertas @if(alertas.noLeidas()){ ({{alertas.noLeidas()}} nuevas) } @if(errorAlertas()){ (sin actualizar) }</a>
       <a routerLink="/mis-peliculas">
         Mis películas
       </a>

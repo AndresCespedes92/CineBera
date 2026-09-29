@@ -387,7 +387,7 @@ export class PeliculaService {
       error
     );
 
-    return [];
+    throw new Error('No se pudieron cargar los próximos estrenos.');
   }
 
   // Obtenemos la fecha actual.
