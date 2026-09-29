@@ -1,3 +1,5 @@
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -12,9 +14,13 @@ class Destino {}
 const combo = { id: 1, nombre: 'Clásico', precio: 100, pochoclo_id: 2, bebida_id: 3, activo: true };
 let service: { obtenerTodos: ReturnType<typeof vi.fn>; obtenerProductos: ReturnType<typeof vi.fn>; guardar: ReturnType<typeof vi.fn> };
 let pantalla: Combos;
+let aceptar = false;
+let dialog: { open: ReturnType<typeof vi.fn> };
 beforeEach(() => {
   service = { obtenerTodos: vi.fn().mockResolvedValue([]), obtenerProductos: vi.fn().mockResolvedValue([]), guardar: vi.fn().mockResolvedValue(undefined) };
-  pantalla = new Combos(service as unknown as ComboService);
+  aceptar = false;
+  dialog = { open: vi.fn().mockImplementation(() => ({ afterClosed: () => of(aceptar) })) };
+  pantalla = new Combos(service as unknown as ComboService, dialog as unknown as MatDialog);
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -22,7 +28,7 @@ it('registra el guard en la ruta real de combos', () => {
   expect(routes.find(r => r.path === 'admin')?.children?.find(r => r.path === 'combos')?.canDeactivate).toContain(cambiosPendientesGuard);
 });
 it('no pregunta en alta limpia ni al cargar una edición', () => {
-  const confirmar = vi.spyOn(window, 'confirm');
+  const confirmar = dialog.open;
   expect(pantalla.puedeSalir()).toBe(true);
   pantalla.editar(combo);
   expect(pantalla.puedeSalir()).toBe(true);
@@ -36,19 +42,19 @@ it('restaurar el valor original elimina los cambios pendientes', () => {
   expect(pantalla.hayCambios()).toBe(false);
 });
 it('cancelar o seleccionar otro combo conserva el borrador si se rechaza', () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(false);
+  aceptar = false;
   pantalla.formulario.nombre = 'Borrador';
   pantalla.cancelar(); pantalla.editar(combo);
   expect(pantalla.formulario.nombre).toBe('Borrador');
   expect(pantalla.editandoId).toBeUndefined();
 });
 it('descartar desde cancelar limpia el borrador', () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  aceptar = true;
   pantalla.formulario.nombre = 'Borrador'; pantalla.cancelar();
   expect(pantalla.hayCambios()).toBe(false);
 });
 it('guardar correctamente limpia sin pedir descarte', async () => {
-  const confirmar = vi.spyOn(window, 'confirm');
+  const confirmar = dialog.open;
   pantalla.formulario.nombre = 'Borrador'; await pantalla.guardar();
   expect(pantalla.puedeSalir()).toBe(true);
   expect(confirmar).not.toHaveBeenCalled();
@@ -80,19 +86,21 @@ it('advierte al cerrar o recargar solamente con cambios o guardado pendiente', (
 it('router mantiene el formulario al rechazar y navega al aceptar', async () => {
   TestBed.configureTestingModule({ providers: [
     { provide: ComboService, useValue: service },
+    { provide: MatDialog, useValue: dialog },
     provideRouter([
       { path: 'combos', component: Combos, canDeactivate: [cambiosPendientesGuard] },
       { path: 'destino', component: Destino }
     ])
   ] });
+  TestBed.overrideProvider(MatDialog, { useValue: dialog });
   const harness = await RouterTestingHarness.create();
   const editor = await harness.navigateByUrl('/combos', Combos);
   editor.formulario.nombre = 'Borrador';
-  const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  aceptar = false;
   await harness.navigateByUrl('/destino');
   expect(TestBed.inject(Router).url).toBe('/combos');
   expect(editor.formulario.nombre).toBe('Borrador');
-  confirmar.mockReturnValue(true);
+  aceptar = true;
   await harness.navigateByUrl('/destino', Destino);
   expect(TestBed.inject(Router).url).toBe('/destino');
 });

@@ -1,9 +1,9 @@
 .dashboard-chip {
   padding: 20px;
 
-  background-color: #ffffff;
+  background-color: var(--cine-surface);
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 }
 
 .dashboard-chip h3 {
@@ -12,7 +12,7 @@
   font-size: 16px;
   font-weight: normal;
 
-  color: #555555;
+  color: var(--cine-muted);
 }
 
 .dashboard-chip p {
@@ -21,5 +21,5 @@
   font-size: 24px;
   font-weight: bold;
 
-  color: #222222;
+  color: var(--cine-text);
 }

@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import {
   Component,
   OnInit,
@@ -19,7 +20,7 @@ import {
    * Esta pantalla por ahora no necesita importar
    * otros componentes o directivas.
    */
-  imports: [],
+  imports: [MatButtonModule, ],
 
   templateUrl: './cupones.html',
   styleUrl: './cupones.css'

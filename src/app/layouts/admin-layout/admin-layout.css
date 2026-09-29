@@ -11,8 +11,8 @@ nav {
   flex-wrap: wrap;
   gap: 12px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--cine-border);
 }
 
-nav a { color: #333; padding: 8px; }
+nav a { color: var(--cine-text); padding: 8px; }
 .admin-content { padding-top: 24px; min-width: 0; }

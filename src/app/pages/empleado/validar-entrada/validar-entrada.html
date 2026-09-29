@@ -81,7 +81,7 @@
       Al hacer click buscamos la entrada
       utilizando el código manual.
     -->
-    <button
+    <button matButton="filled"
       type="button"
       (click)="buscarEntrada()"
       [disabled]="procesando()">
@@ -152,12 +152,12 @@
       <!-- =========================================================
      PEDIDO CANDY
      =========================================================
-     
+
      pedidoCandy() es un Signal.
-     
+
      Si existe un pedido asociado a la compra de esta entrada,
      mostramos sus productos y su estado de entrega.
-     
+
      El QR sigue siendo el mismo QR de la entrada.
 ========================================================= -->
 
@@ -237,7 +237,7 @@
     El botón solamente existe mientras
     el pedido continúa pendiente.
   -->
-  <button
+  <button matButton="filled"
     type="button"
     (click)="entregarCandy()"
     [disabled]="procesando() || pedido.estado !== 'pagado'"
@@ -262,7 +262,7 @@
       -->
       @if (!entradaActual.utilizada) {
 
-        <button
+        <button matButton="filled"
           type="button"
           (click)="validarEntrada()"
           [disabled]="procesando()">
@@ -277,7 +277,7 @@
         el empleado puede limpiar la pantalla
         y volver a habilitar el scanner.
       -->
-      <button
+      <button matButton="filled"
         type="button"
         (click)="escanearOtraEntrada()">
         Escanear otra entrada
@@ -294,9 +294,9 @@
       @if (beneficio.entregado_at) {
         <p>Entregado. Este código no puede volver a utilizarse.</p>
       } @else {
-        <button (click)="entregarCanjeCandy()" [disabled]="procesando()">Entregar Candy canjeado</button>
+        <button matButton="filled" (click)="entregarCanjeCandy()" [disabled]="procesando()">Entregar Candy canjeado</button>
       }
-      <button (click)="escanearOtraEntrada()" [disabled]="procesando()">Escanear otro código</button>
+      <button matButton="filled" (click)="escanearOtraEntrada()" [disabled]="procesando()">Escanear otro código</button>
     </section>
   }
 </main>

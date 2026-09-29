@@ -92,8 +92,8 @@
       registroForm.controls.apellido.touched
   }"
 />
-          
-          
+
+
 
         @if (
           registroForm.controls.apellido.invalid &&
@@ -119,7 +119,7 @@
           id="email"
           type="email"
           formControlName="email"
-          
+
             [ngClass]="{
     'input-valido':
       registroForm.controls.email.valid &&
@@ -130,8 +130,8 @@
       registroForm.controls.email.touched
   }"
 />
-          
-          
+
+
 
         @if (
           registroForm.controls.email.invalid &&
@@ -157,7 +157,7 @@
           id="password"
           type="password"
           formControlName="password"
-          
+
             [ngClass]="{
     'input-valido':
       registroForm.controls.password.valid &&
@@ -168,7 +168,7 @@
       registroForm.controls.password.touched
   }"
 />
-          
+
 
         @if (
           registroForm.controls.password.invalid &&
@@ -206,8 +206,8 @@
       )
   }"
 />
-          
-          
+
+
 
           @if (
             registroForm.hasError('passwordsNoCoinciden') &&
@@ -383,7 +383,7 @@
     </small>
   }
 
-</div> 
+</div>
 
       <!-- GRUPO SANGUÍNEO -->
 
@@ -491,7 +491,7 @@
         Al ser type="submit", Angular ejecutará
         el (ngSubmit) definido en <form>.
       -->
-      <button
+      <button matButton="filled"
         type="submit"
         class="boton-registrar"
         [disabled]="this.registroForm.invalid">

@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import {
   Component,
   OnInit,
@@ -17,7 +18,7 @@ import { ProductoCandy } from '../../../models/producto-candy';
 
 @Component({
   selector: 'app-recompensas',
-  imports: [],
+  imports: [MatButtonModule, ],
   templateUrl: './recompensas.html',
   styleUrl: './recompensas.css'
 })

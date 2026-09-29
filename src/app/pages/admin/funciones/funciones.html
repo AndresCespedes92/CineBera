@@ -16,7 +16,7 @@
   @if (mensaje) { <p role="status">{{ mensaje }}</p> }
   @if (errorCarga) {
     <p role="alert">{{ errorCarga }}</p>
-    <button type="button" (click)="cargarDatos()" [disabled]="cargando || guardando">Reintentar carga</button>
+    <button matButton="filled" type="button" (click)="cargarDatos()" [disabled]="cargando || guardando">Reintentar carga</button>
   }
   @if (cargando) { <p role="status">Cargando programación...</p> }
   @if (resultadoGuardado.length) {
@@ -183,7 +183,7 @@
 
 <div class="acciones-funcion">
 
-  <button
+  <button matButton="filled"
     type="button"
     (click)="agregarFuncionTemporal()">
 
@@ -205,7 +205,7 @@
             <p>{{ nombreDia(funcion.fecha) }} {{ formatearFecha(funcion.fecha) }} — {{ funcion.hora }}</p>
             <p>{{ funcion.formato }} · {{ funcion.idioma }}</p>
             <p>La sala se asignará al guardar el lote completo.</p>
-            <button type="button" (click)="eliminarFuncionTemporal(funcion)" [disabled]="guardando || cargando">Quitar</button>
+            <button matButton="filled" type="button" (click)="eliminarFuncionTemporal(funcion)" [disabled]="guardando || cargando">Quitar</button>
           </article>
         }
       </div>
@@ -284,7 +284,7 @@
 
           <div class="funciones-sala">
 
-            
+
 
             @if (
               obtenerFuncionesDeSala(sala.id).length === 0
@@ -368,7 +368,7 @@
 
                 <div class="funcion-acciones">
 
-                  <button
+                  <button matButton="filled"
                     type="button"
                     (click)="eliminarFuncionTemporal(funcion)" [disabled]="guardando || cargando">
 
@@ -398,7 +398,7 @@
 
   <div class="guardar-programacion">
 
-    <button
+    <button matButton="filled"
       type="button"
       (click)="guardarProgramacionSemanal()" [disabled]="guardando || cargando || !!errorCarga">
 

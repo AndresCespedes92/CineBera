@@ -1,27 +1,77 @@
 <app-navbar></app-navbar>
-<main class="cliente-home"><section class="cartelera">
-  <header class="cartelera-header"><h1>Cartelera</h1><p>Películas disponibles en CineBera.</p></header>
-  @if (cargando) { <p role="status">Cargando cartelera...</p><mat-progress-bar mode="indeterminate" aria-label="Cargando cartelera" /> }
-  @else if (error) { <p role="alert">{{ error }}</p><button matButton="outlined" type="button" (click)="ngOnInit()">Reintentar</button> }
-  @else {
-    <div class="cine-toolbar"><mat-form-field appearance="outline"><mat-label>Buscar película</mat-label><input matInput type="search" [(ngModel)]="busqueda" placeholder="Título de la película"></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Género</mat-label><mat-select [(ngModel)]="genero"><mat-option value="">Todos</mat-option>
-      @for (opcion of generos; track opcion) { <mat-option [value]="opcion">{{ opcion }}</mat-option> }
-    </mat-select></mat-form-field></div>
-    <p>Top 3: las más vendidas de esta cartelera, según entradas acumuladas en CineBera.</p>
-    @if (errorRanking || errorResenas) { <p role="alert">{{ errorRanking }} {{ errorResenas }}</p><button matButton="outlined" type="button" (click)="cargarIndicadores()">Reintentar indicadores</button> }
-    @else if (!ventas.length) { <p>Todavía no hay ventas para formar el Top 3.</p> }
-    <div class="cartelera-listado">
-      @for (pelicula of peliculasFiltradas; track pelicula.id) {
-        <div>
-          @if (puesto(pelicula.id)) { <p><strong>Top {{ puesto(pelicula.id) }} · {{ ventas[puesto(pelicula.id)-1].entradas_vendidas }} entradas vendidas</strong></p> }
-          @if (!errorResenas) {
-            @if (valoracion(pelicula.id); as rating) { <p>CineBera: {{ rating.promedio }} / 5 · {{ rating.cantidad }} reseñas</p> }
-            @else { <p>CineBera: sin valoraciones</p> }
-          }
-          <app-pelicula-card [pelicula]="pelicula" (peliculaSeleccionada)="seleccionarPelicula($event)"></app-pelicula-card>
-        </div>
-      } @empty { <p class="cine-empty">{{ peliculas.length ? 'No hay películas que coincidan con los filtros.' : 'No hay películas programadas esta semana.' }}</p> }
-    </div>
-  }
-</section></main>
+<main class="cliente-home">
+  <section class="cartelera">
+    <header class="cartelera-header">
+      <h1>Cartelera</h1>
+      <p>Películas disponibles en CineBera.</p>
+    </header>
+    @if (cargando) {
+      <p role="status">Cargando cartelera...</p>
+      <mat-progress-bar mode="indeterminate" aria-label="Cargando cartelera" />
+    } @else if (error) {
+      <p role="alert">{{ error }}</p>
+      <button matButton="outlined" type="button" (click)="ngOnInit()">Reintentar</button>
+    } @else {
+      <div class="cine-toolbar">
+        <mat-form-field appearance="outline"
+          ><mat-label>Buscar película</mat-label
+          ><input matInput type="search" [(ngModel)]="busqueda" placeholder="Título de la película"
+        /></mat-form-field>
+        <mat-form-field appearance="outline"
+          ><mat-label>Género</mat-label
+          ><mat-select [(ngModel)]="genero"
+            ><mat-option value="">Todos</mat-option>
+            @for (opcion of generos; track opcion) {
+              <mat-option [value]="opcion">{{ opcion }}</mat-option>
+            }
+          </mat-select></mat-form-field
+        >
+      </div>
+      <p>Top 3: las más vendidas de esta cartelera, según entradas acumuladas en CineBera.</p>
+      @if (errorRanking || errorResenas) {
+        <p role="alert">{{ errorRanking }} {{ errorResenas }}</p>
+        <button matButton="outlined" type="button" (click)="cargarIndicadores()">
+          Reintentar indicadores
+        </button>
+      } @else if (!ventas.length) {
+        <p>Todavía no hay ventas para formar el Top 3.</p>
+      }
+      <div class="cartelera-listado">
+        @for (pelicula of peliculasFiltradas; track pelicula.id) {
+          <div class="cartelera-item">
+            <div class="indicadores-pelicula">
+              @if (puesto(pelicula.id)) {
+                <p>
+                  <strong
+                    >Top {{ puesto(pelicula.id) }} ·
+                    {{ ventas[puesto(pelicula.id) - 1].entradas_vendidas }} entradas
+                    vendidas</strong
+                  >
+                </p>
+              }
+              @if (!errorResenas) {
+                @if (valoracion(pelicula.id); as rating) {
+                  <p>CineBera: {{ rating.promedio }} / 5 · {{ rating.cantidad }} reseñas</p>
+                } @else {
+                  <p>CineBera: sin valoraciones</p>
+                }
+              }
+            </div>
+            <app-pelicula-card
+              [pelicula]="pelicula"
+              (peliculaSeleccionada)="seleccionarPelicula($event)"
+            ></app-pelicula-card>
+          </div>
+        } @empty {
+          <p class="cine-empty">
+            {{
+              peliculas.length
+                ? 'No hay películas que coincidan con los filtros.'
+                : 'No hay películas programadas esta semana.'
+            }}
+          </p>
+        }
+      </div>
+    }
+  </section>
+</main>

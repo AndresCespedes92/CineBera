@@ -1,9 +1,10 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Navbar } from '../../../components/navbar/navbar';
 import { AlertaService } from '../../../services/alerta';
 import { AlertaVisible } from '../../../models/alerta-estreno';
-@Component({selector:'app-alertas',imports:[Navbar,RouterLink],templateUrl:'./alertas.html',styleUrl:'../home/home.css'})
+@Component({selector:'app-alertas',imports: [MatButtonModule, Navbar,RouterLink],templateUrl:'./alertas.html',styleUrl:'../home/home.css'})
 export class Alertas implements OnInit {
   filas=signal<AlertaVisible[]>([]);cargando=signal(false);error=signal('');
   constructor(private servicio:AlertaService) {}

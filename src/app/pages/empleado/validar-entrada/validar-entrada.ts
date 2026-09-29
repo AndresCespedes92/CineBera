@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Navbar } from '../../../components/navbar/navbar';
 /*
  * Componente de ZXing encargado de acceder
@@ -34,7 +35,7 @@ import {
    * FormsModule nos permite utilizar [(ngModel)]
    * en el input del código manual.
    */
-  imports: [Navbar,
+  imports: [MatButtonModule, Navbar,
     FormsModule,
 
     /*
@@ -86,7 +87,7 @@ export class ValidarEntrada {
     } finally { this.procesando.set(false); }
   }
 
-  
+
 
 
   /*

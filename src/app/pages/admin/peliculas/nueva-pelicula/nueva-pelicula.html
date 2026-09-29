@@ -75,7 +75,7 @@
           [(ngModel)]="textoBusquedaTmdb">
 
 
-        <button
+        <button matButton="filled"
           type="button"
           (click)="buscarEnTmdb()">
 
@@ -138,7 +138,7 @@
                 }
 
 
-                <button
+                <button matButton="filled"
                   type="button"
                   (click)="seleccionarPeliculaTmdb(pelicula)">
 
@@ -161,7 +161,7 @@
 
         <div class="paginacion-tmdb">
 
-          <button
+          <button matButton="filled"
             type="button"
             (click)="paginaAnterior()"
             [disabled]="paginaActual === 1">
@@ -176,7 +176,7 @@
           </span>
 
 
-          <button
+          <button matButton="filled"
             type="button"
             (click)="paginaSiguiente()"
             [disabled]="paginaActual === totalPaginas">
@@ -690,7 +690,7 @@
 
             <div class="form-actions">
 
-              <button
+              <button matButton="filled"
                 type="submit"
                 [disabled]="peliculaForm.invalid">
 

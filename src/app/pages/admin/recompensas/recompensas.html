@@ -22,7 +22,7 @@
 
   @else if (error()) {
     <p role="alert">{{ error() }}</p>
-    <button (click)="cargarRecompensas()">Reintentar</button>
+    <button matButton="filled" (click)="cargarRecompensas()">Reintentar</button>
   } @else {
 
     <div class="lista-recompensas">
@@ -111,7 +111,7 @@
               }
 
 
-              <button
+              <button matButton="filled"
                 type="button"
                 [disabled]="guardando()"
                 (click)="guardar(recompensa)"
@@ -120,7 +120,7 @@
               </button>
 
 
-              <button
+              <button matButton="filled"
                 type="button"
                 [disabled]="guardando()"
                 (click)="cancelarEdicion()"
@@ -140,7 +140,7 @@
               </p>
 
 
-              <button
+              <button matButton="filled"
                 type="button"
                 (click)="editar(recompensa)"
               >
@@ -148,7 +148,7 @@
               </button>
 
 
-              <button
+              <button matButton="filled"
                 type="button"
                 (click)="cambiarEstado(recompensa)"
               >

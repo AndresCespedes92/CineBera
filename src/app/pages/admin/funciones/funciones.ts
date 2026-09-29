@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import {
   ChangeDetectorRef,
   Component,
@@ -75,7 +76,7 @@ interface FuncionTemporal {
 @Component({
   selector: 'app-funciones',
 
-  imports: [
+  imports: [MatButtonModule,
     FormsModule, RouterLink
   ],
 
@@ -393,7 +394,7 @@ async cargarDatos(): Promise<void> {
       this.fechasSeleccionadas = [...this.fechasSemana];
       await this.cargarProgramacionGuardada();
 
-    
+
 
   }
 

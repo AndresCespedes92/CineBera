@@ -6,7 +6,7 @@
       <label>Acción <select name="accion" [(ngModel)]="accion"><option value="">Todas</option>
         @for (a of acciones; track a.valor) { <option [value]="a.valor">{{ a.nombre }}</option> }
       </select></label>
-      <button type="submit">Consultar / actualizar</button>
+      <button matButton="filled" type="submit">Consultar / actualizar</button>
     </fieldset>
   </form>
   <p>Filtro aplicado: {{ aplicada ? nombre(aplicada) : 'Todas las acciones' }}. Más recientes primero; fechas de Buenos Aires (UTC-03).</p>
@@ -23,5 +23,5 @@
       </div></article>
     } @empty { @if (!cargando() && !error()) { <p>No hay eventos para este filtro.</p> } }
   </div>
-  @if (siguiente() !== undefined) { <button (click)="cargar(true)" [disabled]="cargando()">Cargar más</button> }
+  @if (siguiente() !== undefined) { <button matButton="filled" (click)="cargar(true)" [disabled]="cargando()">Cargar más</button> }
 </section>

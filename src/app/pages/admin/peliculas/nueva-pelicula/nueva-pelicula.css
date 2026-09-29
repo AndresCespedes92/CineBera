@@ -52,10 +52,10 @@
 
 .busqueda-tmdb,
 .detalle-cinebera {
-  border: 1px solid #d7d7d7;
+  border: 1px solid var(--cine-border);
   border-radius: 8px;
 
-  background: #ffffff;
+  background: var(--cine-surface);
 
   padding: 16px;
 }
@@ -93,7 +93,7 @@
 
   padding: 8px 10px;
 
-  border: 1px solid #bdbdbd;
+  border: 1px solid var(--cine-border);
   border-radius: 4px;
 }
 
@@ -132,10 +132,10 @@
 
   padding: 7px;
 
-  border: 1px solid #dddddd;
+  border: 1px solid var(--cine-panel);
   border-radius: 5px;
 
-  background: #fafafa;
+  background: var(--cine-surface);
 }
 
 
@@ -245,7 +245,7 @@
 .pelicula-seleccionada {
   padding-bottom: 16px;
 
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--cine-panel);
 }
 
 
@@ -339,10 +339,10 @@
 .genero {
   padding: 3px 7px;
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
   border-radius: 4px;
 
-  background: #f3f3f3;
+  background: var(--cine-panel);
 
   font-size: 11px;
 }
@@ -397,7 +397,7 @@
 
   padding: 8px;
 
-  border: 1px solid #bdbdbd;
+  border: 1px solid var(--cine-border);
   border-radius: 4px;
 }
 
@@ -421,7 +421,7 @@
 
   padding: 5px 8px;
 
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--cine-border);
   border-radius: 4px;
 
   font-size: 12px;

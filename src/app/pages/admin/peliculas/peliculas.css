@@ -2,8 +2,8 @@
   min-height: 100vh;
   padding: 32px;
 
-  background-color: #f5f5f5;
-  color: #222222;
+  background-color: var(--cine-bg);
+  color: var(--cine-text);
 }
 .page-header {
   display: flex;
@@ -16,8 +16,8 @@
 .page-header button {
   padding: 10px 16px;
 
-  background-color: #444444;
-  color: #ffffff;
+  background-color: var(--cine-text);
+  color: var(--cine-surface);
 
   border: none;
   cursor: pointer;
@@ -26,9 +26,9 @@
 .peliculas-listado {
   padding: 24px;
 
-  background-color: #ffffff;
+  background-color: var(--cine-surface);
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 }
 
 table {
@@ -43,7 +43,7 @@ td {
 
   text-align: left;
 
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--cine-panel);
 }
 
 td button {
@@ -51,9 +51,9 @@ td button {
 
   padding: 6px 10px;
 
-  background-color: #ffffff;
+  background-color: var(--cine-surface);
 
-  border: 1px solid #999999;
+  border: 1px solid var(--cine-border);
 
   cursor: pointer;
 }
@@ -74,16 +74,16 @@ td button {
 .buscador input {
   padding: 10px;
 
-  background-color: #ffffff;
+  background-color: var(--cine-surface);
 
-  border: 1px solid #aaaaaa;
+  border: 1px solid var(--cine-border);
 }
 
 .boton-nueva {
   padding: 10px 16px;
 
-  background-color: #444444;
-  color: #ffffff;
+  background-color: var(--cine-text);
+  color: var(--cine-surface);
 
   text-decoration: none;
 
@@ -97,7 +97,7 @@ td button {
 
   margin-bottom: 24px;
 
-  color: #444444;
+  color: var(--cine-text);
 
   text-decoration: none;
 }
@@ -128,7 +128,7 @@ td button {
 .peliculas-header p {
   margin: 0;
 
-  color: #666666;
+  color: var(--cine-muted);
 }
 
 /* Acción principal */
@@ -136,18 +136,18 @@ td button {
 .boton-nueva {
   padding: 10px 16px;
 
-  background-color: #eeeeee;
+  background-color: var(--cine-panel);
 
-  border: 1px solid #cccccc;
+  border: 1px solid var(--cine-border);
 
-  color: #222222;
+  color: var(--cine-text);
 
   text-decoration: none;
 }
 
 
 .boton-nueva:hover {
-  background-color: #dddddd;
+  background-color: var(--cine-panel);
 }
 
 .boton-editar {
@@ -155,15 +155,15 @@ td button {
   margin-right: 8px;
   padding: 6px 10px;
 
-  background-color: #ffffff;
-  border: 1px solid #999999;
+  background-color: var(--cine-surface);
+  border: 1px solid var(--cine-border);
 
-  color: #222222;
+  color: var(--cine-text);
   text-decoration: none;
 
   cursor: pointer;
 }
 
 .boton-editar:hover {
-  background-color: #eeeeee;
+  background-color: var(--cine-panel);
 }

@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import { CandyService } from '../../../services/candy';
 import { ProductoCandy } from '../../../models/producto-candy';
 import { CategoriaCandy } from '../../../models/categoria-candy';
 
-@Component({ selector: 'app-admin-candy', imports: [FormsModule, RouterLink],
+@Component({ selector: 'app-admin-candy', imports: [MatButtonModule, FormsModule, RouterLink],
   templateUrl: './candy.html', styleUrl: '../recompensas/recompensas.css' })
 export class AdminCandy implements OnInit {
   productos = signal<ProductoCandy[]>([]);

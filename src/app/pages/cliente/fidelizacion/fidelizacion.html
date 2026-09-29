@@ -5,7 +5,7 @@
   @if (cargando()) {
     <p>Cargando beneficios...</p>
   } @else if (error()) {
-    <p role="alert">{{ error() }}</p><button (click)="cargarDatos()">Reintentar</button>
+    <p role="alert">{{ error() }}</p><button matButton="filled" (click)="cargarDatos()">Reintentar</button>
   } @else if (requiereSesion()) {
     <p>Iniciá sesión para consultar y utilizar tus beneficios.</p><a routerLink="/login">Iniciar sesión</a>
   } @else {
@@ -17,7 +17,7 @@
           <article class="recompensa">
             <div><h3>{{ recompensa.nombre }}</h3><p>{{ recompensa.descripcion }}</p>
               <strong>{{ recompensa.puntos_necesarios }} puntos</strong></div>
-            <button (click)="canjear(recompensa)" [disabled]="!puedeCanjear(recompensa) || recompensaCanjeandoId() !== null">
+            <button matButton="filled" (click)="canjear(recompensa)" [disabled]="!puedeCanjear(recompensa) || recompensaCanjeandoId() !== null">
               @if (recompensaCanjeandoId() === recompensa.id) { Canjeando... }
               @else if (puedeCanjear(recompensa)) { Canjear }
               @else { No disponible }

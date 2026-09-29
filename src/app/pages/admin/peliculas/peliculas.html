@@ -47,7 +47,7 @@
 <h2>
     Listado de películas
 </h2>
-    <table>
+    <div class="tabla-scroll" tabindex="0" role="region" aria-label="Tabla desplazable"><table>
     <thead>
     <tr>
         <th>Título</th>
@@ -87,7 +87,7 @@
             ]">
             Editar
           </a>
-          <button
+          <button matButton="filled"
             type="button"
             (click)="cambiarVisibilidad(pelicula)">
             @if (pelicula.visible) {
@@ -116,6 +116,6 @@
   </tr>
 </ng-template>
 
-</table>
+</table></div>
 </section>
 </main>

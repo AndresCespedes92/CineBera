@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import {
   ChangeDetectorRef,
   Component
@@ -36,7 +37,7 @@ import {
 @Component({
   selector: 'app-nueva-pelicula',
 
-  imports: [
+  imports: [MatButtonModule,
     RouterLink,
     ReactiveFormsModule,
     FormsModule

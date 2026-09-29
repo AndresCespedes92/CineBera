@@ -1,9 +1,10 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, OnInit, signal } from '@angular/core';
 import { Navbar } from '../../../components/navbar/navbar';
 import { Auth } from '../../../services/auth';
 import { Usuario } from '../../../services/usuario';
 
-@Component({selector: 'app-perfil', imports: [Navbar], templateUrl: './perfil.html', styleUrl: '../home/home.css'})
+@Component({selector: 'app-perfil', imports: [MatButtonModule, Navbar], templateUrl: './perfil.html', styleUrl: '../home/home.css'})
 export class Perfil implements OnInit {
   datos = signal<{nombre: string; apellido: string; email: string; rol: string} | null>(null);
   cargando = signal(false);
