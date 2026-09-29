@@ -1,190 +1,54 @@
 <section class="fidelizacion">
-
-  <header>
-    <h1>
-      Mis beneficios
-    </h1>
-
-    <p>
-      Acumulá 1 punto por cada peso gastado.
-    </p>
-  </header>
-
-
+  <header><h1>Mis beneficios</h1><p>Acumulá 1 punto por cada peso pagado en entradas y Candy.</p></header>
+  @if (mensaje()) { <p role="status">{{ mensaje() }}</p> }
   @if (cargando()) {
-
-    <p>
-      Cargando beneficios...
-    </p>
-
-  }
-
-  @else {
-
-    <!--
-      SALDO ACTUAL
-    -->
-    <section class="saldo">
-
-      <p>
-        Puntos disponibles
-      </p>
-
-      <strong>
-        {{ saldo() }} pts
-      </strong>
-
-    </section>
-
-
-    <!--
-      RECOMPENSAS
-    -->
+    <p>Cargando beneficios...</p>
+  } @else if (error()) {
+    <p role="alert">{{ error() }}</p><button (click)="cargarDatos()">Reintentar</button>
+  } @else if (requiereSesion()) {
+    <p>Iniciá sesión para consultar y utilizar tus beneficios.</p><a routerLink="/login">Iniciar sesión</a>
+  } @else {
+    <section class="saldo"><p>Puntos disponibles</p><strong>{{ saldo() }} pts</strong></section>
     <section>
-
-      <h2>
-        Recompensas
-      </h2>
-
-
+      <h2>Recompensas</h2>
       <div class="recompensas">
-
-        @for (
-          recompensa of recompensas();
-          track recompensa.id
-        ) {
-
+        @for (recompensa of recompensas(); track recompensa.id) {
           <article class="recompensa">
-
-            <div>
-
-              <h3>
-                {{ recompensa.nombre }}
-              </h3>
-
-
-              @if (recompensa.descripcion) {
-
-                <p>
-                  {{ recompensa.descripcion }}
-                </p>
-
-              }
-
-
-              <strong>
-                {{ recompensa.puntos_necesarios }}
-                puntos
-              </strong>
-
-            </div>
-
-
-            <button
-              type="button"
-
-              [disabled]="
-                !puedeCanjear(recompensa) ||
-                recompensaCanjeandoId() !== null
-              "
-
-              (click)="canjear(recompensa)"
-            >
-
-              @if (
-                recompensaCanjeandoId() === recompensa.id
-              ) {
-
-                Canjeando...
-
-              }
-
-              @else if (
-                puedeCanjear(recompensa)
-              ) {
-
-                Canjear
-
-              }
-
-              @else {
-
-                Puntos insuficientes
-
-              }
-
+            <div><h3>{{ recompensa.nombre }}</h3><p>{{ recompensa.descripcion }}</p>
+              <strong>{{ recompensa.puntos_necesarios }} puntos</strong></div>
+            <button (click)="canjear(recompensa)" [disabled]="!puedeCanjear(recompensa) || recompensaCanjeandoId() !== null">
+              @if (recompensaCanjeandoId() === recompensa.id) { Canjeando... }
+              @else if (puedeCanjear(recompensa)) { Canjear }
+              @else { No disponible }
             </button>
-
           </article>
-
-        }
-
-        @empty {
-
-          <p>
-            No hay recompensas disponibles.
-          </p>
-
-        }
-
+        } @empty { <p>No hay recompensas disponibles.</p> }
       </div>
-
     </section>
-
-    <!--
-  =====================================================
-  HISTORIAL DE CANJES
-  =====================================================
--->
-<section class="historial">
-
-  <h2>
-    Historial de canjes
-  </h2>
-
-
-  @for (
-    movimiento of historialCanjes();
-    track movimiento.id
-  ) {
-
-    <article class="historial__item">
-
-      <div>
-
-        <strong>
-          {{ movimiento.descripcion }}
-        </strong>
-
-        <p>
-          {{ movimiento.created_at }}
-        </p>
-
-      </div>
-
-
-      <!--
-        Los canjes ya están guardados como números
-        negativos, por ejemplo -150.
-      -->
-      <strong>
-        {{ movimiento.puntos }} pts
-      </strong>
-
-    </article>
-
+    <section class="historial">
+      <h2>Mis canjes y beneficios</h2>
+      @for (beneficio of historialCanjes(); track beneficio.id) {
+        <article class="historial__item">
+          <div>
+            <strong>{{ beneficio.beneficio_nombre || beneficio.descripcion }}</strong>
+            <p>{{ beneficio.created_at | date:'dd/MM/yyyy HH:mm' }} · {{ beneficio.puntos }} pts</p>
+            @if (beneficio.compra_utilizada_id) {
+              <p>Utilizado en la compra #{{ beneficio.compra_utilizada_id }}.</p>
+              <a [routerLink]="['/pago', beneficio.compra_utilizada_id]">Ver entrada</a>
+            } @else if (beneficio.entregado_at) {
+              <p>Candy entregado el {{ beneficio.entregado_at | date:'dd/MM/yyyy HH:mm' }}.</p>
+            } @else if (beneficio.beneficio_tipo === 'entrada') {
+              <p>Entrada gratis pendiente. Elegí función y butacas; seleccioná este beneficio al pagar.
+                Cubre una entrada, la de menor precio si elegís varias. Incluye el recargo VIP de esa entrada.</p>
+              <a routerLink="/cartelera">Elegir película</a>
+            } @else if (beneficio.beneficio_tipo === 'candy') {
+              <p>Pendiente de retiro: una unidad. Mostrá este código al empleado.</p>
+              <qrcode [qrdata]="'CINEBERA-CANJE:' + beneficio.codigo_beneficio" [width]="160" />
+              <p>Código: {{ beneficio.codigo_beneficio }}</p>
+            }
+          </div>
+        </article>
+      } @empty { <p>Todavía no realizaste ningún canje.</p> }
+    </section>
   }
-
-  @empty {
-
-    <p>
-      Todavía no realizaste ningún canje.
-    </p>
-
-  }
-
-</section>
-
-  }
-
 </section>

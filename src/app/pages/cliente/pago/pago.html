@@ -1,69 +1,42 @@
 <main>
-
-  <h1>
-    Pago
-  </h1>
-
-
-  @if (cargando()) {
-
-    <p>
-      Cargando compra...
-    </p>
-
-  } @else {
-
-
-    @if (compra(); as compraActual) {
-
+  <h1>Pago</h1>
+  @if (cargando()) { <p>Cargando compra...</p> }
+  @else {
+    @if (error()) { <p role="alert">{{ error() }}</p> }
+    @if (aviso()) { <p role="status">{{ aviso() }}</p> }
+    @if (codigoEntrada(); as codigo) { <a [routerLink]="['/entrada', codigo]">Ver mi entrada</a> }
+    @if (compra(); as actual) {
       <section>
-
-        <p>
-          Compra #{{ compraActual.id }}
-        </p>
-
-
-        <p>
-          Estado:
-          {{ compraActual.estado }}
-        </p>
-
-
-        <h2>
-          Total a pagar:
-          ${{ compraActual.total }}
-        </h2>
-
-
-        <!--
-          Por ahora simulamos un pago aprobado.
-
-          Más adelante podremos reemplazar esta acción
-          por un medio de pago real si fuera necesario.
-        -->
-        <button
-          type="button"
-          (click)="confirmarPago()"
-        >
-          Confirmar pago
-        </button>
-
+        <p>Compra #{{ actual.id }} · {{ actual.estado }}</p>
+        @if (actual.estado === 'pendiente') {
+          @if (beneficios().length && actual.total > 0) {
+            <label>Usar una entrada gratis
+              <select [ngModel]="beneficioId()" (ngModelChange)="beneficioId.set($event)" [disabled]="procesando()">
+                <option [ngValue]="null">Guardar mis beneficios para otra compra</option>
+                @for (beneficio of beneficios(); track beneficio.id) {
+                  <option [ngValue]="beneficio.id">{{ beneficio.beneficio_nombre }} · Canje #{{ beneficio.id }}</option>
+                }
+              </select>
+            </label>
+            <p>Cubre una entrada, la de menor precio si seleccionaste varias. El resto conserva sus descuentos.</p>
+          }
+          <p>Importe de entradas: ${{ actual.total }}</p>
+          @if (descuento() > 0) { <p>Entrada gratis: −${{ descuento() }}</p> }
+          <h2>Total a pagar: ${{ total() }}</h2>
+        } @else {
+          <p>Total pagado: ${{ actual.total }}</p>
+          @if (actual.beneficio_id) { <p>Entrada gratis utilizada: canje #{{ actual.beneficio_id }}.</p> }
+        }
+        @if (actual.estado !== 'cancelada') {
+          <button (click)="confirmarPago()" [disabled]="procesando()">
+            @if (procesando()) { Procesando... }
+            @else if (actual.estado === 'pagada') { Completar emisión / ver entrada }
+            @else if (total() === 0) { Confirmar entrada gratis }
+            @else { Confirmar pago simulado }
+          </button>
+        }
+        <a routerLink="/cartelera">Volver a cartelera</a>
       </section>
-
-          @if (compra()?.estado === 'pagada') {
-              <p>
-                Pago confirmado correctamente.
-              </p>
-            }
-
-    } @else {
-
-      <p>
-        No se encontró la compra.
-      </p>
-
-    }
-
+    } @else { <p>No se encontró una compra disponible.</p> }
   }
-
 </main>

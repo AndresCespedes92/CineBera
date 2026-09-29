@@ -51,6 +51,9 @@ export interface Compra {
 
   pagada_at: string | null;
 
+  beneficio_id?: number | null;
+  descuento_beneficio?: number;
+
 }
 
 

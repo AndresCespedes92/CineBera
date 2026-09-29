@@ -25,6 +25,8 @@ import {
 import {
   CandyService
 } from '../../../services/candy';
+import { FidelizacionService } from '../../../services/fidelizacion';
+import { PedidoCandy } from '../../../models/pedido-candy';
 
 
 @Component({
@@ -38,6 +40,27 @@ import {
   styleUrl: './candy.css'
 })
 export class Candy implements OnInit {
+
+  pedido = signal<PedidoCandy | null>(null);
+  errorCarga = signal('');
+
+  async pagarPedido(): Promise<void> {
+    if (!this.compraId || this.guardandoPedido) return;
+    this.guardandoPedido = true;
+    try {
+      const pedido = await this.candyService.confirmarPagoPedido(this.compraId);
+      this.pedido.set(pedido);
+      const acreditado = await this.fidelizacionService.acreditarPuntosPorCandy(pedido.id);
+      this.mensajePedido = acreditado
+        ? 'Candy pagado. Retiralo con el QR o código de tu entrada.'
+        : 'Candy pagado. Falta acreditar los puntos; podés reintentar sin volver a pagar.';
+    } catch (error) {
+      this.mensajePedido = error instanceof Error ? error.message : 'No se pudo confirmar el pago.';
+    } finally {
+      this.guardandoPedido = false;
+      this.changeDetectorRef.detectChanges();
+    }
+  }
 
   /*
  * Compra a la que quedará asociado
@@ -136,7 +159,8 @@ totalCarrito =
   constructor(
   private candyService: CandyService,
   private changeDetectorRef: ChangeDetectorRef,
-  private route: ActivatedRoute
+  private route: ActivatedRoute,
+  private fidelizacionService: FidelizacionService
 ) {}
 
 
@@ -148,6 +172,10 @@ totalCarrito =
    * solicitar el catálogo al servicio.
    */
   async ngOnInit(): Promise<void> {
+
+    this.errorCarga.set('');
+    this.cargando = true;
+    try {
 
     /*
  * Intentamos recuperar el ID de compra
@@ -191,6 +219,15 @@ if (compraRecibida) {
     this.productos =
       await this.candyService
         .obtenerProductosActivos();
+
+    if (this.compraId) {
+      const pedido = await this.candyService.obtenerPedidoPorCompra(this.compraId);
+      this.pedido.set(pedido);
+      this.pedidoCreadoId = pedido?.detalles.length ? pedido.id : null;
+    }
+    } catch (error) {
+      this.errorCarga.set(error instanceof Error ? error.message : 'No se pudo cargar Candy.');
+    }
 
 
     /*
@@ -433,6 +470,8 @@ async confirmarPedido(): Promise<void> {
   this.guardandoPedido = true;
   this.mensajePedido = '';
 
+  try {
+
 
   /*
    * Le pasamos al servicio:
@@ -465,9 +504,17 @@ async confirmarPedido(): Promise<void> {
    * sabemos que el pedido fue creado.
    */
   this.pedidoCreadoId = pedidoId;
+  this.pedido.set(await this.candyService.obtenerPedidoPorCompra(this.compraId));
 
   this.mensajePedido =
-    'Pedido de Candy creado correctamente.';
+    'Pedido guardado. Confirmá el pago para poder retirarlo.';
+
+  } catch (error) {
+    this.mensajePedido = error instanceof Error ? error.message : 'No se pudo guardar el pedido.';
+  } finally {
+    this.guardandoPedido = false;
+    this.changeDetectorRef.detectChanges();
+  }
 
   this.guardandoPedido = false;
 }

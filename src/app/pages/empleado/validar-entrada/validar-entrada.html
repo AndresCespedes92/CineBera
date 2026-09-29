@@ -1,5 +1,7 @@
 <main>
 
+  @if (errorCandy()) { <p role="alert">{{ errorCandy() }}</p> }
+
   <!-- =====================================================
        TÍTULO PRINCIPAL
        ===================================================== -->
@@ -8,7 +10,7 @@
 
   <p>
     Escaneá el código QR de la entrada o ingresá
-    el código manual.
+    el código manual. También podés buscar o escanear un canje de Candy.
   </p>
 
 
@@ -70,7 +72,7 @@
       type="text"
       [(ngModel)]="codigoManual"
       placeholder="Ej: A7K3P9XZ"
-      maxlength="8"
+      maxlength="60"
     >
 
 
@@ -82,7 +84,7 @@
       type="button"
       (click)="buscarEntrada()"
       [disabled]="procesando()">
-      Buscar entrada
+      Buscar entrada o canje
     </button>
 
   </section>
@@ -225,7 +227,7 @@
 
   <p>
     Estado:
-    Pendiente de entrega
+    {{ pedido.estado === 'pagado' ? 'Pendiente de entrega' : 'Pago pendiente: no entregar' }}
   </p>
 
 
@@ -236,7 +238,7 @@
   <button
     type="button"
     (click)="entregarCandy()"
-    [disabled]="procesando()"
+    [disabled]="procesando() || pedido.estado !== 'pagado'"
   >
     @if (procesando()) {
       Procesando...
@@ -283,4 +285,16 @@
 
   }
 
+  @if (beneficioCandy(); as beneficio) {
+    <section class="pedido-candy">
+      <h2>Canje de Candy</h2>
+      <p>{{ beneficio.beneficio_nombre }} · Una unidad · Producto #{{ beneficio.producto_candy_id }}</p>
+      @if (beneficio.entregado_at) {
+        <p>Entregado. Este código no puede volver a utilizarse.</p>
+      } @else {
+        <button (click)="entregarCanjeCandy()" [disabled]="procesando()">Entregar Candy canjeado</button>
+      }
+      <button (click)="escanearOtraEntrada()" [disabled]="procesando()">Escanear otro código</button>
+    </section>
+  }
 </main>

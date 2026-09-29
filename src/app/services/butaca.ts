@@ -603,7 +603,17 @@ async confirmarButacasReserva(
   reservaToken: string
 ): Promise<boolean> {
 
+  // Un reintento de pago puede encontrar butacas ya ocupadas. Cero filas,
+  // en cambio, nunca significa que confirmamos una entrada correctamente.
+  const consulta = await supabase.from('butacas_funcion').select('*')
+    .eq('reserva_token', reservaToken);
+  if (consulta.error || !consulta.data?.length) return false;
+  const reservadas = consulta.data.filter(butaca => butaca.estado === 'reservada');
+  if (reservadas.some(butaca => !butaca.expires_at || new Date(butaca.expires_at).getTime() <= Date.now())) return false;
+  if (!reservadas.length) return consulta.data.every(butaca => butaca.estado === 'ocupada');
+
   const {
+    data,
     error
   } = await supabase
     .from('butacas_funcion')
@@ -628,7 +638,9 @@ async confirmarButacasReserva(
     .eq(
       'estado',
       'reservada'
-    );
+    )
+    .gt('expires_at', new Date().toISOString())
+    .select('id');
 
 
   if (error) {
@@ -642,7 +654,7 @@ async confirmarButacasReserva(
   }
 
 
-  return true;
+  return data?.length === reservadas.length;
 
 }
 

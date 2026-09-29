@@ -35,6 +35,9 @@
       Cargando productos...
     </p>
 
+  } @else if (errorCarga()) {
+    <p role="alert">{{ errorCarga() }}</p>
+    <button (click)="ngOnInit()">Reintentar</button>
   } @else {
 
     @if (productos.length > 0) {
@@ -233,4 +236,19 @@
 
   }
 
+  @if (pedido(); as actual) {
+    <section class="carrito">
+      <h2>Pedido #{{ actual.id }} · {{ actual.estado }}</h2>
+      @for (detalle of actual.detalles; track detalle.id) {
+        <p>{{ detalle.nombreProducto }} × {{ detalle.cantidad }} · ${{ detalle.subtotal }}</p>
+      }
+      <p>Total del pedido: ${{ actual.total }}</p>
+      @if (actual.estado !== 'cancelado' && actual.detalles.length) {
+        <button (click)="pagarPedido()" [disabled]="guardandoPedido">
+          {{ actual.estado === 'pagado' ? 'Verificar acreditación de puntos' : 'Confirmar pago simulado de Candy' }}
+        </button>
+      }
+      <p role="status">{{ mensajePedido }}</p>
+    </section>
+  }
 </main>
