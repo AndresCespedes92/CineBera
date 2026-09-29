@@ -1,236 +1,34 @@
-<app-navbar></app-navbar>
-
-
+<app-navbar />
 <main class="candy-page">
-
-  <header>
-
-    <h1>
-      Candy
-    </h1>
-
-    @if (compraId !== null) {
-
-  <p>
-    Pedido asociado a la compra
-    #{{ compraId }}
-  </p>
-
-}
-
-    <p>
-      Elegí tus productos para disfrutar durante la película.
-    </p>
-
-  </header>
-
-
-  @if (cargando) {
-
-    <!--
-      Este contenido aparece mientras
-      esperamos la respuesta de Supabase.
-    -->
-    <p>
-      Cargando productos...
-    </p>
-
-  } @else {
-
-    @if (productos.length > 0) {
-
-      <section class="productos-candy">
-
-        <!--
-          @for recorre el array recibido
-          desde CandyService.
-
-          track producto.id ayuda a Angular
-          a identificar cada elemento de
-          manera única.
-        -->
-        @for (
-          producto of productos;
-          track producto.id
-        ) {
-
-          <article class="producto-candy">
-
-            @if (producto.imagenUrl) {
-
-              <img
-                [src]="producto.imagenUrl"
-                [alt]="producto.nombre"
-              >
-
-            }
-
-
-            <h2>
-              {{ producto.nombre }}
-            </h2>
-
-
-            @if (producto.descripcion) {
-
-              <p>
-                {{ producto.descripcion }}
-              </p>
-
-            }
-
-
-            <strong>
-              ${{ producto.precio }}
-            </strong>
-
-
-            <!--
-              Todavía no implementamos el carrito.
-              Primero verificamos que el catálogo
-              llegue correctamente desde Supabase.
-            -->
-            <button
-            type="button"
-            (click)="agregarProducto(producto)"
-            >
-            Agregar
-            </button>
-
+  <header><h1>Candy</h1><p>Elegí productos y volvé al checkout para pagar todo junto. El tiempo de reserva sigue corriendo.</p></header>
+  @if (cargando()) { <p>Cargando productos...</p> }
+  @else if (error()) { <p role="alert">{{ error() }}</p><button (click)="ngOnInit()">Reintentar</button><a routerLink="/cartelera">Volver a cartelera</a> }
+  @else {
+    @if (!reservaToken) { <p>Para agregar Candy, elegí tus butacas e ingresá desde el checkout.</p><a routerLink="/cartelera">Elegir película</a> }
+    @if (aviso()) { <p role="status">{{ aviso() }}</p> }
+    <section class="productos-candy">
+      @for (producto of productos; track producto.id) {
+        <article class="producto-candy">
+          @if (producto.imagenUrl) { <img [src]="producto.imagenUrl" [alt]="producto.nombre"> }
+          <h2>{{ producto.nombre }}</h2><p>{{ producto.descripcion }}</p><strong>$ {{ producto.precio }}</strong>
+          @if (reservaToken) { <button (click)="agregarProducto(producto)">Agregar</button> }
+        </article>
+      } @empty { <p>No hay productos disponibles.</p> }
+    </section>
+    @if (reservaToken) {
+      <section class="carrito-candy"><h2>Tu selección</h2>
+        @for (item of carrito(); track item.producto.id) {
+          <article class="item-carrito"><strong>{{ item.producto.nombre }}</strong>
+            <div class="cantidad-controles">
+              <button (click)="disminuirCantidad(item.producto.id)" [disabled]="item.cantidad <= 1">−</button>
+              <span>{{ item.cantidad }}</span><button (click)="aumentarCantidad(item.producto.id)">+</button>
+            </div>
+            <span>$ {{ item.producto.precio * item.cantidad }}</span><button (click)="eliminarProducto(item.producto.id)">Eliminar</button>
           </article>
-
-        }
-
-        <!--
-  Mostramos el carrito solamente
-  cuando contiene al menos un producto.
--->
-@if (carrito().length > 0) {
-
-  <section class="carrito-candy">
-
-    <h2>
-      Tu pedido
-    </h2>
-
-
-    @for (
-      item of carrito();
-      track item.producto.id
-    ) {
-
-      <article class="item-carrito">
-
-        <strong>
-          {{ item.producto.nombre }}
-        </strong>
-
-
-        <!--
-          Controles para modificar la cantidad
-          del producto seleccionado.
-        -->
-        <div class="cantidad-controles">
-
-          <button
-            type="button"
-            (click)="disminuirCantidad(item.producto.id)"
-            [disabled]="item.cantidad <= 1"
-          >
-            -
-          </button>
-
-
-          <span>
-            {{ item.cantidad }}
-          </span>
-
-
-          <button
-            type="button"
-            (click)="aumentarCantidad(item.producto.id)"
-          >
-            +
-          </button>
-
-        </div>
-
-
-        <span>
-          Subtotal:
-          ${{
-            item.producto.precio *
-            item.cantidad
-          }}
-        </span>
-
-
-        <button
-          type="button"
-          (click)="eliminarProducto(item.producto.id)"
-        >
-          Eliminar
-        </button>
-
-      </article>
-
-    }
-
-
-    <h3>
-      Total:
-      ${{ totalCarrito() }}
-    </h3>
-
-    <!--
-  Solo permitimos confirmar si Candy
-  está asociado a una compra real.
--->
-@if (compraId !== null) {
-
-  <button
-    type="button"
-    (click)="confirmarPedido()"
-    [disabled]="
-      guardandoPedido ||
-      pedidoCreadoId !== null
-    "
-  >
-
-    @if (guardandoPedido) {
-      Guardando...
-    } @else if (pedidoCreadoId !== null) {
-      Pedido confirmado
-    } @else {
-      Confirmar pedido
-    }
-
-  </button>
-
-  @if (mensajePedido) {
-
-  <p>
-    {{ mensajePedido }}
-  </p>
-
-}
-
-}
-
-  </section>
-
-}
-
+        } @empty { <p>Podés continuar sin Candy.</p> }
+        <h3>Total Candy: $ {{ totalCarrito() }}</h3>
+        <button (click)="volverCheckout()">Volver al checkout</button>
       </section>
-
-    } @else {
-
-      <p>
-        No hay productos disponibles.
-      </p>
-
     }
-
   }
-
 </main>

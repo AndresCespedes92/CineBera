@@ -13,6 +13,8 @@ import { FormsModule } from '@angular/forms';
 
 import { EntradaService } from '../../../services/entrada';
 import { Entrada } from '../../../models/entrada';
+import { Beneficio } from '../../../models/beneficio';
+import { FidelizacionService } from '../../../services/fidelizacion';
 
 import {
   CandyService
@@ -45,6 +47,43 @@ import {
   styleUrl: './validar-entrada.css'
 })
 export class ValidarEntrada {
+
+  beneficioCandy = signal<Beneficio | null>(null);
+  errorCandy = signal('');
+
+  async buscarCanjeCandy(codigo: string): Promise<void> {
+    this.errorCandy.set('');
+    this.procesando.set(true);
+    this.entrada.set(null);
+    this.pedidoCandy.set(null);
+    this.beneficioCandy.set(null);
+    try {
+      const beneficio = await this.fidelizacionService.buscarBeneficioCandy(codigo.trim());
+      this.beneficioCandy.set(beneficio);
+      this.mensaje.set(!beneficio ? 'Canje no encontrado.' : beneficio.entregado_at
+        ? 'Este canje ya fue entregado.' : 'Canje válido. Entregar una unidad del producto indicado.');
+    } catch (error) {
+      this.mensaje.set(error instanceof Error ? error.message : 'No se pudo consultar el canje.');
+    } finally { this.procesando.set(false); }
+  }
+
+  async entregarCanjeCandy(): Promise<void> {
+    const beneficio = this.beneficioCandy();
+    if (!beneficio || beneficio.entregado_at || this.procesando()) return;
+    this.procesando.set(true);
+    try {
+      const entregado = await this.fidelizacionService.entregarBeneficioCandy(beneficio.id);
+      if (!entregado) {
+        await this.buscarCanjeCandy(beneficio.codigo_beneficio);
+        this.mensaje.set('No se confirmó una nueva entrega. Revisá el estado del canje.');
+        return;
+      }
+      this.beneficioCandy.set(entregado);
+      this.mensaje.set('Beneficio Candy entregado correctamente.');
+    } catch (error) {
+      this.mensaje.set(error instanceof Error ? error.message : 'No se pudo confirmar la entrega.');
+    } finally { this.procesando.set(false); }
+  }
 
   
 
@@ -113,7 +152,8 @@ scannerActivo = signal<boolean>(true);
    * Lo utilizaremos para consultar el pedido
    * Candy asociado a la compra de la entrada.
    */
-  private candyService: CandyService
+  private candyService: CandyService,
+  private fidelizacionService: FidelizacionService
 ) {}
 
 /*
@@ -136,6 +176,7 @@ async cargarCandyDeEntrada(
    * el Candy de la entrada previamente escaneada.
    */
   this.pedidoCandy.set(null);
+  this.errorCandy.set('');
 
 
   /*
@@ -145,6 +186,7 @@ async cargarCandyDeEntrada(
    *
    * Usamos ese ID para buscar el pedido Candy.
    */
+  try {
   const pedido =
     await this.candyService
       .obtenerPedidoPorCompra(
@@ -159,6 +201,9 @@ async cargarCandyDeEntrada(
    * null        → no compró Candy.
    */
   this.pedidoCandy.set(pedido);
+  } catch (error) {
+    this.errorCandy.set(error instanceof Error ? error.message : 'No se pudo consultar Candy.');
+  }
 
 }
 
@@ -168,6 +213,16 @@ async cargarCandyDeEntrada(
    * código manual ingresado por el empleado.
    */
   async buscarEntrada(): Promise<void> {
+
+    if (this.procesando()) return;
+    this.errorCandy.set('');
+    this.beneficioCandy.set(null);
+    this.pedidoCandy.set(null);
+    const codigoCanje = this.codigoManual.trim().replace(/^CINEBERA-CANJE:/, '');
+    if (/^[0-9a-f-]{36}$/i.test(codigoCanje)) {
+      await this.buscarCanjeCandy(codigoCanje);
+      return;
+    }
 
     /*
      * Eliminamos espacios accidentales.
@@ -347,6 +402,15 @@ await this.cargarCandyDeEntrada(
  */
 async qrLeido(resultado: string): Promise<void> {
 
+  if (this.procesando() || !this.scannerActivo()) return;
+  if (resultado.startsWith('CINEBERA-CANJE:') && this.scannerActivo()) {
+    this.scannerActivo.set(false);
+    await this.buscarCanjeCandy(resultado.slice('CINEBERA-CANJE:'.length));
+    return;
+  }
+  this.beneficioCandy.set(null);
+  this.pedidoCandy.set(null);
+
   /*
    * Si ya estamos procesando un QR,
    * ignoramos nuevas lecturas.
@@ -476,113 +540,32 @@ await this.cargarCandyDeEntrada(
  * la entrada para ingresar a la sala.
  */
 async entregarCandy(): Promise<void> {
-
-  /*
-   * Recuperamos el pedido que actualmente
-   * está cargado en pantalla.
-   */
-  const pedidoActual =
-    this.pedidoCandy();
-
-
-  /*
-   * Si no existe pedido Candy,
-   * no hay nada para entregar.
-   */
-  if (!pedidoActual) {
-    return;
-  }
-
-
-  /*
-   * Evitamos intentar entregar nuevamente
-   * un pedido que ya sabemos que fue entregado.
-   */
-  if (pedidoActual.entregado) {
-
-    this.mensaje.set(
-      'El pedido Candy ya fue entregado.'
-    );
-
-    return;
-  }
-
-
+  const pedido = this.pedidoCandy();
+  if (!pedido || pedido.entregado || pedido.estado !== 'pagado' || this.procesando()) return;
   this.procesando.set(true);
-
-
-  /*
-   * CandyService realiza el UPDATE real
-   * contra Supabase.
-   *
-   * Supabase solamente permitirá el cambio
-   * si entregado continúa siendo false.
-   */
-  const pedidoEntregado =
-    await this.candyService.entregarPedido(
-      pedidoActual.id
-    );
-
-
-  this.procesando.set(false);
-
-
-  /*
-   * null significa que no se pudo realizar
-   * la actualización.
-   *
-   * Por ejemplo, otro empleado pudo haber
-   * entregado el pedido unos segundos antes.
-   */
-  if (!pedidoEntregado) {
-
-    this.mensaje.set(
-      'El pedido Candy no pudo ser entregado. Puede haber sido entregado anteriormente.'
-    );
-
-    /*
-     * Volvemos a consultar el estado real
-     * usando la entrada actualmente cargada.
-     */
-    const entradaActual =
-      this.entrada();
-
-    if (entradaActual) {
-
-      await this.cargarCandyDeEntrada(
-        entradaActual
-      );
-
+  try {
+    const entregado = await this.candyService.entregarPedido(pedido.id);
+    if (!entregado) {
+      this.mensaje.set('No se confirmó una nueva entrega. Revisá el estado del pedido.');
+      const entrada = this.entrada();
+      if (entrada) await this.cargarCandyDeEntrada(entrada);
+      return;
     }
-
-    return;
-  }
-
-
-  /*
-   * Actualizamos el Signal con la información
-   * real que acaba de devolver Supabase.
-   *
-   * Angular actualizará automáticamente
-   * el HTML que depende de pedidoCandy().
-   */
-  this.pedidoCandy.set(
-    pedidoEntregado
-  );
-
-
-  this.mensaje.set(
-    'Pedido Candy entregado correctamente.'
-  );
-
+    this.pedidoCandy.set(entregado);
+    this.mensaje.set('Pedido Candy entregado correctamente.');
+  } catch (error) {
+    this.mensaje.set(error instanceof Error ? error.message : 'No se pudo confirmar la entrega.');
+  } finally { this.procesando.set(false); }
 }
-
 
 /*
  * Limpia la entrada actual y vuelve
  * a habilitar el lector QR.
  */
 escanearOtraEntrada(): void {
+
+  this.beneficioCandy.set(null);
+  this.errorCandy.set('');
 
   this.entrada.set(null);
 

@@ -17,6 +17,12 @@ import {
 })
 export class CompraService {
 
+  async actualizarTotalPendiente(id: number, total: number): Promise<void> {
+    const { data, error } = await supabase.from('compras').update({ total })
+      .eq('id', id).eq('estado', 'pendiente').select('id').maybeSingle();
+    if (error || !data) throw new Error('No se pudo actualizar el resumen de entradas.');
+  }
+
 
   /*
    * Crea una compra en estado pendiente.

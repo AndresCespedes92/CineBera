@@ -11,6 +11,8 @@ import {
 import {
   FidelizacionService
 } from '../../../services/fidelizacion';
+import { CandyService } from '../../../services/candy';
+import { ProductoCandy } from '../../../models/producto-candy';
 
 
 @Component({
@@ -20,6 +22,14 @@ import {
   styleUrl: './recompensas.css'
 })
 export class Recompensas implements OnInit {
+
+  productos = signal<ProductoCandy[]>([]);
+  productoEditando = signal<number | null>(null);
+  error = signal('');
+
+  cambiarProducto(event: Event): void {
+    this.productoEditando.set(Number((event.target as HTMLSelectElement).value) || null);
+  }
 
 
   /*
@@ -62,7 +72,8 @@ export class Recompensas implements OnInit {
 
   constructor(
     private fidelizacionService:
-      FidelizacionService
+      FidelizacionService,
+    private candyService: CandyService
   ) {}
 
 
@@ -83,6 +94,10 @@ export class Recompensas implements OnInit {
 
     this.cargando.set(true);
 
+    this.error.set('');
+    try {
+    this.productos.set(await this.candyService.obtenerProductosActivos());
+
 
     const recompensas =
       await this.fidelizacionService
@@ -95,6 +110,10 @@ export class Recompensas implements OnInit {
 
 
     this.cargando.set(false);
+
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'No se pudieron cargar las recompensas.');
+    } finally { this.cargando.set(false); }
 
   }
 
@@ -112,6 +131,8 @@ export class Recompensas implements OnInit {
   editar(
     recompensa: Recompensa
   ): void {
+
+    this.productoEditando.set(recompensa.producto_candy_id ?? null);
 
     this.recompensaEditandoId.set(
       recompensa.id
@@ -186,7 +207,8 @@ export class Recompensas implements OnInit {
         .actualizarRecompensa(
           recompensa.id,
           nuevosPuntos,
-          recompensa.activo
+          recompensa.activo,
+          recompensa.tipo === 'candy' ? this.productoEditando() : null
         );
 
 

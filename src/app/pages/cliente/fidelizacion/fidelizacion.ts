@@ -1,313 +1,74 @@
-import {
-  Component,
-  OnInit,
-  signal
-} from '@angular/core';
-
-import {
-  FidelizacionService
-} from '../../../services/fidelizacion';
-
-import {
-  Auth
-} from '../../../services/auth';
-
-import {
-  Recompensa
-} from '../../../models/recompensa';
-
-import {
-  MovimientoPuntos
-} from '../../../models/movimiento-puntos';
+import { Component, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { QRCodeComponent } from 'angularx-qrcode';
+import { DatePipe } from '@angular/common';
+import { FidelizacionService } from '../../../services/fidelizacion';
+import { Auth } from '../../../services/auth';
+import { Recompensa } from '../../../models/recompensa';
+import { Beneficio } from '../../../models/beneficio';
 
 @Component({
   selector: 'app-fidelizacion',
-  imports: [],
+  imports: [RouterLink, QRCodeComponent, DatePipe],
   templateUrl: './fidelizacion.html',
   styleUrl: './fidelizacion.css'
 })
 export class Fidelizacion implements OnInit {
+  saldo = signal(0);
+  recompensas = signal<Recompensa[]>([]);
+  historialCanjes = signal<Beneficio[]>([]);
+  cargando = signal(true);
+  recompensaCanjeandoId = signal<number | null>(null);
+  error = signal('');
+  mensaje = signal('');
+  requiereSesion = signal(false);
 
-  /*
- * =====================================================
- * HISTORIAL DE CANJES
- * =====================================================
- *
- * Contiene los canjes realizados por
- * el usuario actualmente autenticado.
- */
-historialCanjes =
-  signal<MovimientoPuntos[]>([]);
+  constructor(private authService: Auth, private fidelizacionService: FidelizacionService) {}
 
+  async ngOnInit(): Promise<void> { await this.cargarDatos(); }
 
-  /*
-   * =====================================================
-   * ESTADO DE LA PANTALLA
-   * =====================================================
-   *
-   * Guarda el saldo actual del usuario.
-   */
-  saldo =
-    signal<number>(0);
-
-
-  /*
-   * Recompensas activas configuradas
-   * actualmente por el administrador.
-   */
-  recompensas =
-    signal<Recompensa[]>([]);
-
-
-  /*
-   * Mientras consultamos Supabase podemos
-   * informar al usuario que estamos cargando.
-   */
-  cargando =
-    signal<boolean>(true);
-
-
-  /*
-   * Guarda el ID de la recompensa que
-   * actualmente estamos procesando.
-   *
-   * null = ningún canje en curso.
-   */
-  recompensaCanjeandoId =
-    signal<number | null>(null);
-
-
-  /*
-   * =====================================================
-   * INYECCIÓN DE DEPENDENCIAS
-   * =====================================================
-   *
-   * Auth:
-   * nos permite identificar al usuario.
-   *
-   * FidelizacionService:
-   * concentra puntos, recompensas y canjes.
-   */
-  constructor(
-    private authService: Auth,
-    private fidelizacionService: FidelizacionService
-  ) {}
-
-
-  /*
-   * Angular ejecuta ngOnInit cuando
-   * se inicializa esta pantalla.
-   */
-  async ngOnInit(): Promise<void> {
-
-    await this.cargarDatos();
-
-  }
-
-
-  /*
-   * =====================================================
-   * CARGAR DATOS
-   * =====================================================
-   *
-   * Recuperamos:
-   *
-   * - sesión
-   * - saldo de puntos
-   * - recompensas disponibles
-   */
   async cargarDatos(): Promise<void> {
-
     this.cargando.set(true);
-
-
-    const sesion =
-      await this.authService
-        .obtenerSesion();
-
-
-    /*
-     * El programa de fidelización solamente
-     * corresponde a usuarios registrados.
-     */
-    if (!sesion?.user?.id) {
-
-      this.saldo.set(0);
-
-      this.recompensas.set([]);
-
-      this.cargando.set(false);
-
-      return;
-
-    }
-
-
-    /*
-     * Obtenemos saldo y recompensas.
-     */
-    const saldo =
-      await this.fidelizacionService
-        .obtenerSaldoPuntos(
-          sesion.user.id
-        );
-
-
-    const recompensas =
-      await this.fidelizacionService
-        .obtenerRecompensasActivas();
-
-    /*
- * También recuperamos los canjes anteriores
- * del usuario.
- */
-const historialCanjes =
-  await this.fidelizacionService
-    .obtenerHistorialCanjes(
-      sesion.user.id
-    );
-
-
-    /*
- * =====================================================
- * ACTUALIZAMOS EL ESTADO DE LA PANTALLA
- * =====================================================
- *
- * Los datos anteriores son variables locales.
- *
- * Ahora los guardamos dentro de los Signals para
- * que Angular pueda reflejarlos en el HTML.
- */
-this.saldo.set(
-  saldo
-);
-
-this.recompensas.set(
-  recompensas
-);
-
-this.historialCanjes.set(
-  historialCanjes
-);
-
-
-this.cargando.set(false);
-
+    this.error.set('');
+    try {
+      const sesion = await this.authService.obtenerSesion();
+      this.requiereSesion.set(!sesion?.user?.id);
+      if (!sesion?.user?.id) {
+        this.saldo.set(0);
+        this.recompensas.set([]);
+        this.historialCanjes.set([]);
+        return;
+      }
+      const saldo = await this.fidelizacionService.obtenerSaldoPuntos(sesion.user.id);
+      const recompensas = await this.fidelizacionService.obtenerRecompensasActivas();
+      const beneficios = await this.fidelizacionService.obtenerBeneficios(sesion.user.id);
+      this.saldo.set(saldo);
+      this.recompensas.set(recompensas);
+      this.historialCanjes.set(beneficios);
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'No se pudieron cargar tus beneficios.');
+    } finally { this.cargando.set(false); }
   }
 
-
-  /*
-   * =====================================================
-   * PUEDE CANJEAR
-   * =====================================================
-   *
-   * Determina si el saldo actual alcanza
-   * para una recompensa.
-   *
-   * Ejemplo:
-   *
-   * saldo = 300
-   * recompensa = 500
-   *
-   * false
-   */
-  puedeCanjear(
-    recompensa: Recompensa
-  ): boolean {
-
-    return (
-      this.saldo() >=
-      recompensa.puntos_necesarios
-    );
-
+  puedeCanjear(recompensa: Recompensa): boolean {
+    return recompensa.activo && this.saldo() >= recompensa.puntos_necesarios &&
+      (recompensa.tipo !== 'candy' || !!recompensa.producto_candy_id);
   }
 
-
-  /*
-   * =====================================================
-   * CANJEAR
-   * =====================================================
-   *
-   * Solicita al service realizar el canje.
-   */
-  async canjear(
-    recompensa: Recompensa
-  ): Promise<void> {
-
-    /*
-     * Primera validación desde la interfaz.
-     *
-     * El Service vuelve a comprobar el saldo.
-     *
-     * Tener ambas validaciones evita depender
-     * solamente del botón.
-     */
-    if (!this.puedeCanjear(recompensa)) {
-
-      alert(
-        'No tenés puntos suficientes para esta recompensa.'
-      );
-
-      return;
-
-    }
-
-
-    const sesion =
-      await this.authService
-        .obtenerSesion();
-
-
-    if (!sesion?.user?.id) {
-
-      return;
-
-    }
-
-
-    /*
-     * Guardamos qué recompensa estamos procesando.
-     */
-    this.recompensaCanjeandoId.set(
-      recompensa.id
-    );
-
-
-    const resultado =
-      await this.fidelizacionService
-        .canjearRecompensa(
-          sesion.user.id,
-          recompensa
-        );
-
-
-    this.recompensaCanjeandoId.set(null);
-
-
-    if (!resultado) {
-
-      alert(
-        'No se pudo realizar el canje.'
-      );
-
-      return;
-
-    }
-
-
-    alert(
-      `Canje realizado: ${recompensa.nombre}`
-    );
-
-
-    /*
-     * Volvemos a consultar los datos.
-     *
-     * Como el canje creó un movimiento negativo,
-     * el saldo debería aparecer actualizado.
-     */
-    await this.cargarDatos();
-
+  async canjear(recompensa: Recompensa): Promise<void> {
+    if (this.recompensaCanjeandoId() !== null || !this.puedeCanjear(recompensa)) return;
+    this.recompensaCanjeandoId.set(recompensa.id);
+    this.mensaje.set('');
+    try {
+      const sesion = await this.authService.obtenerSesion();
+      if (!sesion?.user?.id) throw new Error('Iniciá sesión para canjear.');
+      const resultado = await this.fidelizacionService.canjearRecompensa(sesion.user.id, recompensa);
+      if (!resultado) throw new Error('No se pudo canjear. Revisá el saldo y la disponibilidad de la recompensa.');
+      this.mensaje.set('Canje realizado. Tu beneficio está disponible más abajo.');
+      await this.cargarDatos();
+    } catch (error) {
+      this.mensaje.set(error instanceof Error ? error.message : 'No se pudo confirmar el canje. Recargá antes de reintentar.');
+      await this.cargarDatos();
+    } finally { this.recompensaCanjeandoId.set(null); }
   }
-
 }

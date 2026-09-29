@@ -288,12 +288,19 @@
         -->
         <h2>
           Total a pagar:
-          ${{ calcularTotalFinal() }}
+          ${{ calcularTotalFinal() + totalCandy() }}
         </h2>
 
       </section>
 
 
+      <section><h2>Candy (opcional)</h2>
+        @for (item of seleccionCandy(); track item.producto.id) { <p>{{ item.producto.nombre }} × {{ item.cantidad }} · $ {{ item.producto.precio * item.cantidad }}</p> }
+        @empty { <p>Sin productos Candy.</p> }
+        <p>Total Candy: $ {{ totalCandy() }}</p>
+        <button (click)="irACandy()" [disabled]="reservaVencida() || preparandoPago()">Elegir o modificar Candy</button>
+        @if (errorPago()) { <p role="alert">{{ errorPago() }}</p> }
+      </section>
       <!--
         =====================================================
         MODIFICAR BUTACAS
@@ -308,7 +315,7 @@
       <button
         type="button"
         (click)="modificarButacas()"
-        [disabled]="reservaVencida()"
+        [disabled]="reservaVencida() || preparandoPago()"
       >
         Modificar butacas
       </button>
@@ -328,7 +335,7 @@
       <button
         type="button"
         (click)="irAlPago()"
-        [disabled]="reservaVencida()"
+        [disabled]="reservaVencida() || preparandoPago()"
       >
         Ir al pago
       </button>

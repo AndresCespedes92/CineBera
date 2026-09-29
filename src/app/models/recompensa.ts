@@ -39,6 +39,8 @@ export interface Recompensa {
 
   tipo: TipoRecompensa;
 
+  producto_candy_id?: number | null;
+
   puntos_necesarios: number;
 
   activo: boolean;

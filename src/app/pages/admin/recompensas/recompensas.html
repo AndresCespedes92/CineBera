@@ -20,7 +20,10 @@
 
   }
 
-  @else {
+  @else if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button (click)="cargarRecompensas()">Reintentar</button>
+  } @else {
 
     <div class="lista-recompensas">
 
@@ -95,6 +98,17 @@
                   (input)="cambiarPuntos($event)"
                 >
               </label>
+
+              @if (recompensa.tipo === 'candy') {
+                <label>Producto que se entrega (una unidad)
+                  <select [value]="productoEditando() ?? ''" (change)="cambiarProducto($event)">
+                    <option value="">Seleccioná un producto</option>
+                    @for (producto of productos(); track producto.id) {
+                      <option [value]="producto.id">{{ producto.nombre }}</option>
+                    }
+                  </select>
+                </label>
+              }
 
 
               <button

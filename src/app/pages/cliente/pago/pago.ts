@@ -1,400 +1,132 @@
-import {
-  Component,
-  OnInit,
-  signal
-} from '@angular/core';
-
-import {
-  FidelizacionService
-} from '../../../services/fidelizacion';
-
-import {
-  ActivatedRoute,
-  Router
-} from '@angular/router';
-
-import {
-  CompraService
-} from '../../../services/compra';
-
-import {
-  Compra
-} from '../../../models/compra';
-
-import {
-  ButacaService
-} from '../../../services/butaca';
-
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FidelizacionService } from '../../../services/fidelizacion';
+import { CompraService } from '../../../services/compra';
+import { ButacaService } from '../../../services/butaca';
 import { EntradaService } from '../../../services/entrada';
-
+import { Auth } from '../../../services/auth';
+import { Compra } from '../../../models/compra';
+import { Beneficio } from '../../../models/beneficio';
+import { ButacaFuncion } from '../../../models/butaca-funcion';
+import { CandyService } from '../../../services/candy';
+import { PedidoCandy } from '../../../models/pedido-candy';
 
 @Component({
-  selector: 'app-pago',
-  imports: [],
-  templateUrl: './pago.html',
-  styleUrl: './pago.css'
+  selector: 'app-pago', imports: [FormsModule, RouterLink],
+  templateUrl: './pago.html', styleUrl: './pago.css'
 })
 export class Pago implements OnInit {
+  compra = signal<Compra | null>(null);
+  cargando = signal(true);
+  procesando = signal(false);
+  error = signal('');
+  aviso = signal('');
+  codigoEntrada = signal<string | null>(null);
+  beneficios = signal<Beneficio[]>([]);
+  butacas = signal<ButacaFuncion[]>([]);
+  beneficioId = signal<number | null>(null);
+  pedidoCandy = signal<PedidoCandy | null>(null);
+  totalCandy = computed(() => this.pedidoCandy()?.estado !== 'cancelado' ? this.pedidoCandy()?.total ?? 0 : 0);
+  descuento = computed(() => this.beneficioId() && this.compra()?.estado === 'pendiente'
+    ? this.fidelizacionService.calcularDescuentoEntrada(Number(this.compra()?.total), this.butacas()) : 0);
+  total = computed(() => Math.round((Number(this.compra()?.total ?? 0) - this.descuento() + this.totalCandy()) * 100) / 100);
 
+  constructor(private route: ActivatedRoute, private router: Router,
+    private compraService: CompraService, private butacaService: ButacaService,
+    private entradaService: EntradaService, private fidelizacionService: FidelizacionService,
+    private authService: Auth, private candyService: CandyService) {}
 
-  /*
-   * Compra que el cliente está intentando pagar.
-   *
-   * Al principio es null porque todavía
-   * no consultamos Supabase.
-   */
-  compra =
-    signal<Compra | null>(null);
-
-
-  /*
-   * Controla el estado de carga de la pantalla.
-   */
-  cargando =
-    signal<boolean>(true);
-
-
-
-  constructor(
-  private route: ActivatedRoute,
-  private router: Router,
-  private compraService: CompraService,
-
-  /*
-   * Lo necesitamos para convertir
-   * las reservas en ocupaciones definitivas.
-   */
-  private butacaService: ButacaService,
-  private entradaService: EntradaService,
-  private fidelizacionService: FidelizacionService,
-) {}
-
-
-  ngOnInit(): void {
-
-    /*
-     * ActivatedRoute devuelve los parámetros
-     * de la URL como texto.
-     *
-     * Por eso primero obtenemos un string.
-     */
-    const idRecibido =
-      this.route.snapshot
-        .paramMap
-        .get('id');
-
-
-    /*
-     * Si no recibimos ID no podemos
-     * identificar la compra.
-     */
-    if (!idRecibido) {
-
-      this.cargando.set(false);
-
-      return;
-    }
-
-
-    /*
-     * Convertimos:
-     *
-     * "15" → 15
-     *
-     * porque Compra.id es number.
-     */
-    const compraId =
-      Number(idRecibido);
-
-
-    /*
-     * También verificamos que realmente
-     * sea un número válido.
-     */
-    if (Number.isNaN(compraId)) {
-
-      this.cargando.set(false);
-
-      return;
-    }
-
-
-    this.cargarCompra(
-      compraId
-    );
-
+  async ngOnInit(): Promise<void> {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isInteger(id) || id <= 0) { this.cargando.set(false); return; }
+    await this.cargarCompra(id);
   }
 
-
-  /*
-   * Recupera desde Supabase la compra
-   * identificada por la URL.
-   */
-  async cargarCompra(
-    compraId: number
-  ): Promise<void> {
-
-    const compraEncontrada =
-      await this.compraService
-        .obtenerCompraPorId(
-          compraId
-        );
-
-
-    /*
-     * Guardamos el resultado en nuestro Signal.
-     *
-     * Angular actualizará automáticamente
-     * el HTML que depende de compra().
-     */
-    this.compra.set(
-      compraEncontrada
-    );
-
-
-    this.cargando.set(false);
-
+  async cargarCompra(id: number): Promise<void> {
+    this.cargando.set(true);
+    this.error.set('');
+    try {
+      const compra = await this.compraService.obtenerCompraPorId(id);
+      this.compra.set(compra);
+      this.beneficios.set([]);
+      this.beneficioId.set(null);
+      if (!compra) return;
+      this.pedidoCandy.set(await this.candyService.obtenerPedidoPorCompra(compra.id));
+      const sesion = await this.authService.obtenerSesion();
+      if (compra.usuario_id && compra.usuario_id !== sesion?.user.id) {
+        this.compra.set(null);
+        throw new Error('Iniciá sesión con la cuenta de esta compra.');
+      }
+      if (compra.estado === 'pendiente') {
+        this.butacas.set(await this.butacaService.obtenerReservaPorToken(compra.reserva_token));
+        if (compra.usuario_id) {
+          const beneficios = await this.fidelizacionService.obtenerBeneficios(compra.usuario_id);
+          this.beneficios.set(beneficios.filter(b => b.beneficio_tipo === 'entrada' && !b.compra_utilizada_id));
+        }
+      }
+    } catch (error) { this.error.set(error instanceof Error ? error.message : 'No se pudo cargar la compra.'); }
+    finally { this.cargando.set(false); }
   }
 
-  /*
- * Simula la aprobación del pago.
- *
- * En una integración real este método se
- * ejecutaría después de recibir la confirmación
- * del proveedor de pagos.
- */
-async confirmarPago(): Promise<void> {
-
-  /*
-   * Obtenemos el valor actual del Signal.
-   *
-   * Recordá:
-   * this.compra es el Signal.
-   * this.compra() es su valor actual.
-   */
-  const compraActual = this.compra();
-
-
-  /*
-   * Si por algún motivo no tenemos una compra
-   * cargada, no podemos continuar.
-   */
-  if (!compraActual) {
-    return;
+  /** El pago del TP es simulado. Reintentar una compra pagada completa la emisión
+   * pendiente sin volver a cobrar ni consumir otra recompensa. */
+  async confirmarPago(): Promise<void> {
+    if (this.procesando()) return;
+    let compra = this.compra();
+    if (!compra || compra.estado === 'cancelada') return;
+    this.procesando.set(true);
+    this.error.set('');
+    try {
+      // Releer permite recuperarse también de una respuesta perdida después del UPDATE.
+      compra = await this.compraService.obtenerCompraPorId(compra.id);
+      if (!compra) throw new Error('No se pudo consultar la compra.');
+      const sesion = await this.authService.obtenerSesion();
+      if (compra.usuario_id && compra.usuario_id !== sesion?.user.id) throw new Error('La compra pertenece a otra cuenta.');
+      if (compra.estado === 'cancelada') throw new Error('La compra está cancelada.');
+      let pedido = await this.candyService.obtenerPedidoPorCompra(compra.id);
+      if (pedido && ((pedido.estado === 'cancelado' && (pedido.total > 0 || pedido.detalles.length > 0)) ||
+          (pedido.estado === 'pendiente' && !pedido.detalles.length))) {
+        throw new Error('Candy está incompleto. Volvé al checkout antes de pagar.');
+      }
+      this.pedidoCandy.set(pedido);
+      if (compra.estado === 'pendiente') {
+        const reserva = await this.butacaService.obtenerReservaPorToken(compra.reserva_token);
+        if (!reserva.length || reserva.some(b => !b.expires_at || new Date(b.expires_at).getTime() <= Date.now())) {
+          throw new Error('La reserva venció. Volvé a seleccionar tus butacas.');
+        }
+        const confirmada = this.beneficioId()
+          ? await this.fidelizacionService.confirmarCompraConBeneficio(compra, this.beneficioId()!, reserva)
+          : await this.compraService.confirmarCompra(compra.id);
+        if (!confirmada) throw new Error('No se pudo confirmar el pago. Recargá para consultar el estado.');
+        compra = confirmada;
+      }
+      this.compra.set(compra);
+      // Una única confirmación del usuario completa ambas partes del pago simulado.
+      // Las escrituras son separadas; un reintento recupera el estado ya pagado.
+      if (pedido && pedido.estado !== 'cancelado') {
+        pedido = await this.candyService.confirmarPagoPedido(compra.id);
+        this.pedidoCandy.set(pedido);
+      }
+      if (!await this.butacaService.confirmarButacasReserva(compra.reserva_token)) {
+        throw new Error('La compra está pagada, pero falta confirmar sus butacas. Reintentá para completar la emisión.');
+      }
+      let entrada = await this.entradaService.obtenerEntradaPorCompra(compra.id);
+      if (!entrada) entrada = await this.entradaService.crearEntrada(compra.id);
+      if (!entrada) throw new Error('Falta generar la entrada. Reintentá sin volver a pagar.');
+      this.codigoEntrada.set(entrada.codigo);
+      this.candyService.limpiarSeleccion(compra.reserva_token);
+      sessionStorage.removeItem(`cinebera-expira-funcion-${compra.funcion_id}`);
+      if (compra.usuario_id && !await this.fidelizacionService.acreditarPuntosPorCompra(compra.id, compra.usuario_id)) {
+        this.aviso.set('La entrada está lista. No se pudieron acreditar los puntos; podés reintentar desde esta compra.');
+        return;
+      }
+      if (pedido?.estado === 'pagado' && !await this.fidelizacionService.acreditarPuntosPorCandy(pedido.id)) {
+        this.aviso.set('La compra está completa. Falta acreditar los puntos de Candy; podés reintentar sin otro pago.');
+        return;
+      }
+      await this.router.navigate(['/entrada', entrada.codigo]);
+    } catch (error) { this.error.set(error instanceof Error ? error.message : 'No se pudo completar la operación. Reintentá.'); }
+    finally { this.procesando.set(false); }
   }
-
-
-  /*
-   * Evitamos volver a pagar una compra
-   * que ya fue confirmada.
-   */
-  if (compraActual.estado !== 'pendiente') {
-    return;
-  }
-
-
-  /*
-   * PASO 1:
-   * Marcamos la compra como pagada.
-   */
-  const compraConfirmada =
-    await this.compraService.confirmarCompra(
-      compraActual.id
-    );
-
-
-  /*
-   * Si Supabase no pudo confirmar la compra,
-   * detenemos el proceso.
-   */
-  if (!compraConfirmada) {
-
-    console.error(
-      'No se pudo confirmar la compra.'
-    );
-
-    return;
-
-  }
-
-
-  /*
-   * PASO 2:
-   * Las butacas que estaban temporalmente
-   * reservadas pasan a estar ocupadas.
-   */
-  const butacasConfirmadas =
-    await this.butacaService.confirmarButacasReserva(
-      compraConfirmada.reserva_token
-    );
-
-
-  if (!butacasConfirmadas) {
-
-    console.error(
-      'La compra fue pagada, pero no se pudieron confirmar las butacas.'
-    );
-
-    return;
-
-  }
-
-
-  /*
-   * Actualizamos el Signal para que Angular
-   * refleje inmediatamente el nuevo estado.
-   */
-  this.compra.set(compraConfirmada);
-
-
-  /*
-   * PASO 3:
-   * Antes de crear una entrada preguntamos
-   * si ya existe una para esta compra.
-   *
-   * Esto evita duplicados si posteriormente
-   * el usuario recarga o repite alguna acción.
-   */
-  let entrada =
-    await this.entradaService.obtenerEntradaPorCompra(
-      compraConfirmada.id
-    );
-
-
-  /*
-   * Si todavía no existe, la creamos.
-   */
-  if (!entrada) {
-
-    entrada =
-      await this.entradaService.crearEntrada(
-        compraConfirmada.id
-      );
-
-  }
-
-
-  /*
-   * Si tampoco pudimos crearla,
-   * detenemos la navegación.
-   */
-  if (!entrada) {
-
-    console.error(
-      'El pago fue confirmado, pero no se pudo generar la entrada.'
-    );
-
-    return;
-
-  }
-
-  /*
- * =====================================================
- * PASO 4: ACREDITAR PUNTOS DE FIDELIZACIÓN
- * =====================================================
- *
- * La compra ya está:
- *
- * - pagada
- * - con sus butacas confirmadas
- * - con su entrada generada
- *
- * Por lo tanto, este es un buen momento para
- * acreditar los puntos correspondientes.
- *
- * Regla del negocio:
- *
- * $1 gastado = 1 punto.
- *
- * IMPORTANTE:
- * solamente los usuarios registrados acumulan puntos.
- *
- * Las compras anónimas tienen usuario_id = null,
- * por lo tanto no participan del programa.
- */
-if (compraConfirmada.usuario_id) {
-
-  const puntosAcreditados =
-    await this.fidelizacionService
-      .acreditarPuntosPorCompra(
-        compraConfirmada.id,
-        compraConfirmada.usuario_id,
-        compraConfirmada.total
-      );
-
-
-  if (puntosAcreditados) {
-
-    console.log(
-      'Puntos acreditados:',
-      Math.floor(compraConfirmada.total)
-    );
-
-  }
-  else {
-
-    /*
-     * Un problema con los puntos NO invalida
-     * una compra que ya fue pagada correctamente.
-     *
-     * Por eso registramos el problema,
-     * pero no detenemos la navegación.
-     */
-    console.warn(
-      'La compra fue completada, pero no se pudieron acreditar los puntos.'
-    );
-
-  }
-
-}
-else {
-
-  /*
-   * Las compras anónimas no tienen un perfil
-   * al cual asociar puntos.
-   */
-  console.log(
-    'Compra anónima: no se acreditan puntos.'
-  );
-
-}
-
-  /*
- * =====================================================
- * FINALIZAR LA OPERACIÓN TEMPORAL
- * =====================================================
- *
- * La compra ya fue pagada correctamente.
- *
- * Por lo tanto, el temporizador utilizado durante
- * la selección y el checkout ya no tiene sentido.
- *
- * IMPORTANTE:
- * solamente eliminamos el estado temporal de compra.
- * NO cerramos la sesión del usuario.
- */
-const claveTemporizador =
-  `cinebera-expira-funcion-${compraActual.funcion_id}`;
-
-sessionStorage.removeItem(
-  claveTemporizador
-);
-
-
-  /*
-   * PASO 4:
-   * Navegamos utilizando el código público
-   * de la entrada, no su ID interno.
-   *
-   * Ejemplo:
-   *
-   * /entrada/550e8400-e29b-41d4-a716-446655440000
-   */
-  await this.router.navigate([
-  '/entrada',
-  entrada.codigo
-]);
-
-}
-
 }
