@@ -1,4 +1,4 @@
-<main class="funciones-pelicula">
+<main class="funciones-pelicula"><a routerLink="/cartelera">← Volver a cartelera</a>
 
   <!--
     =====================================================
@@ -64,7 +64,7 @@
 
               <p>
                 <strong>Hora:</strong>
-                {{ funcion.hora }}
+                {{ funcion.hora | horaCorta }}
               </p>
 
               <p>
@@ -83,7 +83,7 @@
               </p>
 
 
-              <button
+              <button matButton="filled"
                 type="button"
                 (click)="elegirFuncion(funcion.id)"
               >

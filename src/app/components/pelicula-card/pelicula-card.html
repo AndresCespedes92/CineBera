@@ -4,11 +4,11 @@
   @if (pelicula.imagenes.length > 0) {
 
     <img
-      class="pelicula-card__poster"
+      class="pelicula-card__poster" loading="lazy" width="300" height="450"
       [src]="pelicula.imagenes[0]"
       [alt]="'Póster de ' + pelicula.titulo">
 
-  }
+  } @else { <div class="pelicula-card__sin-poster">Afiche no disponible</div> }
 
 
   <!-- INFORMACIÓN -->
@@ -63,7 +63,7 @@
 -->
 @if (mostrarBotonFunciones) {
 
-  <button
+  <button matButton="filled"
     type="button"
     (click)="verFunciones()"
   >

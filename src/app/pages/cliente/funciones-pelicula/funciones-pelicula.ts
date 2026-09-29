@@ -1,3 +1,6 @@
+import { RouterLink } from '@angular/router';
+import { HoraCortaPipe } from '../../../pipes/hora-corta';
+import { MatButtonModule } from '@angular/material/button';
 import { Resenas } from '../../../components/resenas/resenas';
 import {
   ChangeDetectorRef,
@@ -29,7 +32,7 @@ import {
 @Component({
   selector: 'app-funciones-pelicula',
 
-  imports: [Resenas],
+  imports: [MatButtonModule, HoraCortaPipe, RouterLink, Resenas],
 
   templateUrl: './funciones-pelicula.html',
   styleUrl: './funciones-pelicula.css'

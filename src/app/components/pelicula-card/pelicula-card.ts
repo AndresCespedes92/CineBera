@@ -1,8 +1,9 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Pelicula } from '../../models/pelicula';
 
 @Component({
-  imports: [],
+  imports: [MatButtonModule, ],
   selector: 'app-pelicula-card',
   styleUrl: './pelicula-card.css',
   templateUrl: './pelicula-card.html',

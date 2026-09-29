@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { AlertaService } from '../../../services/alerta';
 import { Auth } from '../../../services/auth';
 import {
@@ -34,7 +35,7 @@ import {
 @Component({
   selector: 'app-proximamente',
 
-  imports: [
+  imports: [MatButtonModule, 
     Navbar,
     PeliculaCard,
     EnPreventa

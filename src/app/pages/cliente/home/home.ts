@@ -1,3 +1,8 @@
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,7 +14,7 @@ import { PeliculaService } from '../../../services/pelicula';
 import { FuncionService } from '../../../services/funcion';
 import { ResenaService } from '../../../services/resena';
 
-@Component({selector: 'app-home', imports: [Navbar, PeliculaCard, FormsModule], templateUrl: './home.html', styleUrl: './home.css'})
+@Component({selector: 'app-home', imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressBarModule, Navbar, PeliculaCard, FormsModule], templateUrl: './home.html', styleUrl: './home.css'})
 export class Home implements OnInit {
   peliculas: Pelicula[] = [];
   cargando = true;

@@ -1,61 +1,9 @@
-/*
- * =====================================================
- * CONTENEDOR PRINCIPAL
- * =====================================================
- *
- * Limita el ancho de la cartelera y la centra
- * horizontalmente en la pantalla.
- */
-.cliente-home {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 32px 24px;
-}
-
-
-/*
- * =====================================================
- * ENCABEZADO DE CARTELERA
- * =====================================================
- */
-.cartelera-header {
-  margin-bottom: 24px;
-}
-
-.cartelera-header h1 {
-  margin-bottom: 8px;
-}
-
-.cartelera-header p {
-  color: #666666;
-}
-
-
-/*
- * =====================================================
- * LISTADO DE PELÍCULAS
- * =====================================================
- *
- * Utilizamos CSS Grid para distribuir las cards.
- *
- * auto-fill:
- * crea tantas columnas como entren.
- *
- * minmax(240px, 1fr):
- * cada columna debe medir como mínimo 240px,
- * pero puede crecer para ocupar el espacio disponible.
- *
- * De esta manera la cartelera se adapta
- * automáticamente al ancho de la pantalla.
- */
-.cartelera-listado {
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      auto-fill,
-      minmax(240px, 1fr)
-    );
-
-  gap: 24px;
-}
+.cartelera-header, .proximamente-header { padding-block: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--cine-border); }
+.cartelera-header p, .proximamente-header p { color: var(--cine-muted); }
+.cartelera-listado, .proximamente-listado { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 1.5rem; }
+.cartelera-item, .proximamente-item { display: flex; flex-direction: column; gap: .75rem; min-width: 0; }
+.cartelera-item > p { margin: 0; font-size: .875rem; }
+.cartelera-item app-pelicula-card, .proximamente-item app-pelicula-card { flex: 1; }
+.cine-toolbar mat-form-field { min-width: 220px; flex: 1; }
+.preventa-info { color: var(--cine-accent); }
+@media (max-width: 600px) { .cine-toolbar mat-form-field { width: 100%; min-width: 0; } }
