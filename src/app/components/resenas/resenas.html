@@ -2,7 +2,7 @@
   <h2>Reseñas CineBera</h2>
   @if (cargando()) { <p role="status">Cargando reseñas...</p> }
   @else {
-    @if (error()) { <p role="alert">{{ error() }}</p><button type="button" (click)="cargar()" [disabled]="guardando()">Recargar reseñas</button> }
+    @if (error()) { <p role="alert">{{ error() }}</p><button matButton="outlined" type="button" (click)="cargar()" [disabled]="guardando()">Recargar reseñas</button> }
     @else {
       <p>Promedio CineBera: {{ promedio() ?? 'Sin valoraciones' }} @if (promedio()) { / 5 · {{ filas().length }} reseñas }</p>
       @if (usuario()) {
@@ -14,7 +14,7 @@
           <label>Comentario (hasta 300 caracteres)
             <textarea name="comentario" [(ngModel)]="comentario" required maxlength="300" [disabled]="guardando()"></textarea>
           </label>
-          <button type="submit" [disabled]="guardando() || !comentario.trim()">{{ guardando() ? 'Guardando...' : 'Guardar reseña' }}</button>
+          <button matButton="outlined" type="submit" [disabled]="guardando() || !comentario.trim()">{{ guardando() ? 'Guardando...' : 'Guardar reseña' }}</button>
         </form>
       } @else { <p><a routerLink="/login">Iniciá sesión</a> para escribir una reseña.</p> }
       @for (resena of filas(); track resena.usuario_id) {

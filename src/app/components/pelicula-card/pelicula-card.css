@@ -1,0 +1,9 @@
+:host { display: flex; height: 100%; }
+.pelicula-card { display: flex; flex-direction: column; width: 100%; background: var(--cine-surface); border: 1px solid var(--cine-border); border-radius: 6px; overflow: hidden; }
+.pelicula-card__poster, .pelicula-card__sin-poster { width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; background: var(--cine-panel); }
+.pelicula-card__sin-poster { display: grid; place-items: center; }
+.pelicula-card__contenido { display: flex; flex-direction: column; gap: .75rem; padding: 1.25rem; flex: 1; }
+h3 { margin: 0; font-size: 1.45rem; }
+.pelicula-card__sinopsis { color: var(--cine-muted); font-size: .875rem; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pelicula-card__datos { display: grid; gap: .4rem; font-size: .8rem; padding-block: .75rem; }
+button { width: 100%; margin-top: auto; }

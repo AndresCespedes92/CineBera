@@ -1,0 +1,4 @@
+header { margin-block: 2rem; max-width: 75ch; } header p { color: var(--cine-muted); }
+.lista-funciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1rem; }
+.funcion { padding: 1.5rem; border: 1px solid var(--cine-border); background: var(--cine-surface); border-radius: 6px; }
+.funcion p { margin: .5rem 0; }.funcion button { width: 100%; margin-top: 1rem; }

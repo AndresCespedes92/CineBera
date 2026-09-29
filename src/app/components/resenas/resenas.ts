@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, Input, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import { ResenaService } from '../../services/resena';
 import { Auth } from '../../services/auth';
 import { Resena } from '../../models/resena';
 
-@Component({selector: 'app-resenas', imports: [FormsModule, RouterLink], templateUrl: './resenas.html'})
+@Component({selector: 'app-resenas', imports: [MatButtonModule, FormsModule, RouterLink], templateUrl: './resenas.html'})
 export class Resenas implements OnInit {
   @Input({required: true}) peliculaId!: number;
   filas = signal<Resena[]>([]);
