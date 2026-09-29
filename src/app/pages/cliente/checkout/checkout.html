@@ -1,4 +1,5 @@
 <main>
+<app-pasos-compra [paso]="2" />
 
   <!--
     =====================================================
@@ -300,15 +301,15 @@
         <p>Precio fijo, incluso para butaca VIP. Elegí hasta un combo por entrada; se aplica primero a las entradas de mayor precio.
           Las promociones se conservan en las entradas restantes. Combo y canje de entrada gratis no se acumulan en la misma compra.</p>
         @if (cargandoCombos()) { <p>Cargando combos...</p> }
-        @else if (errorCombos()) { <p role="alert">{{ errorCombos() }}</p><button (click)="cargarCombos()">Reintentar</button> }
+        @else if (errorCombos()) { <p role="alert">{{ errorCombos() }}</p><button matButton="filled" (click)="cargarCombos()">Reintentar</button> }
         @else {
-          <button (click)="cargarCombos()" [disabled]="preparandoPago()">Actualizar combos</button>
+          <button matButton="filled" (click)="cargarCombos()" [disabled]="preparandoPago()">Actualizar combos</button>
           @if (avisoCombos()) { <p role="status">{{ avisoCombos() }}</p> }
           @for (combo of combos(); track combo.id) {
             <article>
               <h3>{{ combo.nombre }} · ${{ combo.precio }}</h3>
               <p>Una entrada + {{ nombreProductoCombo(combo.pochoclo_id) }} + {{ nombreProductoCombo(combo.bebida_id) }}</p>
-              <button (click)="elegirCombo(combo)" [disabled]="preparandoPago() || reservaVencida()">
+              <button matButton="filled" (click)="elegirCombo(combo)" [disabled]="preparandoPago() || reservaVencida()">
                 {{ seleccionCombo()?.combo?.id === combo.id ? 'Seleccionado' : 'Elegir combo' }}
               </button>
             </article>
@@ -320,7 +321,7 @@
             <p>{{ seleccion.combo.nombre }} × {{ seleccion.cantidad }}: ${{ resumenCombos().combos }}</p>
             <p>Entradas fuera del combo con sus descuentos: ${{ resumenCombos().entradas }}</p>
             <p>Los productos incluidos se retiran con el mismo QR de tu entrada.</p>
-            <button (click)="elegirCombo(null)" [disabled]="preparandoPago()">Quitar combo</button>
+            <button matButton="filled" (click)="elegirCombo(null)" [disabled]="preparandoPago()">Quitar combo</button>
           }
         }
       </section>
@@ -328,7 +329,7 @@
         @for (item of seleccionCandy(); track item.producto.id) { <p>{{ item.producto.nombre }} × {{ item.cantidad }} · $ {{ item.producto.precio * item.cantidad }}</p> }
         @empty { <p>Sin productos Candy.</p> }
         <p>Total Candy: $ {{ totalCandy() }}</p>
-        <button (click)="irACandy()" [disabled]="reservaVencida() || preparandoPago()">Elegir o modificar Candy</button>
+        <button matButton="filled" (click)="irACandy()" [disabled]="reservaVencida() || preparandoPago()">Elegir o modificar Candy</button>
         @if (errorPago()) { <p role="alert">{{ errorPago() }}</p> }
       </section>
       <!--
@@ -342,7 +343,7 @@
         El temporizador no se reinicia.
       -->
 
-      <button
+      <button matButton="filled"
         type="button"
         (click)="modificarButacas()"
         [disabled]="reservaVencida() || preparandoPago()"
@@ -362,13 +363,13 @@
         y luego navega hacia Pago.
       -->
 
-      <button
+      <div class="total-compra"><strong>Total: ${{ calcularTotalFinal() + totalCandy() }}</strong><button matButton="filled"
         type="button"
         (click)="irAlPago()"
         [disabled]="reservaVencida() || preparandoPago() || cargandoCombos() || !!errorCombos()"
       >
         Ir al pago
-      </button>
+      </button></div>
 
     }
 

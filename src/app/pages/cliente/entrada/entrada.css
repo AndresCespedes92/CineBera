@@ -12,10 +12,10 @@
  * Tarjeta que representa la entrada.
  */
 .ticket {
-  border: 1px solid #222;
+  border: 1px solid var(--cine-border);
   border-radius: 12px;
   padding: 24px;
-  background: white;
+  background: var(--cine-surface);
 }
 
 
@@ -26,13 +26,13 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--cine-border);
   padding-bottom: 16px;
 }
 
 
 .ticket__estado {
-  border: 1px solid #222;
+  border: 1px solid var(--cine-border);
   border-radius: 6px;
   padding: 6px 10px;
   font-weight: bold;
@@ -64,8 +64,8 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   padding: 20px 0;
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
+  border-top: 1px solid var(--cine-border);
+  border-bottom: 1px solid var(--cine-border);
 }
 
 
@@ -85,7 +85,7 @@
 
 
 .ticket__advertencia {
-  border: 1px solid #222;
+  border: 1px solid var(--cine-border);
   padding: 12px;
   margin-bottom: 20px;
 }
@@ -107,7 +107,7 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  border-top: 1px dashed #777;
+  border-top: 1px dashed var(--cine-border);
   padding-top: 20px;
 }
 
@@ -122,3 +122,4 @@
   padding: 12px 18px;
   cursor: pointer;
 }
+.ticket__ubicacion{flex-wrap:wrap;gap:1rem}.ticket__qr{background:white;color:#111;border-radius:6px}.ticket__header{gap:1rem;flex-wrap:wrap}@media(max-width:500px){.ticket{padding:1rem}.ticket__datos{grid-template-columns:1fr}}

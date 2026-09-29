@@ -1,3 +1,5 @@
+import { MatButtonModule } from '@angular/material/button';
+import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Navbar } from '../../../components/navbar/navbar';
@@ -6,7 +8,7 @@ import { ButacaService } from '../../../services/butaca';
 import { ItemCarritoCandy } from '../../../models/item-carrito-candy';
 import { ProductoCandy } from '../../../models/producto-candy';
 
-@Component({ selector: 'app-candy', imports: [Navbar, RouterLink], templateUrl: './candy.html', styleUrl: './candy.css' })
+@Component({ selector: 'app-candy', imports: [MatButtonModule, PasosCompra, Navbar, RouterLink], templateUrl: './candy.html', styleUrl: './candy.css' })
 export class Candy implements OnInit {
   reservaToken = '';
   productos: ProductoCandy[] = [];

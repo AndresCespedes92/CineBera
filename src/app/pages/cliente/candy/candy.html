@@ -1,8 +1,9 @@
 <app-navbar />
 <main class="candy-page">
+<app-pasos-compra [paso]="2" [candy]="true" />
   <header><h1>Candy</h1><p>Elegí productos adicionales y volvé al checkout para pagar todo junto. Si elegiste un combo, sus productos se conservan por separado. El tiempo de reserva sigue corriendo.</p></header>
   @if (cargando()) { <p>Cargando productos...</p> }
-  @else if (error()) { <p role="alert">{{ error() }}</p><button (click)="ngOnInit()">Reintentar</button><a routerLink="/cartelera">Volver a cartelera</a> }
+  @else if (error()) { <p role="alert">{{ error() }}</p><button matButton="filled" (click)="ngOnInit()">Reintentar</button><a routerLink="/cartelera">Volver a cartelera</a> }
   @else {
     @if (!reservaToken) { <p>Para agregar Candy, elegí tus butacas e ingresá desde el checkout.</p><a routerLink="/cartelera">Elegir película</a> }
     @if (aviso()) { <p role="status">{{ aviso() }}</p> }
@@ -11,7 +12,7 @@
         <article class="producto-candy">
           @if (producto.imagenUrl) { <img [src]="producto.imagenUrl" [alt]="producto.nombre"> }
           <h2>{{ producto.nombre }}</h2><p>{{ producto.descripcion }}</p><strong>$ {{ producto.precio }}</strong>
-          @if (reservaToken) { <button (click)="agregarProducto(producto)">Agregar</button> }
+          @if (reservaToken) { <button matButton="filled" (click)="agregarProducto(producto)">Agregar</button> }
         </article>
       } @empty { <p>No hay productos disponibles.</p> }
     </section>
@@ -20,14 +21,14 @@
         @for (item of carrito(); track item.producto.id) {
           <article class="item-carrito"><strong>{{ item.producto.nombre }}</strong>
             <div class="cantidad-controles">
-              <button (click)="disminuirCantidad(item.producto.id)" [disabled]="item.cantidad <= 1">−</button>
-              <span>{{ item.cantidad }}</span><button (click)="aumentarCantidad(item.producto.id)">+</button>
+              <button matButton="filled" [attr.aria-label]="'Quitar una unidad de ' + item.producto.nombre" (click)="disminuirCantidad(item.producto.id)" [disabled]="item.cantidad <= 1">−</button>
+              <span>{{ item.cantidad }}</span><button matButton="filled" [attr.aria-label]="'Agregar una unidad de ' + item.producto.nombre" (click)="aumentarCantidad(item.producto.id)">+</button>
             </div>
-            <span>$ {{ item.producto.precio * item.cantidad }}</span><button (click)="eliminarProducto(item.producto.id)">Eliminar</button>
+            <span>$ {{ item.producto.precio * item.cantidad }}</span><button matButton="filled" (click)="eliminarProducto(item.producto.id)">Eliminar</button>
           </article>
         } @empty { <p>Podés continuar sin Candy.</p> }
         <h3>Total Candy: $ {{ totalCarrito() }}</h3>
-        <button (click)="volverCheckout()">Volver al checkout</button>
+        <button matButton="filled" (click)="volverCheckout()">Volver al checkout</button>
       </section>
     }
   }

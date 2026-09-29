@@ -1,3 +1,5 @@
+import { MatButtonModule } from '@angular/material/button';
+import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 import { CreditoService } from '../../../services/credito';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +17,7 @@ import { PedidoCandy } from '../../../models/pedido-candy';
 import { ComboService } from '../../../services/combo';
 
 @Component({
-  selector: 'app-pago', imports: [FormsModule, RouterLink],
+  selector: 'app-pago', imports: [MatButtonModule, PasosCompra, FormsModule, RouterLink],
   templateUrl: './pago.html', styleUrl: './pago.css'
 })
 export class Pago implements OnInit {

@@ -1,3 +1,5 @@
+import { MatButtonModule } from '@angular/material/button';
+import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 /*
  * Componente externo encargado de transformar
  * un texto en un código QR visual.
@@ -90,7 +92,7 @@ import {
    *
    * dentro del HTML.
    */
-  imports: [
+  imports: [MatButtonModule, PasosCompra, 
     QRCodeComponent,
     DatePipe,
     HoraCortaPipe
