@@ -1,1 +1,38 @@
-/* You can add global styles to this file, and also import other style files */
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/playfair-display';
+
+:root {
+  color-scheme: dark;
+  --cine-bg: #1e1a14; --cine-surface: #2a2520; --cine-panel: #332d27;
+  --cine-text: #d4bc94; --cine-muted: #9c8b72; --cine-accent: #c4a471;
+  --cine-border: #3d362f; --cine-success: #7a9e7e; --cine-info: #8ba7b5;
+  --cine-danger: #c47171; --cine-vip: #a88bbf;
+  font-family: 'Geist Variable', sans-serif; font-size: 16px;
+  background: var(--cine-bg); color: var(--cine-text);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; line-height: 1.6; }
+h1, h2, h3 { font-family: 'Playfair Display Variable', Georgia, serif; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 4vw, 3.5rem); margin: 0 0 1rem; }
+h2 { font-size: clamp(1.4rem, 2.5vw, 2rem); }
+a { color: var(--cine-accent); text-underline-offset: .25em; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--cine-accent); outline-offset: 4px; }
+button:not([matButton]), a.boton-ingresar { background: var(--cine-accent); color: var(--cine-bg); border: 1px solid var(--cine-accent); border-radius: 4px; padding: .65rem 1rem; min-height: 44px; cursor: pointer; font-weight: 600; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+button:not(:disabled):hover { filter: brightness(1.08); }
+input:not([type=checkbox]):not([type=radio]):not(.p-inputtext), select, textarea { background: var(--cine-bg); color: var(--cine-text); border: 1px solid var(--cine-muted); border-radius: 4px; padding: .7rem; max-width: 100%; min-height: 44px; }
+input[type=checkbox], input[type=radio] { accent-color: var(--cine-accent); width: 1.15rem; height: 1.15rem; }
+label { display: inline-flex; flex-direction: column; gap: .4rem; margin: .5rem .8rem .5rem 0; }
+fieldset { border: 1px solid var(--cine-border); border-radius: 6px; padding: 1rem; min-width: 0; }
+main { width: min(100%, 1200px); margin-inline: auto; padding: clamp(1rem, 4vw, 3rem); }
+main > header { margin-bottom: 2rem; }
+main > header p { color: var(--cine-muted); max-width: 65ch; }
+[role=alert] { border-left: 3px solid var(--cine-danger); background: var(--cine-surface); padding: .8rem 1rem; }
+[role=status] { color: var(--cine-info); }
+img { max-width: 100%; }
+.cine-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; margin-block: 1.5rem; }
+.cine-empty { padding: 2rem; border: 1px dashed var(--cine-border); text-align: center; grid-column: 1 / -1; }
+@media (max-width: 600px) { label { width: 100%; margin-right: 0; } main { padding: 1.25rem 1rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }

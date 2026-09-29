@@ -1,0 +1,13 @@
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme((color: (theme-type: dark, primary: mat.$orange-palette), typography: 'Geist Variable', density: 0));
+  @include mat.theme-overrides((
+    primary: #c4a471, on-primary: #1e1a14, primary-container: #51473b, on-primary-container: #d4bc94,
+    secondary: #d4bc94, on-secondary: #1e1a14,
+    surface: #1e1a14, on-surface: #d4bc94, on-surface-variant: #b7a68d,
+    surface-container: #2a2520, surface-container-high: #332d27, surface-container-highest: #3d362f,
+    outline: #9c8b72, outline-variant: #3d362f, error: #c47171, on-error: #1e1a14
+  ));
+  @include mat.button-overrides((filled-container-shape: 4px, outlined-container-shape: 4px, text-container-shape: 4px));
+}
