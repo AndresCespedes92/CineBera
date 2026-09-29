@@ -1,6 +1,6 @@
 <app-navbar />
 <main class="candy-page">
-  <header><h1>Candy</h1><p>Elegí productos y volvé al checkout para pagar todo junto. El tiempo de reserva sigue corriendo.</p></header>
+  <header><h1>Candy</h1><p>Elegí productos adicionales y volvé al checkout para pagar todo junto. Si elegiste un combo, sus productos se conservan por separado. El tiempo de reserva sigue corriendo.</p></header>
   @if (cargando()) { <p>Cargando productos...</p> }
   @else if (error()) { <p role="alert">{{ error() }}</p><button (click)="ngOnInit()">Reintentar</button><a routerLink="/cartelera">Volver a cartelera</a> }
   @else {

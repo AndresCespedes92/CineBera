@@ -52,6 +52,12 @@ export interface Compra {
   pagada_at: string | null;
 
   beneficio_id?: number | null;
+  combo_id?: number | null;
+  combo_nombre?: string | null;
+  combo_precio?: number | null;
+  combo_cantidad?: number;
+  combo_pochoclo_id?: number | null;
+  combo_bebida_id?: number | null;
   descuento_beneficio?: number;
 
 }

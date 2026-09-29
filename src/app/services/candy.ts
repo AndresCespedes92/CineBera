@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import { ItemCarritoCandy } from '../models/item-carrito-candy';
 import { ProductoCandy } from '../models/producto-candy';
 import { PedidoCandy } from '../models/pedido-candy';
+import { SeleccionCombo } from '../models/combo';
 
 @Injectable({ providedIn: 'root' })
 export class CandyService {
@@ -20,19 +21,34 @@ export class CandyService {
 
   limpiarSeleccion(token: string): void { sessionStorage.removeItem(`cinebera-candy-${token}`); }
 
-  async prepararPedidoCheckout(compraId: number, items: ItemCarritoCandy[]): Promise<void> {
+  async prepararPedidoCheckout(compraId: number, items: ItemCarritoCandy[], seleccion?: SeleccionCombo | null): Promise<void> {
     await this.validarCompra(compraId, 'pendiente');
     const existente = await this.obtenerPedidoPorCompra(compraId);
     if (existente?.estado === 'pagado') throw new Error('Este pedido ya fue pagado.');
-    if (!existente && !items.length) return;
+    if (!existente && !items.length && !seleccion) return;
     if (items.some(i => !Number.isInteger(i.cantidad) || i.cantidad <= 0)) throw new Error('Cantidad Candy inválida.');
-    const productos = items.length ? await this.obtenerProductosActivos() : [];
-    const detalles = items.map(item => {
+    const productos = items.length || seleccion ? await this.obtenerProductosActivos() : [];
+    const detalles: { producto_id: number; cantidad: number; precio_unitario: number; subtotal: number; cantidad_combo?: number }[] = items.map(item => {
       const producto = productos.find(p => p.id === item.producto.id);
       if (!producto || producto.precio !== item.producto.precio) throw new Error('Cambió el catálogo Candy. Volvé a Candy para revisar la selección.');
       return { producto_id: producto.id, cantidad: item.cantidad, precio_unitario: producto.precio,
         subtotal: Math.round(producto.precio * item.cantidad * 100) / 100 };
     });
+    if (seleccion) {
+      if (!Number.isInteger(seleccion.cantidad) || seleccion.cantidad < 1) throw new Error('Cantidad de combos inválida.');
+      for (const id of [seleccion.combo.pochoclo_id, seleccion.combo.bebida_id]) {
+        const producto = productos.find(p => p.id === id);
+        if (!producto) throw new Error('Un producto del combo ya no está disponible.');
+        const detalle = detalles.find(d => d.producto_id === id);
+        if (detalle) {
+          detalle.cantidad += seleccion.cantidad;
+          detalle.cantidad_combo = seleccion.cantidad;
+        } else {
+          detalles.push({ producto_id: id, cantidad: seleccion.cantidad, cantidad_combo: seleccion.cantidad,
+            precio_unitario: producto.precio, subtotal: 0 });
+        }
+      }
+    }
     const total = Math.round(detalles.reduce((s, d) => s + d.subtotal, 0) * 100) / 100;
     // Mientras reemplazamos detalles, el pedido no puede pagarse ni entregarse.
     let id = existente?.id;
@@ -98,7 +114,7 @@ export class CandyService {
     if (error) throw new Error('No se pudo consultar el pedido Candy.');
     if (!pedido) return null;
     const detalles = await supabase.from('detalles_pedido_candy')
-      .select('id,producto_id,cantidad,precio_unitario,subtotal,productos_candy(nombre)').eq('pedido_candy_id', pedido.id);
+      .select('id,producto_id,cantidad,cantidad_combo,precio_unitario,subtotal,productos_candy(nombre)').eq('pedido_candy_id', pedido.id);
     if (detalles.error) throw new Error('No se pudieron consultar los productos del pedido.');
     return {
       id: pedido.id, compraId: pedido.compra_id, estado: pedido.estado, total: Number(pedido.total),
@@ -108,7 +124,8 @@ export class CandyService {
         const producto = detalle.productos_candy as unknown as { nombre: string } | { nombre: string }[];
         return { id: detalle.id, productoId: detalle.producto_id,
           nombreProducto: (Array.isArray(producto) ? producto[0]?.nombre : producto?.nombre) ?? 'Producto',
-          cantidad: detalle.cantidad, precioUnitario: Number(detalle.precio_unitario), subtotal: Number(detalle.subtotal) };
+          cantidad: detalle.cantidad, cantidadCombo: detalle.cantidad_combo ?? 0,
+          precioUnitario: Number(detalle.precio_unitario), subtotal: Number(detalle.subtotal) };
       })
     };
   }

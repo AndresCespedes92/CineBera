@@ -8,15 +8,22 @@
     @if (compra(); as actual) {
       <section>
         <p>Compra #{{ actual.id }} · {{ actual.estado }}</p>
+        @if (actual.combo_id) {
+          <h2>{{ actual.combo_nombre }} × {{ actual.combo_cantidad }}</h2>
+          <p>Precio fijo por unidad: ${{ actual.combo_precio }}. Incluye entrada, pochoclos y bebida.</p>
+          <p>El combo no se acumula con el canje de entrada gratis en esta compra.</p>
+        }
         @if (pedidoCandy(); as pedido) {
           @if (pedido.estado !== 'cancelado') {
             <h2>Candy</h2>
-            @for (detalle of pedido.detalles; track detalle.id) { <p>{{ detalle.nombreProducto }} × {{ detalle.cantidad }} · ${{ detalle.subtotal }}</p> }
-            <p>Total Candy: ${{ pedido.total }}</p>
+            @for (detalle of pedido.detalles; track detalle.id) { <p>{{ detalle.nombreProducto }} × {{ detalle.cantidad }}
+              @if (detalle.cantidadCombo) { ({{ detalle.cantidadCombo }} incluidos en combo) }
+              · Extras: ${{ detalle.subtotal }}</p> }
+            <p>Total Candy adicional: ${{ pedido.total }}</p>
           }
         }
         @if (actual.estado === 'pendiente') {
-          @if (beneficios().length && actual.total > 0) {
+          @if (beneficios().length && actual.total > 0 && !actual.combo_id) {
             <label>Usar una entrada gratis
               <select [ngModel]="beneficioId()" (ngModelChange)="beneficioId.set($event)" [disabled]="procesando()">
                 <option [ngValue]="null">Guardar mis beneficios para otra compra</option>
@@ -27,11 +34,11 @@
             </label>
             <p>Cubre una entrada, la de menor precio si seleccionaste varias. El resto conserva sus descuentos.</p>
           }
-          <p>Importe de entradas: ${{ actual.total }}</p>
+          <p>Importe de entradas y combos: ${{ actual.total }}</p>
           @if (descuento() > 0) { <p>Entrada gratis: −${{ descuento() }}</p> }
           <h2>Total a pagar: ${{ total() }}</h2>
         } @else {
-          <p>Entradas pagadas: ${{ actual.total }} · Candy: ${{ totalCandy() }}</p>
+          <p>Entradas y combos pagados: ${{ actual.total }} · Candy adicional: ${{ totalCandy() }}</p>
           @if (actual.beneficio_id) { <p>Entrada gratis utilizada: canje #{{ actual.beneficio_id }}.</p> }
         }
         @if (actual.estado !== 'cancelada') {

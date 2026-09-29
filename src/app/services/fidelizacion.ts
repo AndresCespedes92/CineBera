@@ -91,6 +91,7 @@ export class FidelizacionService {
   }
 
   async confirmarCompraConBeneficio(compra: Compra, beneficioId: number, butacas: ButacaFuncion[]): Promise<Compra> {
+    if (compra.combo_id) throw new Error('El combo tiene precio fijo y no se acumula con entrada gratis. Podés quitar el combo desde checkout.');
     const { data: sesion } = await supabase.auth.getSession();
     if (!sesion.session || sesion.session.user.id !== compra.usuario_id) throw new Error('Este beneficio pertenece a otra cuenta.');
     const beneficios = await this.obtenerBeneficios(compra.usuario_id!);

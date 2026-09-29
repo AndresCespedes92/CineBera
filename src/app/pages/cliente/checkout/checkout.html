@@ -220,8 +220,8 @@
           original: sumar el precio de las butacas.
         -->
         <p>
-          Subtotal:
-          ${{ calcularTotal() }}
+          Subtotal de entradas fuera del combo:
+          ${{ seleccionCombo() ? resumenCombos().entradas + resumenCombos().descuento : calcularTotal() }}
         </p>
 
 
@@ -290,11 +290,41 @@
           Total a pagar:
           ${{ calcularTotalFinal() + totalCandy() }}
         </h2>
+        @if (seleccionCombo()) { <p>Incluye combos: ${{ resumenCombos().combos }}.</p> }
 
       </section>
 
 
-      <section><h2>Candy (opcional)</h2>
+      <section class="resumen-compra" aria-label="Combos disponibles">
+        <h2>Combos: entrada + pochoclos + bebida</h2>
+        <p>Precio fijo, incluso para butaca VIP. Elegí hasta un combo por entrada; se aplica primero a las entradas de mayor precio.
+          Las promociones se conservan en las entradas restantes. Combo y canje de entrada gratis no se acumulan en la misma compra.</p>
+        @if (cargandoCombos()) { <p>Cargando combos...</p> }
+        @else if (errorCombos()) { <p role="alert">{{ errorCombos() }}</p><button (click)="cargarCombos()">Reintentar</button> }
+        @else {
+          <button (click)="cargarCombos()" [disabled]="preparandoPago()">Actualizar combos</button>
+          @if (avisoCombos()) { <p role="status">{{ avisoCombos() }}</p> }
+          @for (combo of combos(); track combo.id) {
+            <article>
+              <h3>{{ combo.nombre }} · ${{ combo.precio }}</h3>
+              <p>Una entrada + {{ nombreProductoCombo(combo.pochoclo_id) }} + {{ nombreProductoCombo(combo.bebida_id) }}</p>
+              <button (click)="elegirCombo(combo)" [disabled]="preparandoPago() || reservaVencida()">
+                {{ seleccionCombo()?.combo?.id === combo.id ? 'Seleccionado' : 'Elegir combo' }}
+              </button>
+            </article>
+          } @empty { <p>No hay combos disponibles.</p> }
+          @if (seleccionCombo(); as seleccion) {
+            <label>Cantidad de combos <select [ngModel]="seleccion.cantidad" (ngModelChange)="cambiarCantidadCombo($event)" [disabled]="preparandoPago() || reservaVencida()">
+              @for (butaca of butacasReservadas(); track butaca.id; let indice = $index) { <option [ngValue]="indice + 1">{{ indice + 1 }}</option> }
+            </select></label>
+            <p>{{ seleccion.combo.nombre }} × {{ seleccion.cantidad }}: ${{ resumenCombos().combos }}</p>
+            <p>Entradas fuera del combo con sus descuentos: ${{ resumenCombos().entradas }}</p>
+            <p>Los productos incluidos se retiran con el mismo QR de tu entrada.</p>
+            <button (click)="elegirCombo(null)" [disabled]="preparandoPago()">Quitar combo</button>
+          }
+        }
+      </section>
+      <section><h2>Candy adicional (opcional)</h2>
         @for (item of seleccionCandy(); track item.producto.id) { <p>{{ item.producto.nombre }} × {{ item.cantidad }} · $ {{ item.producto.precio * item.cantidad }}</p> }
         @empty { <p>Sin productos Candy.</p> }
         <p>Total Candy: $ {{ totalCandy() }}</p>
@@ -335,7 +365,7 @@
       <button
         type="button"
         (click)="irAlPago()"
-        [disabled]="reservaVencida() || preparandoPago()"
+        [disabled]="reservaVencida() || preparandoPago() || cargandoCombos() || !!errorCombos()"
       >
         Ir al pago
       </button>

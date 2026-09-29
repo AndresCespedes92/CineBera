@@ -255,6 +255,9 @@
 
   </article>
 
+  @if (compra(); as actual) {
+    @if (actual.combo_id) { <p>Combo: {{ actual.combo_nombre }} × {{ actual.combo_cantidad }} · ${{ actual.combo_precio }} por unidad.</p> }
+  }
   <p>El mismo QR permite ingresar al cine y retirar el Candy incluido en tu compra.</p>
 
   <!--
