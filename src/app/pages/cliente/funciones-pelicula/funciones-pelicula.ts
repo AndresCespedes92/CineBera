@@ -1,3 +1,4 @@
+import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 import { RouterLink } from '@angular/router';
 import { HoraCortaPipe } from '../../../pipes/hora-corta';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,7 +33,7 @@ import {
 @Component({
   selector: 'app-funciones-pelicula',
 
-  imports: [MatButtonModule, HoraCortaPipe, RouterLink, Resenas],
+  imports: [PasosCompra, MatButtonModule, HoraCortaPipe, RouterLink, Resenas],
 
   templateUrl: './funciones-pelicula.html',
   styleUrl: './funciones-pelicula.css'

@@ -1,3 +1,5 @@
+import { MatButtonModule } from '@angular/material/button';
+import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 import { CandyService } from '../../../services/candy';
 import { ItemCarritoCandy } from '../../../models/item-carrito-candy';
 import { Combo, SeleccionCombo } from '../../../models/combo';
@@ -63,7 +65,7 @@ import {
 
 @Component({
   selector: 'app-checkout',
-  imports: [FormsModule],
+  imports: [MatButtonModule, PasosCompra, FormsModule],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css'
 })

@@ -1,4 +1,5 @@
 <main>
+<app-pasos-compra [paso]="3" />
   <h1>Pago</h1>
   @if (cargando()) { <p>Cargando compra...</p> }
   @else {
@@ -44,7 +45,7 @@
             <p>Crédito aplicado: −ARS {{ creditoAplicado() }}</p>
           }
           <h2>Restante por pagar: ARS {{ restante() }}</h2>
-          @if (creditoReservado()) { <p>Si no podés completar este pago, anulá la reserva para recuperar el crédito.</p><button type="button" (click)="anularReservaConCredito()" [disabled]="procesando()">Anular reserva y recuperar crédito</button> }
+          @if (creditoReservado()) { <p>Si no podés completar este pago, anulá la reserva para recuperar el crédito.</p><button matButton="filled" type="button" (click)="anularReservaConCredito()" [disabled]="procesando()">Anular reserva y recuperar crédito</button> }
         } @else {
           <p>Crédito utilizado: ARS {{ creditoReservado() }} · Pago restante: ARS {{ restante() }}</p>
           <p>Entradas y combos pagados: ${{ actual.total }} · Candy adicional: ${{ totalCandy() }}</p>
@@ -52,7 +53,7 @@
         }
         @if (actual.estado === 'cancelada') { <p>Compra cancelada. Reintegro en crédito: ARS {{ actual.credito_reintegro ?? 0 }}.</p> }
         @if (actual.estado !== 'cancelada') {
-          <button (click)="confirmarPago()" [disabled]="procesando()">
+          <button matButton="filled" (click)="confirmarPago()" [disabled]="procesando()">
             @if (procesando()) { Procesando... }
             @else if (actual.estado === 'pagada') { Completar emisión / ver entrada }
             @else if (restante() === 0) { Confirmar compra sin pago adicional }
@@ -60,7 +61,7 @@
           </button>
         }
         <a routerLink="/cartelera">Volver a cartelera</a>
-        @if (actual.estado === 'cancelada' && !actual.cancelacion_completa && creditoReservado()) { <button type="button" (click)="anularReservaConCredito()" [disabled]="procesando()">Completar recuperación del crédito</button> }
+        @if (actual.estado === 'cancelada' && !actual.cancelacion_completa && creditoReservado()) { <button matButton="filled" type="button" (click)="anularReservaConCredito()" [disabled]="procesando()">Completar recuperación del crédito</button> }
         @if (actual.estado === 'pendiente' && !creditoReservado()) { <a [routerLink]="['/checkout', actual.reserva_token]">Volver al checkout</a> }
       </section>
     } @else { <p>No se encontró una compra disponible.</p> }

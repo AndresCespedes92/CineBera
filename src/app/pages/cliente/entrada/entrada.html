@@ -28,6 +28,7 @@
 @else if (entrada(); as entradaActual) {
 
   <main class="pagina-entrada">
+<app-pasos-compra [paso]="4" />
 
   <!--
     Esta tarjeta representa visualmente la entrada.
@@ -269,7 +270,7 @@
   -->
   <section class="acciones-entrada">
 
-    <button
+    <button matButton="filled"
       type="button"
       (click)="descargarPDF()">
       Descargar entrada en PDF

@@ -1,0 +1,1 @@
+main{max-width:900px}section{padding:clamp(1rem,3vw,2rem);border:1px solid var(--cine-border);border-radius:6px;background:var(--cine-surface)}section>button,section>a{margin:.75rem .75rem .75rem 0}section>a{display:inline-block}h2{color:var(--cine-accent)}@media(max-width:600px){section>button{width:100%}}
