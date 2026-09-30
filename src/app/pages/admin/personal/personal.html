@@ -1,0 +1,224 @@
+<app-page-header
+  ><h1>Personal</h1>
+  <p>Consulta y alta de empleados de CineBera.</p></app-page-header
+>
+<div class="toolbar">
+  <button matButton="filled" type="button" (click)="nuevo()" [disabled]="mostrarFormulario()">
+    + Nuevo empleado</button
+  ><button
+    matButton="outlined"
+    type="button"
+    (click)="cargar()"
+    [disabled]="cargando() || guardando()"
+  >
+    Actualizar listado
+  </button>
+</div>
+@if (mensaje()) {
+  <p role="status">{{ mensaje() }}</p>
+}
+@if (mostrarFormulario()) {
+  <section class="registro-card" aria-labelledby="alta-titulo">
+    <h2 id="alta-titulo">Nuevo empleado</h2>
+    <p>
+      La cuenta tendrá rol Empleado. Usá un correo nuevo; esta pantalla no modifica cuentas
+      existentes.
+    </p>
+    @if (errorAlta()) {
+      <p role="alert">{{ errorAlta() }}</p>
+    }
+    @if (perfilPendiente()) {
+      <p>
+        Cuenta pendiente: <code>{{ perfilPendiente()!.id }}</code
+        >. El reintento guarda únicamente su perfil.
+      </p>
+    }
+    <form [formGroup]="form" (ngSubmit)="guardar()">
+      <fieldset [disabled]="guardando() || !!perfilPendiente()">
+        <legend>Datos del empleado</legend>
+        <div class="campos">
+          <div class="form-field">
+            <label for="personal-nombre">Nombre</label
+            ><input
+              id="personal-nombre"
+              type="text"
+              autocomplete="given-name"
+              formControlName="nombre"
+            />
+            @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+              <small class="error">Ingresá un nombre válido.</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="personal-apellido">Apellido</label
+            ><input
+              id="personal-apellido"
+              type="text"
+              autocomplete="family-name"
+              formControlName="apellido"
+            />
+            @if (form.controls.apellido.touched && form.controls.apellido.invalid) {
+              <small class="error">Ingresá un apellido válido.</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="personal-email">Correo electrónico</label
+            ><input id="personal-email" type="email" autocomplete="off" formControlName="email" />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <small class="error">Ingresá un correo válido.</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="personal-password">Contraseña inicial</label
+            ><input
+              id="personal-password"
+              type="password"
+              autocomplete="new-password"
+              formControlName="password"
+            />
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <small class="error">Usá al menos 6 caracteres.</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="personal-confirmarPassword">Confirmar contraseña</label
+            ><input
+              id="personal-confirmarPassword"
+              type="password"
+              autocomplete="new-password"
+              formControlName="confirmarPassword"
+            />
+            @if (
+              form.controls.confirmarPassword.touched &&
+              (form.controls.confirmarPassword.invalid || form.hasError('passwordsNoCoinciden'))
+            ) {
+              <small class="error">Repetí la misma contraseña.</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="personal-diasVacaciones">Días de vacaciones</label
+            ><input
+              id="personal-diasVacaciones"
+              type="number"
+              min="0"
+              max="32767"
+              step="1"
+              formControlName="diasVacaciones"
+            />
+            @if (form.controls.diasVacaciones.touched && form.controls.diasVacaciones.invalid) {
+              <small class="error">Ingresá un entero entre 0 y 32767.</small>
+            }
+          </div>
+        </div>
+        <fieldset>
+          <legend>Fecha de nacimiento</legend>
+          <div class="fecha-nacimiento">
+            <select aria-label="Día de nacimiento" formControlName="diaNacimiento">
+              <option [ngValue]="null">Día</option>
+              @for (valor of dias; track valor) {
+                <option [ngValue]="valor">{{ valor }}</option>
+              }</select
+            ><select aria-label="Mes de nacimiento" formControlName="mesNacimiento">
+              <option [ngValue]="null">Mes</option>
+              @for (valor of meses; track valor) {
+                <option [ngValue]="valor">{{ valor }}</option>
+              }</select
+            ><select aria-label="Año de nacimiento" formControlName="anioNacimiento">
+              <option [ngValue]="null">Año</option>
+              @for (valor of anios; track valor) {
+                <option [ngValue]="valor">{{ valor }}</option>
+              }
+            </select>
+          </div>
+          @if (
+            form.touched &&
+            (form.controls.diaNacimiento.invalid ||
+              form.controls.mesNacimiento.invalid ||
+              form.controls.anioNacimiento.invalid ||
+              form.hasError('fechaInvalida') ||
+              form.hasError('fechaFutura'))
+          ) {
+            <small class="error">Completá una fecha real que no sea futura.</small>
+          }
+        </fieldset>
+        <div class="campos">
+          <div class="form-field">
+            <label for="personal-grupoSanguineo">Grupo sanguíneo</label
+            ><select id="personal-grupoSanguineo" formControlName="grupoSanguineo">
+              <option value="">Seleccionar</option>
+              @for (valor of grupos; track valor) {
+                <option [value]="valor">{{ valor }}</option>
+              }
+            </select>
+            @if (form.controls.grupoSanguineo.touched && form.controls.grupoSanguineo.invalid) {
+              <small class="error">Seleccioná una opción.</small>
+            }
+          </div>
+          <div class="form-field">
+            <label for="personal-colorOjos">Color de ojos</label
+            ><select id="personal-colorOjos" formControlName="colorOjos">
+              <option value="">Seleccionar</option>
+              @for (valor of colores; track valor) {
+                <option [value]="valor">{{ valor }}</option>
+              }
+            </select>
+            @if (form.controls.colorOjos.touched && form.controls.colorOjos.invalid) {
+              <small class="error">Seleccioná una opción.</small>
+            }
+          </div>
+        </div>
+      </fieldset>
+      <div class="toolbar">
+        <button matButton="filled" type="submit" [disabled]="guardando()">
+          {{
+            guardando()
+              ? 'Guardando…'
+              : perfilPendiente()
+                ? 'Reintentar guardar perfil'
+                : 'Crear empleado'
+          }}</button
+        ><button
+          matButton="outlined"
+          type="button"
+          (click)="cancelar()"
+          [disabled]="guardando() || !!perfilPendiente()"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </section>
+}
+@if (cargando()) {
+  <p role="status">Cargando personal…</p>
+} @else if (errorListado()) {
+  <p role="alert">{{ errorListado() }}</p>
+} @else if (!empleados().length) {
+  <p class="empty-state">No hay empleados registrados.</p>
+} @else {
+  <div class="tabla-scroll" tabindex="0" role="region" aria-label="Listado de empleados">
+    <table>
+      <caption>
+        Empleados registrados
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Nombre</th>
+          <th scope="col">Apellido</th>
+          <th scope="col">Rol</th>
+          <th scope="col">Días de vacaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (empleado of empleados(); track empleado.id) {
+          <tr>
+            <td>{{ empleado.nombre || 'Sin nombre' }}</td>
+            <td>{{ empleado.apellido || 'Sin apellido' }}</td>
+            <td>{{ empleado.rol }}</td>
+            <td>{{ empleado.dias_vacaciones ?? 'Sin datos' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

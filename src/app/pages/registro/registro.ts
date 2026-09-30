@@ -1,18 +1,10 @@
 import { MatButtonModule } from '@angular/material/button';
 import { Component } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators
-} from '@angular/forms';
+import {ReactiveFormsModule} from '@angular/forms';
+import {crearFormularioRegistro} from '../../forms/registro-form';
 import { RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
-import { confirmarPasswordValidator } from '../../validators/confirmar-password.validator';
 import { NgClass } from '@angular/common';
-import {
-  fechaNacimientoValidator
-} from '../../validators/fecha-nacimiento.validator';
 import {
   Usuario,
   NuevoPerfil
@@ -89,74 +81,7 @@ anios = Array.from(
    * Cada FormControl representa uno de los campos
    * de esa ficha.
    */
-registroForm = new FormGroup({
-
-  nombre: new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required, Validators.minLength(2),
-      // Solo letras y espacios.
-    // Incluimos caracteres habituales del español.
-    Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/)]
-  }),
-  apellido: new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required,Validators.minLength(2),
-      // Solo letras y espacios.
-    // Incluimos caracteres habituales del español.
-    Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/)]
-  }),
-
-  email: new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required,Validators.email]
-  }),
-
-  password: new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required,Validators.minLength(6)]
-  }),
-
-  // Este campo individualmente solo debe ser obligatorio.
-  confirmarPassword: new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required]
-  }),
-
-  diaNacimiento: new FormControl<number | null>(null, {
-  validators: [Validators.required]
-  }),
-
-  mesNacimiento: new FormControl<number | null>(null, {
-    validators: [Validators.required]
-  }),
-
-  anioNacimiento: new FormControl<number | null>(null, {
-    validators: [Validators.required]
-  }),
-
-  grupoSanguineo: new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required]
-  }),
-
-  colorOjos: new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required]
-  }),
-
-  diasVacaciones: new FormControl(0, {
-    nonNullable: true,
-    validators: [Validators.required,Validators.min(0)]
-  })
-
-},
-  {
-    // Este validador analiza el formulario completo.
-    validators: [
-  confirmarPasswordValidator,
-  fechaNacimientoValidator
-]
-  });
+registroForm = crearFormularioRegistro();
 
 
   /*

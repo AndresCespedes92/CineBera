@@ -208,6 +208,7 @@ export const routes: Routes = [
       .then(m => m.AdminLayout),
 
   children: [
+    { path: 'personal', canDeactivate: [cambiosPendientesGuard], loadComponent: () => import('./pages/admin/personal/personal').then(m => m.Personal) },
     { path: '', pathMatch: 'full', redirectTo: 'home' },
     { path: 'auditoria', loadComponent: () => import('./pages/admin/auditoria/auditoria').then(m => m.Auditoria) },
     { path: 'graficos', loadComponent: () => import('./pages/admin/graficos/graficos').then(m => m.Graficos) },
