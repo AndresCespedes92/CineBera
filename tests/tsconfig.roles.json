@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.spec.json",
+  "include": [
+    "../src/**/*.d.ts",
+    "../src/tests/roles.spec.ts",
+    "../src/tests/navegacion.spec.ts",
+    "../src/app/guards/role-guard.spec.ts",
+    "../src/app/guards/auth-guard.spec.ts"
+  ]
+}

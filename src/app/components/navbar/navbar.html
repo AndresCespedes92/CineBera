@@ -1,35 +1,57 @@
-<nav class="navbar" aria-label="Navegación principal" [class.menu-abierto]="menuAbierto()">
-
+<nav
+  class="navbar"
+  aria-label="Navegación principal"
+  [class.menu-abierto]="menuAbierto()"
+  (keydown.escape)="menuAbierto.set(false); toggle.focus()"
+>
   <!--
     Logo/nombre de la aplicación.
     Siempre vuelve a la cartelera.
   -->
-  <a
-    class="navbar-logo"
-    routerLink="/">
-    CineBera
-  </a>
-
+  <a class="navbar-logo" routerLink="/"> CineBera </a>
 
   <!-- =========================
        NAVEGACIÓN PRINCIPAL
        ========================= -->
-  <button matButton="filled" type="button" class="menu-toggle" [attr.aria-expanded]="menuAbierto()" aria-controls="menu-principal menu-sesion" (click)="menuAbierto.set(!menuAbierto())">{{ menuAbierto() ? 'Cerrar menú' : 'Menú' }}</button>
-  <div class="navbar-links" id="menu-principal" (click)="menuAbierto.set(false)" (keydown.escape)="menuAbierto.set(false)">
-
+  <button
+    #toggle
+    matButton="filled"
+    type="button"
+    class="menu-toggle"
+    [attr.aria-expanded]="menuAbierto()"
+    aria-controls="menu-principal menu-sesion"
+    (click)="menuAbierto.set(!menuAbierto())"
+  >
+    {{ menuAbierto() ? 'Cerrar menú' : 'Menú' }}
+  </button>
+  <div
+    class="navbar-links"
+    id="menu-principal"
+    (click)="menuAbierto.set(false)"
+    (keydown.escape)="menuAbierto.set(false)"
+  >
     <!--
       Estas opciones son públicas.
       Pueden utilizarlas tanto visitantes
       como usuarios registrados.
     -->
-    <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/">
+    <a
+      routerLinkActive="enlace-activo"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
+      routerLink="/"
+    >
       Cartelera
     </a>
 
-    <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/proximamente">
+    <a
+      routerLinkActive="enlace-activo"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
+      routerLink="/proximamente"
+    >
       Próximamente
     </a>
-
 
     <!--
       Estas opciones pertenecen al usuario.
@@ -38,45 +60,86 @@
       existe una sesión autenticada.
     -->
     @if (usuarioAutenticado()) {
+      <ng-container *appRoles="['cliente']; actual: rol()">
+        <a
+          routerLinkActive="enlace-activo"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          routerLink="/alertas"
+        >
+          Mis alertas
 
-      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/alertas">Mis alertas @if(alertas.noLeidas()){ ({{alertas.noLeidas()}} nuevas) } @if(errorAlertas()){ (sin actualizar) }</a>
-      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/mis-peliculas">
-        Mis películas
-      </a>
+          @if (alertas.noLeidas()) {
+            <span class="alertas-contador">
+              {{ alertas.noLeidas() }}
+            </span>
+          }
 
-      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/fidelizacion">Fidelización / Recompensas</a>
-      @if (rol() === 'admin') { <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/admin/home">Administración</a> }
-      @if (rol() === 'admin' || rol() === 'empleado') { <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/empleado/validar-entrada">Entradas y retiros Candy</a> }
-      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/perfil">
+          @if (errorAlertas()) {
+            <span>(sin actualizar)</span>
+          }
+        </a>
+
+        <a
+          routerLinkActive="enlace-activo"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          routerLink="/mis-peliculas"
+        >
+          Mis películas
+        </a>
+
+        <a
+          routerLinkActive="enlace-activo"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          routerLink="/fidelizacion"
+          >Fidelización</a
+        >
+      </ng-container>
+      <a
+        *appRoles="['admin']; actual: rol()"
+        routerLinkActive="enlace-activo"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+        routerLink="/admin/home"
+        >Administración</a
+      >
+      <a
+        *appRoles="['admin', 'empleado']; actual: rol()"
+        routerLinkActive="enlace-activo"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+        routerLink="/empleado/validar-entrada"
+        >Entradas y retiros Candy</a
+      >
+      <a
+        routerLinkActive="enlace-activo"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+        routerLink="/perfil"
+      >
         Mi perfil
       </a>
-
     }
-
   </div>
-
 
   <!-- =========================
        ESTADO DE AUTENTICACIÓN
        ========================= -->
-  <div class="navbar-auth" id="menu-sesion">
-
+  <div class="navbar-auth" id="menu-sesion" (click)="menuAbierto.set(false)">
     @if (usuarioAutenticado()) {
-
       <!--
         CASO 1:
         existe una sesión de Supabase Auth.
       -->
       <span class="navbar-usuario">
-
         @if (nombreUsuario()) {
           Hola, {{ nombreUsuario() }}
         } @else {
           Sesión iniciada
         }
-
       </span>
-
 
       <!--
         Acá usamos Event Binding.
@@ -84,15 +147,10 @@
         HTML detecta el click y ejecuta
         cerrarSesion() en TypeScript.
       -->
-      <button
-        type="button"
-        class="boton-salir"
-        (click)="cerrarSesion()" [disabled]="cerrando()">
+      <button type="button" class="boton-salir" (click)="cerrarSesion()" [disabled]="cerrando()">
         Cerrar sesión
       </button>
-
     } @else {
-
       <!--
         CASO 2:
         no existe sesión.
@@ -100,20 +158,12 @@
         Por lo tanto estamos navegando
         como visitante/anónimo.
       -->
-      <a
-        class="boton-ingresar"
-        routerLink="/login">
-        Iniciar sesión
-      </a>
+      <a class="boton-ingresar" routerLink="/login"> Iniciar sesión </a>
 
-      <a
-        routerLink="/registro">
-        Crear cuenta
-      </a>
-
+      <a routerLink="/registro"> Crear cuenta </a>
     }
-
   </div>
-
 </nav>
-@if (errorSesion()) { <p role="alert">{{ errorSesion() }}</p> }
+@if (errorSesion()) {
+  <p role="alert">{{ errorSesion() }}</p>
+}
