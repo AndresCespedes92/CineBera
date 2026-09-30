@@ -39,8 +39,24 @@
     -->
     @if (usuarioAutenticado()) {
 
-      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/alertas">Mis alertas @if(alertas.noLeidas()){ ({{alertas.noLeidas()}} nuevas) } @if(errorAlertas()){ (sin actualizar) }</a>
-      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/mis-peliculas">
+      <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/alertas">
+        Mis alertas
+
+  @if (alertas.noLeidas()) {
+    <span class="alertas-contador">
+      {{ alertas.noLeidas() }}
+    </span>
+  }
+
+  @if (errorAlertas()) {
+    <span>(sin actualizar)</span>
+  }
+
+</a>
+      
+      
+      
+        <a routerLinkActive="enlace-activo" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page" routerLink="/mis-peliculas">
         Mis películas
       </a>
 

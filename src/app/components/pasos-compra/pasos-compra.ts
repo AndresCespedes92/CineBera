@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 @Component({
   selector: 'app-pasos-compra',
+  standalone:true,
   template: `<nav aria-label="Progreso de compra">
     <ol>
       @for (nombre of pasos; track nombre; let i = $index) {

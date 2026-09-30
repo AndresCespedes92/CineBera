@@ -108,13 +108,15 @@
   color: var(--cine-muted);
 }
 
-.input-valido {
+.form-field input.input-valido,
+.form-field select.input-valido {
   border: 2px solid var(--cine-success);
   background-color: var(--cine-surface);
   outline: none;
 }
 
-.input-invalido {
+.form-field input.input-invalido,
+.form-field select.input-invalido {
   border: 2px solid var(--cine-danger);
   background-color: var(--cine-surface);
   outline: none;
