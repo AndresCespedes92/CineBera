@@ -57,19 +57,24 @@
 .navbar-auth {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 1rem;
   font-size: 0.875rem;
 }
 .navbar-usuario {
+  max-width: 7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--cine-muted);
 }
 .menu-toggle {
   display: none;
 }
-@media (max-width: 1100px) {
+@media (max-width: 1279px) {
   .navbar {
     justify-content: space-between;
+    flex-wrap: wrap;
   }
   .menu-toggle {
     display: inline-flex;
@@ -93,5 +98,20 @@
   }
   .navbar-links a {
     padding: 0.6rem 0;
+  }
+}
+
+.navbar-auth {
+  flex-shrink: 0;
+}
+@media (max-width: 1279px) {
+  .navbar-usuario {
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .navbar-links,
+  .navbar-links a {
+    white-space: normal;
   }
 }

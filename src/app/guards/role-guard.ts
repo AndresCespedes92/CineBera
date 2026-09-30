@@ -11,8 +11,19 @@ export const roleGuard: CanMatchFn = async (route) => {
   try {
     const sesion = await auth.obtenerSesion();
     if (!sesion || sesion.user.is_anonymous) return router.createUrlTree(['/login']);
-    const {data: perfil, error} = await usuarios.obtenerPerfil(sesion.user.id);
+    const { data: perfil, error } = await usuarios.obtenerPerfil(sesion.user.id);
     const roles: string[] = route.data?.['roles'] ?? ['admin'];
-    return !error && perfil && roles.includes(perfil.rol) ? true : router.createUrlTree(['/']);
-  } catch { return router.createUrlTree(['/login']); }
+    if (error || !perfil) return router.createUrlTree(['/']);
+    if (roles.includes(perfil.rol)) return true;
+    // El rechazo devuelve al usuario a un área que corresponde a su perfil.
+    const destino =
+      perfil.rol === 'empleado'
+        ? '/empleado/validar-entrada'
+        : perfil.rol === 'admin'
+          ? '/admin/home'
+          : '/';
+    return router.createUrlTree([destino]);
+  } catch {
+    return router.createUrlTree(['/login']);
+  }
 };

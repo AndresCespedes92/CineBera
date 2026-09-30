@@ -7,35 +7,72 @@ import { roleGuard } from './role-guard';
 describe('roleGuard', () => {
   const auth = { obtenerSesion: vi.fn() };
   const usuarios = { obtenerPerfil: vi.fn() };
-  const ejecutar = (route: Route = {}) => TestBed.runInInjectionContext(() => roleGuard(route, [], {} as Parameters<typeof roleGuard>[2]));
+  const ejecutar = (route: Route = {}) =>
+    TestBed.runInInjectionContext(() =>
+      roleGuard(route, [], {} as Parameters<typeof roleGuard>[2]),
+    );
   beforeEach(() => {
     vi.resetAllMocks();
-    TestBed.configureTestingModule({ providers: [provideRouter([]), {provide: Auth, useValue: auth}, {provide: Usuario, useValue: usuarios}] });
-    auth.obtenerSesion.mockResolvedValue({user: {id: 'usuario'}});
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: Auth, useValue: auth },
+        { provide: Usuario, useValue: usuarios },
+      ],
+    });
+    auth.obtenerSesion.mockResolvedValue({ user: { id: 'usuario' } });
   });
-  it.each([null, {user: {id: 'anonimo', is_anonymous: true}}])('envía visitantes al login', async sesion => {
-    auth.obtenerSesion.mockResolvedValue(sesion);
-    expect(await ejecutar()).toEqual(TestBed.inject(Router).createUrlTree(['/login']));
-    expect(usuarios.obtenerPerfil).not.toHaveBeenCalled();
+  it.each([null, { user: { id: 'anonimo', is_anonymous: true } }])(
+    'envía visitantes al login',
+    async (sesion) => {
+      auth.obtenerSesion.mockResolvedValue(sesion);
+      expect(await ejecutar()).toEqual(TestBed.inject(Router).createUrlTree(['/login']));
+      expect(usuarios.obtenerPerfil).not.toHaveBeenCalled();
+    },
+  );
+  it.each(['admin', 'empleado'])('permite validar entradas al rol %s', async (rol) => {
+    usuarios.obtenerPerfil.mockResolvedValue({ data: { rol }, error: null });
+    expect(await ejecutar({ data: { roles: ['admin', 'empleado'] } })).toBe(true);
   });
-  it.each(['admin', 'empleado'])('permite validar entradas al rol %s', async rol => {
-    usuarios.obtenerPerfil.mockResolvedValue({data: {rol}, error: null});
-    expect(await ejecutar({data: {roles: ['admin', 'empleado']}})).toBe(true);
-  });
-  it.each(['cliente', 'empleado'])('impide entrar a administración al rol %s', async rol => {
-    usuarios.obtenerPerfil.mockResolvedValue({data: {rol}, error: null});
-    expect(await ejecutar()).toEqual(TestBed.inject(Router).createUrlTree(['/']));
+  it.each(['cliente', 'empleado'])('impide entrar a administración al rol %s', async (rol) => {
+    usuarios.obtenerPerfil.mockResolvedValue({ data: { rol }, error: null });
+    expect(await ejecutar()).toEqual(
+      TestBed.inject(Router).createUrlTree([
+        rol === 'empleado' ? '/empleado/validar-entrada' : '/',
+      ]),
+    );
   });
   it('permite administración al admin', async () => {
-    usuarios.obtenerPerfil.mockResolvedValue({data: {rol: 'admin'}, error: null});
+    usuarios.obtenerPerfil.mockResolvedValue({ data: { rol: 'admin' }, error: null });
     expect(await ejecutar()).toBe(true);
   });
   it('rechaza un perfil que no pudo cargarse', async () => {
-    usuarios.obtenerPerfil.mockResolvedValue({data: null, error: {message: 'error'}});
+    usuarios.obtenerPerfil.mockResolvedValue({ data: null, error: { message: 'error' } });
     expect(await ejecutar()).toEqual(TestBed.inject(Router).createUrlTree(['/']));
   });
   it('resuelve un error de sesión con una redirección', async () => {
     auth.obtenerSesion.mockRejectedValue(new Error('sin conexión'));
     expect(await ejecutar()).toEqual(TestBed.inject(Router).createUrlTree(['/login']));
   });
+});
+
+it('cliente no accede manualmente a validación de entradas', async () => {
+  TestBed.configureTestingModule({
+    providers: [
+      provideRouter([]),
+      { provide: Auth, useValue: { obtenerSesion: async () => ({ user: { id: 'cliente' } }) } },
+      {
+        provide: Usuario,
+        useValue: { obtenerPerfil: async () => ({ data: { rol: 'cliente' }, error: null }) },
+      },
+    ],
+  });
+  const resultado = await TestBed.runInInjectionContext(() =>
+    roleGuard(
+      { data: { roles: ['admin', 'empleado'] } },
+      [],
+      {} as Parameters<typeof roleGuard>[2],
+    ),
+  );
+  expect(resultado).toEqual(TestBed.inject(Router).createUrlTree(['/']));
 });

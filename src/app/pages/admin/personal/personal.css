@@ -1,0 +1,30 @@
+.registro-card {
+  max-width: none;
+  box-sizing: border-box;
+  margin-block: 24px;
+}
+.campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+}
+legend {
+  margin-bottom: 12px;
+}
+code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .campos {
+    grid-template-columns: 1fr;
+  }
+  .registro-card {
+    padding: 16px;
+  }
+}
