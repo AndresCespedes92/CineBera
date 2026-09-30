@@ -1,5 +1,5 @@
-# ETAPA 2 IMPLEMENTADA
-Personal / Empleados. El cierre integral del bloque queda pendiente de una prueba con cuentas reales.
+# FUNCIONALIDAD TERMINADA
+Roles + Personal + Navegación. Validación real completada el 29/09/2026 (hora local).
 
 ## Archivos modificados
 - `src/app/pages/admin/personal/personal.ts`, `.html`, `.css`: listado, formulario, estados, reintento de perfil y protección de borrador.
@@ -58,12 +58,24 @@ Incluye: roles rechazados, sesión anónima, validaciones, cliente público, car
 
 Se consultó el esquema real de perfiles y se verificó una consulta de empleados de solo lectura. Esto no equivale a probar permisos del cliente ni completar un alta real. No se ejecutó la suite general histórica.
 
+## Validación integral posterior (navegador real)
+- El usuario inició sesión como administrador y completó personalmente el alta, incluidas las credenciales.
+- Personal mostró el listado vacío antes del alta y luego el mensaje de éxito con la fila de rol empleado.
+- Tras crear la cuenta se pudo volver a /admin/home y el menú mantuvo la identidad Admin: la sesión administrativa no fue reemplazada.
+- Se revisó Personal en tamaños de escritorio, intermedio y móvil, sin desbordamiento horizontal de página ni campos. Los anchos CSS observados fueron 1309, 931 y 327 px debido al escalado del navegador.
+- Después de cerrar la sesión administrativa, el usuario ingresó con la cuenta nueva y llegó a /empleado/validar-entrada.
+- El menú mostró Cartelera, Próximamente, Entradas y retiros Candy, Mi perfil y cierre de sesión; no mostró Administración ni enlaces exclusivos del cliente.
+- Abrir directamente /admin/personal y /admin/home con el empleado redirigió en ambos casos a /empleado/validar-entrada.
+- No se escanearon entradas ni se efectuaron retiros de Candy: se verificó el acceso operativo, sin consumir compras.
+- No se registraron credenciales en documentación ni se modificaron datos de la cuenta fuera del formulario que completó el usuario.
+- Esta actualización solo documenta la prueba real; no se modificó código ni se repitió el build ya aprobado.
+
 ## Build
 Build de producción correcto. Inicial: 547.56 kB. Avisos conocidos: presupuesto inicial 500 kB y CommonJS de dependencias jsPDF/canvg/qrcode. No se ampliaron presupuestos.
 
 ## Pendientes / riesgos
-- Validación integral en navegador con admin y un correo nuevo de empleado: alta, posible confirmación y posterior login operativo. No se afirma que esa prueba real esté realizada.
-- Revisión visual de Personal con sesión admin en desktop/móvil. La responsividad del navbar ya se verificó en etapa 1; los tests actuales de Personal son de componente, no capturas de navegador.
+- La configuración actual permitió el alta y login real sin confirmación adicional. El caso con confirmación de correo fue cubierto con el SDK real y transporte simulado, no con un email real.
+- Los escenarios de cliente y errores del alta se cubrieron con tests automatizados. No se reprodujeron fallos deliberados en la base real.
 - Un alta parcial puede requerir intervención manual si se abandona la pantalla; limitación explícita de las dos operaciones independientes.
 - La protección autoritativa del rol en la base sigue fuera del bloque, tal como se solicitó. No se modificó RLS.
 
