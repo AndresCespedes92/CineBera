@@ -1,7 +1,7 @@
 .navbar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 1.25rem;
   padding: 1.25rem max(1rem, calc((100vw - 1200px) / 2));
   background: var(--cine-bg);
@@ -16,9 +16,10 @@
 }
 .navbar-links {
   display: flex;
-  flex: 1 1 450px;
-  flex-wrap: wrap;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
   gap: 0.6rem 1.25rem;
+  white-space: nowrap;
 }
 .navbar-links a,
 .navbar-auth a {
@@ -27,28 +28,53 @@
 }
 .navbar-links a {
   color: var(--cine-muted);
+  white-space: nowrap;
 }
 .navbar-links a:hover,
 .navbar-links .enlace-activo {
   color: var(--cine-text);
   text-decoration: underline;
 }
+
+.alertas-contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+
+  border-radius: 10px;
+
+  background-color: var(--cine-accent);
+  color: var(--cine-bg);
+
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .navbar-auth {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 1rem;
   font-size: 0.875rem;
 }
 .navbar-usuario {
+  max-width: 7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--cine-muted);
 }
 .menu-toggle {
   display: none;
 }
-@media (max-width: 800px) {
+@media (max-width: 1279px) {
   .navbar {
     justify-content: space-between;
+    flex-wrap: wrap;
   }
   .menu-toggle {
     display: inline-flex;
@@ -72,5 +98,20 @@
   }
   .navbar-links a {
     padding: 0.6rem 0;
+  }
+}
+
+.navbar-auth {
+  flex-shrink: 0;
+}
+@media (max-width: 1279px) {
+  .navbar-usuario {
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .navbar-links,
+  .navbar-links a {
+    white-space: normal;
   }
 }
