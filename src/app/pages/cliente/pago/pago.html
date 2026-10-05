@@ -57,7 +57,7 @@
             @if (procesando()) { Procesando... }
             @else if (actual.estado === 'pagada') { Completar emisión / ver entrada }
             @else if (restante() === 0) { Confirmar compra sin pago adicional }
-            @else { Confirmar pago simulado }
+            @else { Confirmar pago }
           </button>
         }
         <a routerLink="/cartelera">Volver a cartelera</a>
