@@ -28,7 +28,7 @@ import {
  * ActivatedRoute nos permite leer información
  * que llega mediante la URL.
  */
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 
 /*
@@ -92,7 +92,7 @@ import {
    *
    * dentro del HTML.
    */
-  imports: [MatButtonModule, PasosCompra, 
+  imports: [MatButtonModule, RouterLink, PasosCompra,
     QRCodeComponent,
     DatePipe,
     HoraCortaPipe
