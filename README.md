@@ -27,3 +27,9 @@ La aplicación se encuentra desplegada y disponible públicamente.
 - **Aplicación:** https://cinebera.web.app
 - **Documentación funcional y diagramas:** [https://miro.com/app/board/uXjVHogrWv8=/](https://miro.com/app/board/uXjVHogrWv8=/?share_link_id=2295409427)
 - **Diseño y paleta de colores:** https://www.figma.com/design/npOTQoiVnjea5iPowB9rQs/Cine-TP-%E2%80%93-Prototipo-Programaci%C3%B3n-IV?node-id=0-1&p=f&t=oIhDM4NTu3IVSmJO-0
+
+Comandos para deploy en firebase:
+ng build
+Remove-Item .\public\* -Recurse -Force
+Copy-Item .\dist\cine-bera\browser\* .\public\ -Recurse -Force
+firebase deploy --only hosting
