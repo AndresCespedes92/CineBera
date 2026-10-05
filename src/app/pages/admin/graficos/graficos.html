@@ -3,8 +3,8 @@
   <form (ngSubmit)="consultar()" #form="ngForm">
     <fieldset [disabled]="cargando()">
       <label>Período <select name="tipo" [(ngModel)]="tipo"><option value="semana">Semana (lunes a domingo)</option><option value="mes">Mes calendario</option></select></label>
-      <label>Fecha dentro del período <input type="date" name="fecha" [(ngModel)]="fecha" required></label>
-      <button matButton="filled" type="submit" [disabled]="form.invalid">Consultar gráficos</button>
+      <app-selector-fecha etiqueta="Fecha dentro del período" [(fecha)]="fecha" />
+      <button matButton="filled" type="submit" [disabled]="form.invalid || !fecha">Consultar gráficos</button>
     </fieldset>
   </form>
   @if (cargando()) { <p role="status">Consultando ventas...</p> }

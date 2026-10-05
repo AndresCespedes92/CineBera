@@ -1,3 +1,4 @@
+import { SelectorFecha } from '../../../components/selector-fecha/selector-fecha';
 import { MatButtonModule } from '@angular/material/button';
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +7,7 @@ import { ReporteService, fechaBuenosAires } from '../../../services/reporte';
 import { ReporteVentas } from '../../../models/reporte';
 import { criterioReporte, descargarExcel, generarPdf } from '../../../services/exportar-reporte';
 
-@Component({selector: 'app-reportes', imports: [MatButtonModule, FormsModule, DecimalPipe], templateUrl: './reportes.html', styleUrl: '../recompensas/recompensas.css'})
+@Component({selector: 'app-reportes', imports: [SelectorFecha, MatButtonModule, FormsModule, DecimalPipe], templateUrl: './reportes.html', styleUrl: '../recompensas/recompensas.css'})
 export class Reportes {
   hasta = fechaBuenosAires();
   desde = this.hasta.slice(0, 8) + '01';

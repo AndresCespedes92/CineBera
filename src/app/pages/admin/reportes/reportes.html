@@ -4,9 +4,9 @@
   <p>Una entrada equivale a una butaca ocupada de una compra pagada, incluso si se obtuvo con un beneficio. El combo se suma una sola vez; Candy extra excluye lo incluido en combos.</p>
   <form (ngSubmit)="consultar()" #form="ngForm">
     <fieldset [disabled]="cargando() || exportando()">
-      <label>Desde <input type="date" name="desde" [(ngModel)]="desde" required></label>
-      <label>Hasta <input type="date" name="hasta" [(ngModel)]="hasta" required></label>
-      <button matButton="filled" type="submit" [disabled]="form.invalid">Consultar</button>
+      <app-selector-fecha etiqueta="Desde" [(fecha)]="desde" />
+      <app-selector-fecha etiqueta="Hasta" [(fecha)]="hasta" />
+      <button matButton="filled" type="submit" [disabled]="form.invalid || !desde || !hasta">Consultar</button>
     </fieldset>
   </form>
   <p>Hasta 366 días por consulta. Los filtros se aplican al pulsar Consultar.</p>
