@@ -9,7 +9,7 @@
       <button matButton="filled" type="submit">Consultar / actualizar</button>
     </fieldset>
   </form>
-  <p>Filtro aplicado: {{ aplicada ? nombre(aplicada) : 'Todas las acciones' }}. Más recientes primero; fechas de Buenos Aires (UTC-03).</p>
+  <p>Filtro aplicado: {{ aplicada ? nombre(aplicada) : 'Todas las acciones' }}. Más recientes primero.</p>
   @if (error()) { <p role="alert">{{ error() }} Podés reintentar la consulta.</p> }
   @if (cargando()) { <p role="status">Cargando auditoría...</p> }
   <div class="lista-recompensas">
@@ -17,7 +17,7 @@
       <article class="recompensa"><div>
         <h2>#{{ r.id }} · {{ nombre(r.accion) }}</h2>
         <p>Fecha: {{ r.created_at | date:'dd/MM/yyyy HH:mm:ss':'-0300' }}</p>
-        <p>Usuario (UUID): {{ r.usuario_id }}</p>
+        <p>Usuario: {{ r.usuario_nombre || 'Usuario no disponible' }}</p>
         <p>Elemento: {{ r.entidad }} #{{ r.entidad_id }}</p>
         <details><summary>Información del evento</summary><pre>{{ r.detalles | json }}</pre></details>
       </div></article>

@@ -1,3 +1,4 @@
+import { IconoCine } from '../../../components/icono-cine/icono-cine';
 import { MatButtonModule } from '@angular/material/button';
 import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 /*
@@ -92,7 +93,7 @@ import {
    *
    * dentro del HTML.
    */
-  imports: [MatButtonModule, RouterLink, PasosCompra,
+  imports: [IconoCine, MatButtonModule, RouterLink, PasosCompra,
     QRCodeComponent,
     DatePipe,
     HoraCortaPipe

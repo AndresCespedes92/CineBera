@@ -1,3 +1,4 @@
+import { IconoCine } from '../../../components/icono-cine/icono-cine';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
@@ -14,7 +15,7 @@ import { PeliculaService } from '../../../services/pelicula';
 import { FuncionService } from '../../../services/funcion';
 import { ResenaService } from '../../../services/resena';
 
-@Component({selector: 'app-home', imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressBarModule, Navbar, PeliculaCard, FormsModule], templateUrl: './home.html', styleUrl: './home.css'})
+@Component({selector: 'app-home', imports: [IconoCine, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressBarModule, Navbar, PeliculaCard, FormsModule], templateUrl: './home.html', styleUrl: './home.css'})
 export class Home implements OnInit {
   peliculas: Pelicula[] = [];
   cargando = true;

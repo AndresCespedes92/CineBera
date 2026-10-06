@@ -1,3 +1,4 @@
+import { IconoCine } from '../../../components/icono-cine/icono-cine';
 import { MatButtonModule } from '@angular/material/button';
 import { AlertaService } from '../../../services/alerta';
 import { Auth } from '../../../services/auth';
@@ -35,7 +36,7 @@ import {
 @Component({
   selector: 'app-proximamente',
 
-  imports: [MatButtonModule, 
+  imports: [IconoCine, MatButtonModule,
     Navbar,
     PeliculaCard,
     EnPreventa

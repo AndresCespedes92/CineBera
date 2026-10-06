@@ -1,7 +1,7 @@
 <app-navbar />
 <main class="candy-page">
 <app-pasos-compra [paso]="2" [candy]="true" />
-  <header><h1>Candy</h1><p>Elegí productos adicionales y volvé al checkout para pagar todo junto. Si elegiste un combo, sus productos se conservan por separado. El tiempo de reserva sigue corriendo.</p></header>
+  <header><h1><app-icono-cine tipo="pochoclos" />Candy</h1><p>Elegí productos adicionales y volvé al checkout para pagar todo junto. Si elegiste un combo, sus productos se conservan por separado. El tiempo de reserva sigue corriendo.</p></header>
   @if (cargando()) { <p>Cargando productos...</p> }
   @else if (error()) { <p role="alert">{{ error() }}</p><button matButton="filled" (click)="ngOnInit()">Reintentar</button><a routerLink="/cartelera">Volver a cartelera</a> }
   @else {

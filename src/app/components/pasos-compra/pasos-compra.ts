@@ -21,6 +21,8 @@ import { Component, Input } from '@angular/core';
   </nav>`,
   styles: [
     `
+      :host(.compacto) nav { margin-block: 4px 8px; }
+      :host(.compacto) ol { margin-block: 4px; }
       nav {
         margin-block: 1.5rem 2rem;
       }

@@ -18,6 +18,15 @@ export class AuditoriaService {
     const {data, error} = await consulta;
     if (error) throw new Error('No se pudo consultar la auditoría.');
     const filas = (data ?? []) as RegistroAuditoria[];
-    return {registros: filas.slice(0, 50), siguiente: filas.length > 50 ? filas[49].id : undefined};
+    const pagina = filas.slice(0, 50);
+    const ids = [...new Set(pagina.map(fila => fila.usuario_id).filter(Boolean))];
+    // Una consulta por página, en lugar de una por evento. Auth no se expone para obtener emails.
+    if (ids.length) {
+      const perfiles = await supabase.from('perfiles').select('id,nombre,apellido').in('id', ids);
+      if (perfiles.error) throw new Error('No se pudieron consultar los nombres de la auditoría.');
+      const nombres = new Map((perfiles.data ?? []).map(p => [p.id, [p.nombre, p.apellido].filter(Boolean).join(' ').trim()]));
+      for (const fila of pagina) fila.usuario_nombre = nombres.get(fila.usuario_id) || 'Usuario no disponible';
+    }
+    return {registros: pagina, siguiente: filas.length > 50 ? filas[49].id : undefined};
   }
 }

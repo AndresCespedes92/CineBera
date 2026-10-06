@@ -1,3 +1,4 @@
+import { IconoCine } from '../../../components/icono-cine/icono-cine';
 import { MatButtonModule } from '@angular/material/button';
 import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 import { CandyService } from '../../../services/candy';
@@ -65,7 +66,7 @@ import {
 
 @Component({
   selector: 'app-checkout',
-  imports: [MatButtonModule, PasosCompra, FormsModule],
+  imports: [IconoCine, MatButtonModule, PasosCompra, FormsModule],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css'
 })

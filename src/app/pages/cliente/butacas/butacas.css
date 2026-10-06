@@ -1,49 +1,76 @@
+.butacas-page {
+  padding-block: 16px;
+}
+.butacas-page > header {
+  margin-bottom: 8px;
+}
+.butacas-page h1 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: 4px;
+}
+.butacas-page > header p {
+  margin: 0;
+}
+.butacas-page .temporizador {
+  padding: 6px 12px;
+  margin-block: 8px;
+}
+/* Los sectores tienen el mismo ancho en todas las filas, incluida K. */
 .mapa-scroll {
+  --butaca: clamp(22px, 2.2vw, 26px);
+  --separacion: 3px;
+  --pasillo: 20px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  padding: 1rem 0;
+  padding: 8px;
   border: 1px solid var(--cine-border);
   border-radius: 6px;
   background: var(--cine-surface);
 }
 .pantalla {
-  width: 1050px;
-  margin: 1rem auto 2rem;
+  width: min(90%, 800px);
+  margin: 0 auto 12px;
   text-align: center;
-  padding: 0.6rem;
+  padding: 4px;
   border-top: 3px solid var(--cine-accent);
   color: var(--cine-muted);
   letter-spacing: 0.3em;
 }
 .mapa-butacas {
   width: max-content;
-  min-width: 1050px;
   margin: auto;
-  padding: 0 1rem;
+  padding: 0;
 }
 .fila {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px calc(4 * var(--butaca) + 3 * var(--separacion)) var(--pasillo) calc(
+      20 * var(--butaca) + 19 * var(--separacion)
+    ) var(--pasillo) calc(4 * var(--butaca) + 3 * var(--separacion));
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .nombre-fila,
 .fila-vacia span:first-child {
-  width: 30px;
+  width: 24px;
   text-align: center;
   font-weight: 600;
 }
 .sector {
   display: flex;
-  gap: 4px;
+  justify-content: center;
+  gap: var(--separacion);
 }
 .pasillo {
-  width: 30px;
+  width: var(--pasillo);
   flex-shrink: 0;
 }
 .sector button {
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
+  width: var(--butaca);
+  height: var(--butaca);
+  min-height: var(--butaca);
+  flex: 0 0 var(--butaca);
+  font-size: 11px;
+  line-height: 1;
   padding: 0;
   border: 1px solid var(--cine-muted);
   border-radius: 4px 4px 10px 10px;
@@ -73,7 +100,7 @@
 .fila-vacia {
   display: flex;
   align-items: center;
-  height: 48px;
+  height: 24px;
 }
 .fila-vacia span:last-child {
   width: 100%;
@@ -140,4 +167,19 @@
 .error,
 .mensaje-edad {
   color: var(--cine-danger);
+}
+
+.leyenda-butacas {
+  margin-block: 8px;
+}
+.ayuda-mapa {
+  display: none;
+}
+@media (max-width: 900px) {
+  .ayuda-mapa {
+    display: block;
+  }
+  .mapa-scroll {
+    --butaca: 32px;
+  }
 }
