@@ -1,3 +1,4 @@
+import { IconoCine } from '../../../components/icono-cine/icono-cine';
 import { MatButtonModule } from '@angular/material/button';
 import { PasosCompra } from '../../../components/pasos-compra/pasos-compra';
 import {
@@ -56,7 +57,7 @@ import { supabase } from '../../../supabase';
    * NgClass:
    * permite mostrar visualmente campos válidos/inválidos.
    */
-  imports: [MatButtonModule, PasosCompra, 
+  imports: [IconoCine, MatButtonModule, PasosCompra,
     EstadoButaca,
     ReactiveFormsModule,
     NgClass

@@ -2,6 +2,7 @@ export type AccionAuditoria = 'funcion_creada' | 'precio_modificado' | 'qr_valid
 export interface RegistroAuditoria {
   id: number;
   usuario_id: string;
+  usuario_nombre?: string;
   accion: AccionAuditoria;
   entidad: string;
   entidad_id: number;

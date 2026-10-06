@@ -1,5 +1,5 @@
 <main class="butacas-page">
-<app-pasos-compra [paso]="1" />
+<app-pasos-compra class="compacto" [paso]="1" />
 
   <!-- =====================================================
        ENCABEZADO
@@ -7,7 +7,7 @@
 
   <header>
 
-    <h1>
+    <h1><app-icono-cine tipo="entrada" />
       Seleccioná tus butacas
     </h1>
 
@@ -89,7 +89,7 @@
        PANTALLA DEL CINE
        ===================================================== -->
 
-  <ul class="leyenda-butacas" aria-label="Estados de las butacas"><li><i></i>Disponible</li><li><i class="vip"></i>VIP</li><li><i class="accesible"></i>Accesible</li><li><i class="seleccionada"></i>Seleccionada</li><li><i class="ocupada"></i>Ocupada</li></ul><p class="ayuda-mapa">Deslizá el mapa horizontalmente para ver toda la sala.</p><div class="mapa-scroll" tabindex="0" role="region" aria-label="Mapa de butacas, desplazable horizontalmente"><section class="pantalla">
+  <ul class="leyenda-butacas" aria-label="Estados de las butacas"><li><i></i>Disponible</li><li><i class="vip"></i>VIP</li><li><i class="accesible"></i>Accesible</li><li><i class="seleccionada"></i>Seleccionada</li><li><i class="ocupada"></i>Ocupada</li></ul><p class="ayuda-mapa">En pantallas pequeñas, deslizá el mapa para elegir tu butaca.</p><div class="mapa-scroll" tabindex="0" role="region" aria-label="Mapa de butacas, desplazable horizontalmente"><section class="pantalla">
 
     PANTALLA
 

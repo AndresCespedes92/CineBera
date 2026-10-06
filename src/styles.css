@@ -3,13 +3,13 @@
 
 :root {
   color-scheme: dark;
-  --cine-bg: #1e1a14;
-  --cine-surface: #2a2520;
-  --cine-panel: #332d27;
+  --cine-bg: #000000;
+  --cine-surface: #141414;
+  --cine-panel: #202020;
   --cine-text: #d4bc94;
   --cine-muted: #9c8b72;
   --cine-accent: #c4a471;
-  --cine-border: #3d362f;
+  --cine-border: #363636;
   --cine-success: #7a9e7e;
   --cine-info: #8ba7b5;
   --cine-danger: #c47171;

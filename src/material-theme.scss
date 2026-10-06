@@ -14,21 +14,21 @@ html {
   @include mat.theme-overrides(
     (
       primary: #c4a471,
-      on-primary: #1e1a14,
+      on-primary: #000000,
       primary-container: #51473b,
       on-primary-container: #d4bc94,
       secondary: #d4bc94,
-      on-secondary: #1e1a14,
-      surface: #1e1a14,
+      on-secondary: #000000,
+      surface: #000000,
       on-surface: #d4bc94,
       on-surface-variant: #b7a68d,
-      surface-container: #2a2520,
-      surface-container-high: #332d27,
-      surface-container-highest: #3d362f,
+      surface-container: #141414,
+      surface-container-high: #202020,
+      surface-container-highest: #363636,
       outline: #9c8b72,
-      outline-variant: #3d362f,
+      outline-variant: #363636,
       error: #c47171,
-      on-error: #1e1a14,
+      on-error: #000000,
     )
   );
   @include mat.button-overrides(
